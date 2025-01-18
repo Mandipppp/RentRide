@@ -1,0 +1,17 @@
+const mongoose = require('mongoose');
+
+const OwnerSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ['renter', 'owner', 'admin'], default: 'owner' },
+  contactNumber: { type: String },
+  profilePicture: {type: String, required: true},
+  citizenshipFront: {type: String, required: true},
+  citizenshipBack: {type: String, required: true},
+  walletId: {type: String, required: true},
+  kycStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
+  createdAt: { type: Date, default: Date.now },
+});
+
+module.exports = mongoose.model('Owner', OwnerSchema);
