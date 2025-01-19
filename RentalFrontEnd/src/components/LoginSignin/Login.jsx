@@ -99,7 +99,9 @@ const Login = () => {
             </button>
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <label className="block text-right font-small text-red-600">Forgot Password?</label>
+          <label className="block text-right font-small text-red-600">
+          <Link to="/forgot-password" className="text-green-900 ml-1">Forgot Password?</Link>
+            </label>
           <label className="flex justify-end items-center font-small">
             <span>Don't have an account?</span>
             <Link to="/signup" className="text-green-900 ml-1">Signup</Link>
