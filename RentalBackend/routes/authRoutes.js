@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, registerOwner, getUserDetails, login } = require('../controllers/authController');
+const { registerUser, registerOwner, getUserDetails, login, registerEmail, verifyEmail } = require('../controllers/authController');
 const { authenticate } = require('../middlewares/authMiddleware');
 
 // **********
@@ -7,6 +7,13 @@ const upload = require('../middlewares/uploadMiddleware');
 
 const router = express.Router();
 
+// Route for submitting email to receive verification link
+router.post('/registerEmail', registerEmail);
+
+// Route for verifying the email
+router.get('/verify-email/:token', verifyEmail);
+
+// Route for completing the registration after email is verified
 router.post('/registerUser', registerUser);
 
 //changed

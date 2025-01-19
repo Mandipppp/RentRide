@@ -2,23 +2,108 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const Owner = require('../models/owner');
+const nodemailer = require("nodemailer");
 
 
-exports.registerUser = async (req, res) => {
-  const { name, contactNumber, email, password, role } = req.body;
+// Generate a random token for email verification
+const generateVerificationToken = (email) => {
+  return jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+};
+
+// Send verification email
+const sendVerificationEmail = (email, token) => {
+  const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const verificationLink = `http://localhost:5173/complete-renter-registration/${token}`;
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Email Verification',
+    text: `Click this link to verify your email: ${verificationLink}`,
+  };
+
+  return transporter.sendMail(mailOptions);
+};
+
+exports.registerEmail = async (req, res) => {
+  const { email } = req.body;
+
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'Email already registered' });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ name, email, password: hashedPassword, role, contactNumber });
-    await newUser.save();
+    // Generate a verification token
+    const token = generateVerificationToken(email);
 
+    // Send verification email
+    await sendVerificationEmail(email, token);
+
+    res.status(200).json({ message: 'Verification email sent!' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.verifyEmail = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { email } = decoded;
+
+    // Check if the email exists in the database
+    const user = await User.findOne({ email });
+    if (user) return res.status(400).json({ message: 'Email already registered' });
+
+    // Email is verified, redirect to a page to enter other details
+    res.status(200).json({ email, message: 'Email verified, please proceed with registration.' });
+  } catch (error) {
+    res.status(400).json({ message: 'Invalid or expired token' });
+  }
+};
+
+exports.registerUser = async (req, res) => {
+  const { name, contactNumber, email, password, role } = req.body;
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      contactNumber,
+    });
+
+    await newUser.save();
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+// exports.registerUser = async (req, res) => {
+//   const { name, contactNumber, email, password, role } = req.body;
+//   try {
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser) return res.status(400).json({ message: 'Email already registered' });
+
+//     const hashedPassword = await bcrypt.hash(password, 10);
+//     const newUser = new User({ name, email, password: hashedPassword, role, contactNumber });
+//     await newUser.save();
+
+//     res.status(201).json({ message: 'User registered successfully' });
+//   } catch (error) {
+//     res.status(500).json({ error: 'Server error' });
+//   }
+// };
 
 // exports.registerOwner = async (req, res) => {
 //     const {
