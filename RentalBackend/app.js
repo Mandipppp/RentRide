@@ -3,6 +3,8 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const usersRoutes = require('./routes/userRoutes');
 const ownerRoutes = require('./routes/ownerRoutes');
+const resetPassRoutes = require('./routes/resetPassRoutes');
+
 
 
 require('dotenv').config();
@@ -24,6 +26,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 ///////////////////////////////
 
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', resetPassRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/owner', ownerRoutes);

@@ -17,6 +17,8 @@ import AdminOwnerProfile from "./components/Admin/AdminOwnerProfile";
 import Unauthorized from "./components/Admin/Unauthorized";
 import AdminProfile from "./components/Admin/AdminProfile";
 import AdminUsers from "./components/Admin/AdminUsers";
+import ForgotPassword from "./components/LoginSignin/ForgotPassword";
+import ResetPassword from "./components/LoginSignin/ResetPassword";
 
 
 
@@ -75,6 +77,9 @@ const App = () => {
         {/* Other routes for renter or owner pages */}
         <Route path="/signup/renter" element={<SignupRenter />} />
         <Route path="/signup/owner" element={<SignupOwner />} />
+        {/* Forgot Password route for renter or owner pages */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/*ADMIN PART*/}
         <Route path="/adminowners" element={<AdminOwners />} />
