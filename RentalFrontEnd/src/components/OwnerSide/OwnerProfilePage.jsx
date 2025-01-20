@@ -12,21 +12,22 @@ function OwnerProfilePage() {
   const navigate = useNavigate();
 
   const handleSignOut = () => {
-      // Open the confirmation dialog when the sign-out is clicked
-      setIsDialogOpen(true);
-    };
+    // Open the confirmation dialog when the sign-out is clicked
+    setIsDialogOpen(true);
+  };
 
-    const confirmSignOut = () => {
-      // Clear the token from local storage
-      reactLocalStorage.remove("access_token");
-      // Redirect to the login page
-      navigate("/login");
-    };
-  
-    const cancelSignOut = () => {
-      // Close the confirmation dialog without signing out
-      setIsDialogOpen(false);
-    };
+  const confirmSignOut = () => {
+    // Clear the token from local storage
+    reactLocalStorage.remove("access_token");
+    // Redirect to the login page
+    navigate("/login");
+  };
+
+  const cancelSignOut = () => {
+    // Close the confirmation dialog without signing out
+    setIsDialogOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-pink-50 flex flex-col">
       <OwnerNavigation />
