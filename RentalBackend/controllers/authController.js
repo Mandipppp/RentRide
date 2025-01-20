@@ -6,12 +6,12 @@ const nodemailer = require("nodemailer");
 
 
 // Generate a random token for email verification
-const generateVerificationToken = (email) => {
-  return jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+const generateVerificationToken = (email, type) => {
+  return jwt.sign({ email, type }, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
 
-// Send verification email
-const sendVerificationEmail = (email, token) => {
+// Generalized function to send verification email
+const sendVerificationEmail = (email, token, type) => {
   const transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
@@ -20,30 +20,42 @@ const sendVerificationEmail = (email, token) => {
     },
   });
 
-  const verificationLink = `http://localhost:5173/complete-renter-registration/${token}`;
+  // Determine the verification link and email subject based on the type
+  const verificationLink = type === 'owner'
+    ? `http://localhost:5173/complete-owner-registration/${token}`
+    : `http://localhost:5173/complete-renter-registration/${token}`;
+  
+  const emailSubject = type === 'owner'
+    ? 'Owner Email Verification'
+    : 'User Email Verification';
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: 'Email Verification',
+    subject: emailSubject,
     text: `Click this link to verify your email: ${verificationLink}`,
   };
 
   return transporter.sendMail(mailOptions);
 };
 
+
 exports.registerEmail = async (req, res) => {
-  const { email } = req.body;
+  const { email, type } = req.body;
 
   try {
-    const existingUser = await User.findOne({ email });
+    // Determine the model based on the type
+    const Model = type === 'owner' ? Owner : User;
+
+    // Check if the email already exists in the respective collection
+    const existingUser = await Model.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'Email already registered' });
 
     // Generate a verification token
-    const token = generateVerificationToken(email);
+    const token = generateVerificationToken(email, type);
 
     // Send verification email
-    await sendVerificationEmail(email, token);
+    await sendVerificationEmail(email, token, type);
 
     res.status(200).json({ message: 'Verification email sent!' });
   } catch (error) {
@@ -55,16 +67,23 @@ exports.verifyEmail = async (req, res) => {
   const { token } = req.params;
 
   try {
+    // Decode the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { email } = decoded;
+    const { email, type } = decoded;
 
-    // Check if the email exists in the database
-    const user = await User.findOne({ email });
-    if (user) return res.status(400).json({ message: 'Email already registered' });
+    // Determine the appropriate model based on the type
+    const Model = type === 'owner' ? Owner : User;
 
-    // Email is verified, redirect to a page to enter other details
-    res.status(200).json({ email, message: 'Email verified, please proceed with registration.' });
+    // Check if the email already exists in the respective collection
+    const existingEntity = await Model.findOne({ email });
+    if (existingEntity) {
+      return res.status(400).json({ message: `${type} email is already registered` });
+    }
+
+    // If email is not found in the database, verification is successful
+    res.status(200).json({ email, message: `${type} email verified, please proceed with registration.` });
   } catch (error) {
+    console.error('Error verifying email:', error);
     res.status(400).json({ message: 'Invalid or expired token' });
   }
 };

@@ -20,6 +20,7 @@ import AdminUsers from "./components/Admin/AdminUsers";
 import ForgotPassword from "./components/LoginSignin/ForgotPassword";
 import ResetPassword from "./components/LoginSignin/ResetPassword";
 import CompleteRenterSignup from "./components/LoginSignin/CompleteRenterSignup";
+import CompleteOwnerSignup from "./components/LoginSignin/CompleteOwnerSignup";
 
 
 
@@ -80,6 +81,7 @@ const App = () => {
         <Route path="/complete-renter-registration/:token" element={<CompleteRenterSignup />} />
 
         <Route path="/signup/owner" element={<SignupOwner />} />
+        <Route path="/complete-owner-registration/:token" element={<CompleteOwnerSignup />} />
         {/* Forgot Password route for renter or owner pages */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />

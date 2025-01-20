@@ -15,7 +15,7 @@ const SignupRenter = () => {
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     axios
-      .post("http://localhost:3000/api/auth/registerEmail", { email })
+      .post("http://localhost:3000/api/auth/registerEmail", { email, type: 'user'})
       .then((res) => {
         toast.success("Verification email sent!");
         setCountdown(60); // Start 60-second timer
