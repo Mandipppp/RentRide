@@ -33,7 +33,31 @@ const sendVerificationEmail = (email, token, type) => {
     from: process.env.EMAIL_USER,
     to: email,
     subject: emailSubject,
-    text: `Click this link to verify your email: ${verificationLink}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="https://your-logo-url.com/logo.png" alt="RentRide Logo" style="max-width: 200px;">
+        </div>
+        <h2 style="text-align: center; color: #4CAF50;">Welcome to RentRide!</h2>
+        <p style="font-size: 16px; line-height: 1.5; text-align: center;">
+          We're excited to have you on board. Please verify your email to complete the registration process.
+        </p>
+        <p style="font-size: 16px; line-height: 1.5; text-align: center;">
+          <strong style="font-size: 18px;">Click the link below to verify your email:</strong>
+        </p>
+        <div style="text-align: center; margin-top: 20px;">
+          <a href="${verificationLink}" style="display: inline-block; background-color: #4CAF50; color: #fff; padding: 12px 20px; text-decoration: none; font-size: 16px; border-radius: 5px;">
+            Verify Your Email
+          </a>
+        </div>
+        <p style="font-size: 14px; line-height: 1.5; text-align: center; margin-top: 30px; color: #555;">
+          If you did not sign up for RentRide, please ignore this email. Your email will not be used for any other purpose.
+        </p>
+        <p style="font-size: 14px; text-align: center; color: #777;">
+          <strong>RentRide</strong> - Your trusted vehicle rental service.
+        </p>
+      </div>
+    `,
   };
 
   return transporter.sendMail(mailOptions);

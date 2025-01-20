@@ -12,6 +12,9 @@ const OwnerSchema = new mongoose.Schema({
   walletId: {type: String, required: true},
   kycStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
   createdAt: { type: Date, default: Date.now },
+
+  resetPasswordToken: { type: String },
+  resetPasswordExpiry: { type: Date },
 });
 
 module.exports = mongoose.model('Owner', OwnerSchema);

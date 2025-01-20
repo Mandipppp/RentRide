@@ -24,6 +24,7 @@ const CompleteOwnerSignup = () => {
     walletId: "",
   });
   const [error, setError] = useState("");
+  const [isWalletSameAsContact, setIsWalletSameAsContact] = useState(false);
 
   useEffect(() => {
     // Verify the token when the component loads
@@ -46,11 +47,21 @@ const CompleteOwnerSignup = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
+
   const handleFileChange = (e) => {
     const { name, files } = e.target;
     setFormData({ ...formData, [name]: files[0] });
   };
 
+  // Handle checkbox change for wallet ID
+  const handleCheckboxChange = (e) => {
+    setIsWalletSameAsContact(e.target.checked);
+    if (e.target.checked) {
+      setFormData({ ...formData, walletId: formData.contactNumber });
+    } else {
+      setFormData({ ...formData, walletId: "" });
+    }
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -196,6 +207,15 @@ const CompleteOwnerSignup = () => {
               onChange={handleInputChange}
               required
             />
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              checked={isWalletSameAsContact}
+              onChange={handleCheckboxChange}
+              className="mr-2"
+            />
+            <label className="text-sm text-gray-700">Same as Contact Number</label>
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
