@@ -30,10 +30,13 @@ const getOwnerProfile = async (req, res) => {
         ? {
             profilePicture: kyc.documents.profilePicture.file,
             profilePictureStatus: kyc.documents.profilePicture.status,
+            profilePictureComment: kyc.documents.profilePicture.comments,
             citizenshipFront: kyc.documents.citizenshipFront.file,
             citizenshipFrontStatus: kyc.documents.citizenshipFront.status,
+            citizenshipFrontComment: kyc.documents.citizenshipFront.comments,
             citizenshipBack: kyc.documents.citizenshipBack.file,
             citizenshipBackStatus: kyc.documents.citizenshipBack.status,
+            citizenshipBackComment: kyc.documents.citizenshipBack.comments,
           }
         : null,
     });
@@ -69,17 +72,30 @@ const updateOwner = async (req, res) => {
 
     // Update KYC-related fields
     const kycUpdateFields = {};
+    const updatedFields = []; // To track which fields are being updated
+
     if (req.files && req.files.profilePicture) {
       kycUpdateFields['documents.profilePicture.file'] = req.files.profilePicture[0].path;
+      kycUpdateFields['documents.profilePicture.status'] = 'pending'; // Reset status
+      kycUpdateFields['documents.profilePicture.comments'] = ''; // Clear comments
+      updatedFields.push('profilePicture');
     }
     if (req.files && req.files.citizenshipFront) {
       kycUpdateFields['documents.citizenshipFront.file'] = req.files.citizenshipFront[0].path;
+      kycUpdateFields['documents.citizenshipFront.status'] = 'pending'; // Reset status
+      kycUpdateFields['documents.citizenshipFront.comments'] = ''; // Clear comments
+      updatedFields.push('citizenshipFront');
     }
     if (req.files && req.files.citizenshipBack) {
       kycUpdateFields['documents.citizenshipBack.file'] = req.files.citizenshipBack[0].path;
+      kycUpdateFields['documents.citizenshipBack.status'] = 'pending'; // Reset status
+      kycUpdateFields['documents.citizenshipBack.comments'] = ''; // Clear comments
+      updatedFields.push('citizenshipBack');
     }
 
     if (Object.keys(kycUpdateFields).length > 0) {
+      // Ensure overall status is also updated to pending if any field is changed
+      kycUpdateFields.overallStatus = 'pending';
       const updatedKYC = await KYC.findOneAndUpdate(
         { ownerId },
         { $set: kycUpdateFields },

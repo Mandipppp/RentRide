@@ -5,6 +5,7 @@ import OwnerPasswordDetails from './OwnerPasswordDetails'
 import { reactLocalStorage } from 'reactjs-localstorage';
 import { useNavigate } from 'react-router-dom';
 import OwnerWalletDetails from './OwnerWalletDetails';
+import OwnerKYCDetails from './OwnerKYCDetails';
 
 function OwnerProfilePage() {
   const [activeView, setActiveView] = useState("ownerprofile");
@@ -47,6 +48,12 @@ function OwnerProfilePage() {
               Profile Details
             </li>
             <li className={`text-gray-600 hover:text-gray-800 cursor-pointer ${
+                activeView === "kyc" ? "font-bold text-gray-800" : ""}`}
+                onClick={() => setActiveView("kyc")}
+            >
+              KYC
+            </li>
+            <li className={`text-gray-600 hover:text-gray-800 cursor-pointer ${
               activeView === "ownerwallet" ? "font-bold text-gray-800" : ""}`}
               onClick={() => setActiveView("ownerwallet")}
             >
@@ -70,6 +77,8 @@ function OwnerProfilePage() {
         {activeView === "ownerprofile" && <OwnerProfileDetails />}
         {activeView === "ownerpassword" && <OwnerPasswordDetails />}
         {activeView === "ownerwallet" && <OwnerWalletDetails />}
+        {activeView === "kyc" && <OwnerKYCDetails />}
+
 
         
       </main>

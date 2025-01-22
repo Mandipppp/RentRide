@@ -11,9 +11,6 @@ function OwnerProfileDetails() {
     name: "",
     email: "",
     phone: "",
-    profilePicture: "",
-    citizenshipFront: "",
-    citizenshipBack: "",
   });
   const navigate = useNavigate();
 
@@ -39,9 +36,6 @@ function OwnerProfileDetails() {
             name: userData?.name || "",
             email: userData?.email || "",
             phone: userData?.contactNumber || "",
-            profilePicture: kycDetails?.profilePicture || "",
-            citizenshipFront: kycDetails?.citizenshipFront || "",
-            citizenshipBack: kycDetails?.citizenshipBack || "",
           });
         })
         .catch((err) => {
@@ -84,15 +78,6 @@ function OwnerProfileDetails() {
     }
     if (formData.phone && formData.phone !== userData.contactNumber) {
       updatePayload.append("contactNumber", formData.phone);
-    }
-    if (formData.profilePicture instanceof File) {
-      updatePayload.append("profilePicture", formData.profilePicture);
-    }
-    if (formData.citizenshipFront instanceof File) {
-      updatePayload.append("citizenshipFront", formData.citizenshipFront);
-    }
-    if (formData.citizenshipBack instanceof File) {
-      updatePayload.append("citizenshipBack", formData.citizenshipBack);
     }
   
     if ([...updatePayload.keys()].length === 0) {
@@ -167,73 +152,6 @@ function OwnerProfileDetails() {
             className="w-full border border-gray-300 rounded-md px-4 py-2 mt-2 focus:outline-none focus:ring focus:ring-blue-300"
           />
         </div>
-
-        {/* KYC Verification Zone */}
-        {userData.kycStatus !== "verified" && (
-          <div className="mt-6">
-            <h3 className="text-lg font-bold mb-4">KYC Verification</h3>
-
-            <div>
-              <label htmlFor="profilePicture" className="block text-gray-700 font-medium">
-                Profile Picture
-              </label>
-              {formData.profilePicture && (
-                <img
-                  src={`http://localhost:3000/${formData.profilePicture}`}
-                  alt="Profile"
-                  className="w-32 h-32 rounded-full border mt-2"
-                />
-              )}
-              <input
-                type="file"
-                id="profilePicture"
-                accept="image/*"
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-4 py-2 mt-2 focus:outline-none focus:ring focus:ring-blue-300"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="citizenshipFront" className="block text-gray-700 font-medium">
-                Citizenship Front
-              </label>
-              {formData.citizenshipFront && (
-                <img
-                  src={`http://localhost:3000/${formData.citizenshipFront}`}
-                  alt="Citizenship Front"
-                  className="w-48 h-32 border mt-2"
-                />
-              )}
-              <input
-                type="file"
-                id="citizenshipFront"
-                accept="image/*"
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-4 py-2 mt-2 focus:outline-none focus:ring focus:ring-blue-300"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="citizenshipBack" className="block text-gray-700 font-medium">
-                Citizenship Back
-              </label>
-              {formData.citizenshipBack && (
-                <img
-                  src={`http://localhost:3000/${formData.citizenshipBack}`}
-                  alt="Citizenship Back"
-                  className="w-48 h-32 border mt-2"
-                />
-              )}
-              <input
-                type="file"
-                id="citizenshipBack"
-                accept="image/*"
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-4 py-2 mt-2 focus:outline-none focus:ring focus:ring-blue-300"
-              />
-            </div>
-          </div>
-        )}
 
         <button
           type="submit"
