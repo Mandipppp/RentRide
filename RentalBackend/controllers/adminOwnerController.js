@@ -1,4 +1,6 @@
 const Owner = require('../models/owner'); // Import the Owner model
+const KYC = require('../models/kyc'); // Import the Owner model
+
 
 const getAllOwners = async (req, res) => {
   try {
@@ -79,6 +81,39 @@ const getOwnerById = async (req, res) => {
   }
 };
 
+const updateKyc = async (req, res) => {
+  const { ownerId } = req.params;
+  const updates = req.body;
 
+  try {
+    const kyc = await KYC.findOne({ ownerId });
+    if (!kyc) return res.status(404).json({ message: 'KYC record not found' });
 
-module.exports = { getAllOwners, getOwnerById};
+    // Loop through each section in the request body and update the document
+    Object.keys(updates).forEach((section) => {
+      if (kyc.documents[section]) {
+        kyc.documents[section].status = updates[section].status;
+        kyc.documents[section].comments = updates[section].reason || '';
+      }
+    });
+
+    // Update overallStatus based on all sections
+    const allStatuses = Object.values(kyc.documents).map(doc => doc.status);
+    kyc.overallStatus = allStatuses.every(stat => stat === 'verified')
+      ? 'verified'
+      : allStatuses.some(stat => stat === 'rejected')
+      ? 'rejected'
+      : 'pending';
+
+    kyc.updatedAt = Date.now(); // Update the timestamp
+
+    await kyc.save();
+
+    return res.status(200).json({ message: 'KYC updated successfully', kyc });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+module.exports = { getAllOwners, getOwnerById, updateKyc};
