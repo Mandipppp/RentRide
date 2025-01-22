@@ -29,14 +29,19 @@ function OwnerProfileDetails() {
           },
         })
         .then((response) => {
-          setUserData(response.data);
+          const userData = response.data;
+          setUserData(userData);
+  
+          // Extract KYC details from response
+          const kycDetails = userData.kycDetails || {};
+  
           setFormData({
-            name: response.data?.name || "",
-            email: response.data?.email || "",
-            phone: response.data?.contactNumber || "",
-            profilePicture: response.data?.profilePicture || "",
-            citizenshipFront: response.data?.citizenshipFront || "",
-            citizenshipBack: response.data?.citizenshipBack || "",
+            name: userData?.name || "",
+            email: userData?.email || "",
+            phone: userData?.contactNumber || "",
+            profilePicture: kycDetails?.profilePicture || "",
+            citizenshipFront: kycDetails?.citizenshipFront || "",
+            citizenshipBack: kycDetails?.citizenshipBack || "",
           });
         })
         .catch((err) => {

@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const Owner = require('../models/owner');
+const KYC = require('../models/kyc');
+
 const nodemailer = require("nodemailer");
 
 
@@ -132,81 +134,6 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// exports.registerUser = async (req, res) => {
-//   const { name, contactNumber, email, password, role } = req.body;
-//   try {
-//     const existingUser = await User.findOne({ email });
-//     if (existingUser) return res.status(400).json({ message: 'Email already registered' });
-
-//     const hashedPassword = await bcrypt.hash(password, 10);
-//     const newUser = new User({ name, email, password: hashedPassword, role, contactNumber });
-//     await newUser.save();
-
-//     res.status(201).json({ message: 'User registered successfully' });
-//   } catch (error) {
-//     res.status(500).json({ error: 'Server error' });
-//   }
-// };
-
-// exports.registerOwner = async (req, res) => {
-//     const {
-//       name,
-//       email,
-//       password,
-//       contactNumber,
-//       profilePicture,
-//       citizenshipFront,
-//       citizenshipBack,
-//       walletId
-//     } = req.body;
-  
-//     try {
-//       // Check if email already exists
-//       const existingOwnerEmail = await Owner.findOne({ email });
-//       const existingOwnerContact = await Owner.findOne({ contactNumber });
-
-//       if (existingOwnerEmail) {
-//         return res.status(400).json({ message: 'Email is already registered.' });
-//       }
-
-//       if (existingOwnerContact) {
-//         return res.status(400).json({ message: 'Phone is already registered.' });
-//       }
-  
-//       // Hash the password
-//       const hashedPassword = await bcrypt.hash(password, 10);
-  
-//       // Create a new owner
-//       const newOwner = new Owner({
-//         name,
-//         email,
-//         password: hashedPassword,
-//         contactNumber,
-//         profilePicture,
-//         citizenshipFront,
-//         citizenshipBack,
-//         walletId,
-//       });
-  
-//       // Save the owner to the database
-//       await newOwner.save();
-  
-//       res.status(201).json({
-//         message: 'Owner registered successfully!',
-//         owner: {
-//           id: newOwner._id,
-//           name: newOwner.name,
-//           email: newOwner.email,
-//           role: newOwner.role,
-//           kycStatus: newOwner.kycStatus,
-//         },
-//       });
-//     } catch (error) {
-//       console.error('Error during owner signup:', error);
-//       res.status(500).json({ message: 'Server error. Please try again later.' });
-//     }
-//   };
-///////////////////////////
 exports.registerOwner = async (req, res) => {
   const { name, email, password, contactNumber, walletId } = req.body;
 
@@ -256,13 +183,36 @@ exports.registerOwner = async (req, res) => {
       email,
       password: hashedPassword,
       contactNumber,
-      profilePicture,
-      citizenshipFront,
-      citizenshipBack,
       walletId,
     });
 
     // Save the owner to the database
+    await newOwner.save();
+
+    // Create the KYC document
+    const newKYC = new KYC({
+      ownerId: newOwner._id,
+      documents: {
+        profilePicture: {
+          file: profilePicture,
+          status: 'pending',
+        },
+        citizenshipFront: {
+          file: citizenshipFront,
+          status: 'pending',
+        },
+        citizenshipBack: {
+          file: citizenshipBack,
+          status: 'pending',
+        },
+      },
+    });
+
+    // Save the KYC record to the database
+    await newKYC.save();
+
+    // Link the KYC to the owner by updating the owner's kycId field
+    newOwner.kycId = newKYC._id;
     await newOwner.save();
 
     res.status(201).json({
@@ -272,7 +222,7 @@ exports.registerOwner = async (req, res) => {
         name: newOwner.name,
         email: newOwner.email,
         role: newOwner.role,
-        kycStatus: newOwner.kycStatus,
+        kycStatus: 'pending', // Initially, the KYC status is pending
       },
     });
   } catch (error) {
@@ -280,44 +230,6 @@ exports.registerOwner = async (req, res) => {
     res.status(500).json({ message: 'Server error. Please try again later.' });
   }
 };
-////////////////////
-
-
-
-
-// exports.loginUser = async (req, res) => {
-//     const { email, password } = req.body;
-//     try {
-//       const user = await User.findOne({ email });
-//       if (!user) return res.status(404).json({ message: 'User not found' });
-  
-//       const isMatch = await bcrypt.compare(password, user.password);
-//       if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
-  
-//       const token = jwt.sign({ id: user._id, role: user.role, email: user.email, name: user.name, contact: user.contactNumber }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  
-//       res.status(200).json({ token, user: { name: user.name, email: user.email, role: user.role } });
-//     } catch (error) {
-//       res.status(500).json({ error: 'Server error' });
-//     }
-//   };
-
-// exports.loginOwner = async (req, res) => {
-// const { email, password } = req.body;
-// try {
-//     const owner = await Owner.findOne({ email });
-//     if (!owner) return res.status(404).json({ message: 'User not found' });
-
-//     const isMatch = await bcrypt.compare(password, owner.password);
-//     if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
-
-//     const token = jwt.sign({ id: owner._id, role: owner.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-//     res.status(200).json({ token, owner: { name: owner.name, email: owner.email, role: owner.role } });
-// } catch (error) {
-//     res.status(500).json({ error: 'Server error' });
-// }
-// };
 
 
 exports.login = async (req, res) => {

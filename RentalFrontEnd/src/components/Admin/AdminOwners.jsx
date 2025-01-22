@@ -105,7 +105,7 @@ const AdminOwners = () => {
                 <td className="py-3 px-4">{index + 1}</td>
                 <td className="py-3 px-4 flex items-center">
                   <img
-                    src={`http://localhost:3000/${owner.profilePicture}`} // Assuming the server serves profile pictures from this path
+                    src={`http://localhost:3000/${owner.kycId.documents.profilePicture.file}`} 
                     alt={owner.name}
                     className="w-8 h-8 rounded-full mr-3"
                   />
@@ -117,16 +117,16 @@ const AdminOwners = () => {
                 <td className="py-3 px-4">{owner.email}</td>
                 <td
                   className={`py-3 px-4 font-medium ${
-                    owner.kycStatus === "verified"
+                    owner.kycId.overallStatus === "verified"
                       ? "text-green-500"
-                      : owner.kycStatus === "pending"
+                      : owner.kycId.overallStatus === "pending"
                       ? "text-yellow-500"
                       : "text-red-500"
                   }`}
                 >
-                  {owner.kycStatus === "verified"
+                  {owner.kycId.overallStatus === "verified"
                     ? "Owner Approved"
-                    : owner.kycStatus === "pending"
+                    : owner.kycId.overallStatus === "pending"
                     ? "Approval Pending"
                     : "Approval Denied"}
                 </td>

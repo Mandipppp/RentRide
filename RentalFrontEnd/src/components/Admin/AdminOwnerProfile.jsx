@@ -135,10 +135,10 @@ const AdminOwnerProfile = () => {
         <div className="bg-white shadow-md rounded-lg p-6 w-full md:w-1/3">
           <h2 className="text-lg font-semibold mb-4">Profile Picture</h2>
           <img
-            src={`http://localhost:3000/${owner.profilePicture}`}
+            src={`http://localhost:3000/${owner.kycId.documents.profilePicture.file}`}
             alt={owner.name}
             className="w-60 h-60 object-cover mx-auto mb-4"
-            onClick={() => openModal(`http://localhost:3000/${owner.profilePicture}`)}
+            onClick={() => openModal(`http://localhost:3000/${owner.kycId.documents.profilePicture.file}`)}
           />
           <div className="flex justify-between">
             <button
@@ -194,10 +194,10 @@ const AdminOwnerProfile = () => {
         <div className="bg-white shadow-md rounded-lg p-6 w-full md:w-1/3">
           <h2 className="text-lg font-semibold mb-4">Citizenship Front</h2>
           <img
-            src={`http://localhost:3000/${owner.citizenshipFront}`}
+            src={`http://localhost:3000/${owner.kycId.documents.citizenshipFront.file}`}
             alt={owner.name}
             className="w-60 h-60 object-cover mx-auto mb-4"
-            onClick={() => openModal(`http://localhost:3000/${owner.citizenshipFront}`)}
+            onClick={() => openModal(`http://localhost:3000/${owner.kycId.documents.citizenshipFront.file}`)}
           />
           <div className="flex justify-between">
             <button
@@ -254,10 +254,10 @@ const AdminOwnerProfile = () => {
         <h2 className="text-lg font-semibold mb-4">Citizenship Back</h2>
 
         <img
-            src={`http://localhost:3000/${owner.citizenshipBack}`}
+            src={`http://localhost:3000/${owner.kycId.documents.citizenshipBack.file}`}
             alt={owner.name}
             className="w-60 h-60 object-cover mx-auto mb-4"
-            onClick={() => openModal(`http://localhost:3000/${owner.citizenshipBack}`)}
+            onClick={() => openModal(`http://localhost:3000/${owner.kycId.documents.citizenshipBack.file}`)}
           />
           <div className="flex justify-between">
             <button

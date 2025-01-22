@@ -1,35 +1,5 @@
 const Owner = require('../models/owner'); // Import the Owner model
 
-// // Function to get all owner details
-// const getAllOwners = async (req, res) => {
-//   try {
-//     // Fetch all owners from the database
-//     const owners = await Owner.find({}, '-password'); // Exclude the password field for security
-
-//     // Check if owners exist
-//     if (!owners || owners.length === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'No owners found.',
-//       });
-//     }
-
-//     // Respond with the owners data
-//     return res.status(200).json({
-//       success: true,
-//       data: owners,
-//     });
-//   } catch (error) {
-//     // Handle any errors
-//     console.error('Error fetching owners:', error);
-//     return res.status(500).json({
-//       success: false,
-//       message: 'Server error. Please try again later.',
-//     });
-//   }
-// };
-
-
 const getAllOwners = async (req, res) => {
   try {
     // Extract query parameters
@@ -48,7 +18,11 @@ const getAllOwners = async (req, res) => {
     }
 
     // Fetch owners from the database based on the filter
-    const owners = await Owner.find(filter, '-password'); // Exclude the password field for security
+    const owners = await Owner.find(filter, '-password')
+    .populate({
+      path: 'kycId',
+      select: '-ownerId -__v', // Exclude fields not needed in the response
+    }); 
 
     // Check if owners exist
     if (!owners || owners.length === 0) {
@@ -79,7 +53,11 @@ const getOwnerById = async (req, res) => {
     const { id } = req.params;
 
     // Fetch the owner by ID, excluding the password field for security
-    const owner = await Owner.findById(id, '-password');
+    const owner = await Owner.findById(id, '-password')
+    .populate({
+      path: 'kycId',
+      select: '-ownerId -__v', // Exclude fields not needed in the response
+    });
     if (!owner) {
       return res.status(404).json({
         success: false,
@@ -100,5 +78,7 @@ const getOwnerById = async (req, res) => {
     });
   }
 };
+
+
 
 module.exports = { getAllOwners, getOwnerById};

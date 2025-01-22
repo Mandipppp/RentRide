@@ -6,11 +6,8 @@ const OwnerSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['renter', 'owner', 'admin'], default: 'owner' },
   contactNumber: { type: String },
-  profilePicture: {type: String, required: true},
-  citizenshipFront: {type: String, required: true},
-  citizenshipBack: {type: String, required: true},
-  walletId: {type: String, required: true},
-  kycStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
+  kycId: { type: mongoose.Schema.Types.ObjectId, ref: 'KYC' },
+  walletId: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 
   resetPasswordToken: { type: String },

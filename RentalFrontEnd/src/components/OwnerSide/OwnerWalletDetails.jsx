@@ -22,6 +22,7 @@ function OwnerWalletDetails() {
           },
         })
         .then((response) => {
+          console.log(response.data)
           setWalletId(response.data.walletId || "");
           setCurrentWalletId(response.data.walletId || "");
         })

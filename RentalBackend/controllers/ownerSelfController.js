@@ -1,84 +1,103 @@
 const Owner = require('../models/owner');
+const KYC = require('../models/kyc');
+
 const bcrypt = require('bcrypt');
 
 
 const getOwnerProfile = async (req, res) => {
-    try {
-      // The Owner ID will be stored in req.Owner by the authenticateToken middleware
-      const ownerId = req.user.id;
-    //   console.log(OwnerId)
-  
-      // Fetch the Owner from the database
-      const owner = await Owner.findById(ownerId);
-  
-      if (!owner) {
-        return res.status(404).json({ message: "Owner not found." });
-      }
-  
-      // Send Owner data 
-      return res.json({
-        name: owner.name,
-        email: owner.email,
-        contactNumber: owner.contactNumber,
-        profilePicture: owner.profilePicture,
-        citizenshipFront: owner.citizenshipFront,
-        citizenshipBack: owner.citizenshipBack,
-        walletId: owner.walletId,
-        kycStatus: owner.kycStatus,
-      });
-    } catch (error) {
-      console.error("Error fetching Owner profile:", error);
-      res.status(500).json({ message: "Internal server error." });
+  try {
+    // The Owner ID will be stored in req.user by the authenticateToken middleware
+    const ownerId = req.user.id;
+
+    // Fetch the Owner from the database and populate KYC details
+    const owner = await Owner.findById(ownerId).populate('kycId');
+
+    if (!owner) {
+      return res.status(404).json({ message: "Owner not found." });
     }
-  };
+
+    // Extract KYC details if they exist
+    const kyc = owner.kycId;
+
+    // Send Owner and KYC data
+    return res.json({
+      name: owner.name,
+      email: owner.email,
+      contactNumber: owner.contactNumber,
+      walletId: owner.walletId,
+      kycStatus: kyc ? kyc.overallStatus : "No KYC submitted",
+      kycDetails: kyc
+        ? {
+            profilePicture: kyc.documents.profilePicture.file,
+            profilePictureStatus: kyc.documents.profilePicture.status,
+            citizenshipFront: kyc.documents.citizenshipFront.file,
+            citizenshipFrontStatus: kyc.documents.citizenshipFront.status,
+            citizenshipBack: kyc.documents.citizenshipBack.file,
+            citizenshipBackStatus: kyc.documents.citizenshipBack.status,
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error("Error fetching Owner profile:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
 
 
-  const updateOwner = async (req, res) => {
-    const ownerId = req.user.id; 
-    const { name, contactNumber, walletId } = req.body;
-  
-    try {
-      // Create an update object dynamically based on provided fields
-      const updateFields = {};
-      if (name) updateFields.name = name;
-      if (contactNumber) updateFields.contactNumber = contactNumber;
-      if (walletId) updateFields.walletId = walletId;
 
-  
-      // Handle file uploads
-      if (req.files && req.files.profilePicture) {
-        updateFields.profilePicture = req.files.profilePicture[0].path;
-      }
-      if (req.files && req.files.citizenshipFront) {
-        updateFields.citizenshipFront = req.files.citizenshipFront[0].path;
-      }
-      if (req.files && req.files.citizenshipBack) {
-        updateFields.citizenshipBack = req.files.citizenshipBack[0].path;
-      }
-  
-      // Check if there are fields to update
-      if (Object.keys(updateFields).length === 0) {
-        return res.status(400).json({ message: "No fields to update." });
-      }
-  
-      // Update the Owner's data
-      const updatedOwner = await Owner.findByIdAndUpdate(
-        ownerId,
-        { $set: updateFields },
-        { new: true, runValidators: true } // Return updated document and validate input
+const updateOwner = async (req, res) => {
+  const ownerId = req.user.id;
+  const { name, contactNumber, walletId } = req.body;
+
+  try {
+    // Update owner-related fields
+    const ownerUpdateFields = {};
+    if (name) ownerUpdateFields.name = name;
+    if (contactNumber) ownerUpdateFields.contactNumber = contactNumber;
+    if (walletId) ownerUpdateFields.walletId = walletId;
+
+    // Update owner data
+    const updatedOwner = await Owner.findByIdAndUpdate(
+      ownerId,
+      { $set: ownerUpdateFields },
+      { new: true, runValidators: true } // Return updated document and validate input
+    );
+
+    if (!updatedOwner) {
+      return res.status(404).json({ message: "Owner not found." });
+    }
+
+    // Update KYC-related fields
+    const kycUpdateFields = {};
+    if (req.files && req.files.profilePicture) {
+      kycUpdateFields['documents.profilePicture.file'] = req.files.profilePicture[0].path;
+    }
+    if (req.files && req.files.citizenshipFront) {
+      kycUpdateFields['documents.citizenshipFront.file'] = req.files.citizenshipFront[0].path;
+    }
+    if (req.files && req.files.citizenshipBack) {
+      kycUpdateFields['documents.citizenshipBack.file'] = req.files.citizenshipBack[0].path;
+    }
+
+    if (Object.keys(kycUpdateFields).length > 0) {
+      const updatedKYC = await KYC.findOneAndUpdate(
+        { ownerId },
+        { $set: kycUpdateFields },
+        { new: true, runValidators: true }
       );
-  
-      if (!updatedOwner) {
-        return res.status(404).json({ message: "Owner not found." });
+
+      if (!updatedKYC) {
+        return res.status(404).json({ message: "KYC record not found." });
       }
-  
-      // Respond with updated owner data
-      res.status(200).json(updatedOwner);
-    } catch (error) {
-      console.error("Error updating Owner data:", error);
-      res.status(500).json({ message: "Internal server error." });
     }
-  };
+
+    res.status(200).json({ message: "Owner and KYC details updated successfully." });
+  } catch (error) {
+    console.error("Error updating Owner data:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
 
 
 // Controller function to update password
