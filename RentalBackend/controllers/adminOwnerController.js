@@ -1,5 +1,7 @@
 const Owner = require('../models/owner'); // Import the Owner model
 const KYC = require('../models/kyc'); // Import the Owner model
+const Notification = require('../models/notification'); // Import the Owner model
+
 const nodemailer = require('nodemailer');
 
 
@@ -217,7 +219,24 @@ const updateKyc = async (req, res) => {
       html: emailBody,
     });
 
-    return res.status(200).json({ message: 'KYC updated successfully', kyc });
+    // Create a notification for the owner
+    const notificationMessage =
+      kyc.overallStatus === 'verified'
+        ? 'Your KYC verification has been successfully completed.'
+        : kyc.overallStatus === 'rejected'
+        ? 'Your KYC verification was rejected. Please review the comments and resubmit your documents.'
+        : 'Your KYC verification is still pending. We will notify you once it is completed.';
+
+    const notification = new Notification({
+      recipientId: ownerId,
+      recipientModel: 'Owner',
+      message: notificationMessage,
+      type: 'kyc',
+    });
+
+    await notification.save();
+
+    return res.status(200).json({ message: 'KYC updated successfully with notification.', kyc });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Internal server error' });

@@ -97,6 +97,10 @@ const AdminOwnerProfile = () => {
       );
 
       toast.success(response.data.message);
+       // Reload the page after a successful response
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     } catch (error) {
       console.error("Error updating KYC:", error.response?.data || error.message);
       toast.error("Failed to update KYC. Please try again.");

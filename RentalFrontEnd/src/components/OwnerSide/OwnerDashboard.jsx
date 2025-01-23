@@ -8,7 +8,7 @@ function OwnerDashboard() {
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 text-white py-16">
             <div className="max-w-screen-xl mx-auto text-center">
-                <h1 className="text-4xl font-extrabold">Welcome to Your Dashboard, Ganesh!</h1>
+                <h1 className="text-4xl font-extrabold">Welcome to Your Dashboard!</h1>
                 <p className="text-lg mt-4">Here’s an overview of your vehicles and performance.</p>
             </div>
         </section>

@@ -4,6 +4,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const usersRoutes = require('./routes/userRoutes');
 const ownerRoutes = require('./routes/ownerRoutes');
 const resetPassRoutes = require('./routes/resetPassRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 
 
@@ -30,6 +31,8 @@ app.use('/api/auth', resetPassRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/owner', ownerRoutes);
+app.use('/api/notification', notificationRoutes);
+
 
 
 
