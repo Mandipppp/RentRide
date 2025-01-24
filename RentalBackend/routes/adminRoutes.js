@@ -4,6 +4,7 @@ const { getAllOwners, getOwnerById, updateKyc} = require('../controllers/adminOw
 const { authenticate, checkAdmin } = require('../middlewares/authMiddleware');
 const { getAllUsers, getUserById } = require('../controllers/adminUserController');
 const { addAdmin, setupPassword } = require('../controllers/adminAdminController');
+const { getAllVehicles, getVehicleById } = require('../controllers/adminVehicleController');
 // Route to get all owners
 router.get('/getOwners',authenticate, checkAdmin, getAllOwners);
 
@@ -17,6 +18,11 @@ router.post('/add-admin', authenticate, checkAdmin, addAdmin);
 router.post('/setup-password/:token', setupPassword);
 
 router.post('/kyc/:ownerId',authenticate, checkAdmin, updateKyc);
+
+//vehicles
+router.get('getVehicles', authenticate, checkAdmin, getAllVehicles);
+router.get('vehicle/:id', authenticate, checkAdmin, getVehicleById);
+
 
 
 module.exports = router;

@@ -21,6 +21,7 @@ import ForgotPassword from "./components/LoginSignin/ForgotPassword";
 import ResetPassword from "./components/LoginSignin/ResetPassword";
 import CompleteRenterSignup from "./components/LoginSignin/CompleteRenterSignup";
 import CompleteOwnerSignup from "./components/LoginSignin/CompleteOwnerSignup";
+import OwnerAddVehicle from "./components/OwnerSide/OwnerAddVehicle";
 
 
 
@@ -102,10 +103,12 @@ const App = () => {
 
         <Route path="/profile" element={<Profile />} />
 
-        {/* <Route path="/ownerProfile" element={<OwnerProfile />} /> */}
+        {/* OWNER */}
 
         <Route path="/ownerdashboard" element={<OwnerDashboard />} />
         <Route path="/ownerprofile" element={<OwnerProfilePage />} />
+        <Route path="/owneraddvehicle" element={<OwnerAddVehicle />} />
+
 
 
 
