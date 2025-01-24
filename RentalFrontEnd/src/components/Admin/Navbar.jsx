@@ -1,16 +1,18 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const Navbar = () => {
+  const location = useLocation(); // Hook to get the current path
+
   const menuItems = [
-    "Users",
-    "Owners",
-    "Vehicles",
-    "Booking",
-    "Reviews",
-    "Pages",
-    "Contact Us",
-    "Queries",
+    { name: "Users", path: "/users" },
+    { name: "Owners", path: "/adminowners" },
+    { name: "Vehicles", path: "/vehicles" },
+    { name: "Booking", path: "/booking" },
+    { name: "Reviews", path: "/reviews" },
+    { name: "Pages", path: "/pages" },
+    { name: "Contact Us", path: "/contact" },
+    { name: "Queries", path: "/queries" },
   ];
 
   return (
@@ -18,17 +20,21 @@ const Navbar = () => {
       <nav className="flex items-center justify-between px-6 py-4">
         {/* Logo/Title */}
         <h1 className="text-xl font-semibold text-gray-800">Admin Panel</h1>
-        
+
         {/* Menu Items */}
         <div className="flex space-x-6">
           {menuItems.map((item) => (
-            <a
-              key={item}
-              href="#"
-              className="text-gray-600 hover:text-blue-500 transition duration-200"
+            <Link
+              key={item.name}
+              to={item.path}
+              className={`${
+                location.pathname === item.path
+                  ? "text-blue-500 font-bold" // Active style
+                  : "text-gray-600 hover:text-blue-500"
+              } transition duration-200`}
             >
-              {item}
-            </a>
+              {item.name}
+            </Link>
           ))}
         </div>
 
