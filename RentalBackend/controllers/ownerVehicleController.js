@@ -1,5 +1,22 @@
 const Vehicle = require('../models/vehicle');
 const Owner= require('../models/owner');
+const fs = require('fs');
+
+
+// Function to delete files
+const deleteFiles = (files) => {
+  files.forEach(file => {
+    if (file && file.path) {
+      fs.unlink(file.path, (err) => {
+        if (err) {
+          console.error('Error deleting file:', err);
+        } else {
+          console.log(`File deleted: ${file.path}`);
+        }
+      });
+    }
+  });
+};
 
 
 const getOwnerVehicles = async (req, res) => {
@@ -53,36 +70,40 @@ const getOwnerVehicles = async (req, res) => {
   
     try {
       // Validate required files
+      // Check if the registration number is already used
+      const existingVehicle = await Vehicle.findOne({ registrationNumber });
+      if (existingVehicle) {
+        return res.status(400).json({ message: 'A vehicle with this registration number is already registered.' });
+      }
+
       if (!req.files.registrationCert || !req.files.insuranceCert || !req.files.pictures) {
         return res.status(400).json({ message: 'Registration certificate, insurance certificate, and vehicle pictures are required.' });
       }
   
       // Validate file sizes
       if (req.files.registrationCert[0].size > 5 * 1024 * 1024) {
+        deleteFiles(req.files.registrationCert); // Delete uploaded files
         return res.status(400).json({ message: 'Registration certificate must be less than 5MB.' });
       }
   
       if (req.files.insuranceCert[0].size > 5 * 1024 * 1024) {
+        deleteFiles(req.files.insuranceCert); // Delete uploaded files
         return res.status(400).json({ message: 'Insurance certificate must be less than 5MB.' });
       }
   
       for (let picture of req.files.pictures) {
         if (picture.size > 5 * 1024 * 1024) {
+          deleteFiles(req.files.pictures);
           return res.status(400).json({ message: 'Each picture must be less than 5MB.' });
         }
       }
   
       // Validate the number of pictures
       if (req.files.pictures.length < 3 || req.files.pictures.length > 5) {
+        deleteFiles(req.files.pictures);
         return res.status(400).json({ message: 'You must upload between 3 and 5 pictures.' });
       }
-  
-      // Check if the registration number is already used
-      const existingVehicle = await Vehicle.findOne({ registrationNumber });
-      if (existingVehicle) {
-        return res.status(400).json({ message: 'A vehicle with this registration number is already registered.' });
-      }
-  
+       
       // Get file paths
       const registrationCert = req.files.registrationCert[0].path;
       const insuranceCert = req.files.insuranceCert[0].path;

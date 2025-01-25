@@ -1,6 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { reactLocalStorage } from "reactjs-localstorage";
+import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from 'react-toastify';
+
 
 const AddVehicleForm = () => {
   const [vehicleData, setVehicleData] = useState({
@@ -31,6 +34,14 @@ const AddVehicleForm = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [addOnsList, setAddOnsList] = useState([{ name: "", pricePerDay: "" }]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = reactLocalStorage.get("access_token");
+    if (!token) {
+      navigate("/login");
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -101,7 +112,7 @@ const AddVehicleForm = () => {
       }
     }
 
-    console.log("Output: ",formData.entries())
+    // console.log("Output: ",formData.entries())
 
     try {
       const token = reactLocalStorage.get("access_token");
@@ -114,10 +125,41 @@ const AddVehicleForm = () => {
       });
 
       console.log(response.data); 
-      alert("Vehicle added successfully!");
+      toast.success("Vehicle added successfully!");
+
+      // Reset the form fields to initial state
+    setVehicleData({
+      name: "",
+      type: "Car",
+      category: "Four-Wheeler",
+      fuel: "Petrol",
+      transmission: "Manual",
+      brand: "",
+      builtYear: "",
+      mileage: "",
+      registrationNumber: "",
+      description: "",
+      dailyPrice: "",
+      minRentalPeriod: 1,
+      maxRentalPeriod: "",
+      features: [],
+      addOns: [],
+      condition: "Good",
+      status: "Available",
+      pickupLocation: "",
+      latitude: "",
+      longitude: "",
+      registrationCert: null,
+      insuranceCert: null,
+      pictures: [],
+    });
+    setAddOnsList([{ name: "", pricePerDay: "" }]); // Reset add-ons list
+
+    // Navigate to ownersvehicle page
+    navigate("/ownervehicle"); // Assuming this is the desired page
     } catch (error) {
       console.error("Error adding vehicle:", error);
-      alert("Error adding vehicle. Please try again.");
+      toast.error("Error adding vehicle. Please try again.");
     }
   };
 
@@ -131,9 +173,18 @@ const AddVehicleForm = () => {
 
   return (
     <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-      <h2 className="text-3xl font-semibold text-center mb-6 text-gray-800">
-        {currentPage === 1 ? "Add Vehicle - Page 1" : "Add Vehicle - Page 2"}
-      </h2>
+      <div className="relative flex items-center justify-center mb-10">
+        <button
+          type="button"
+          onClick={() => navigate(-1)} // Navigate to the previous page
+          className="absolute left-0 bg-gray-400 text-white py-2 px-6 rounded-md font-semibold hover:bg-gray-500 transition duration-300"
+        >
+          Back
+        </button>
+        <h2 className="text-3xl font-semibold text-gray-800">
+          {"Add Vehicle"}
+        </h2>
+    </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         {currentPage === 1 && (
           <>

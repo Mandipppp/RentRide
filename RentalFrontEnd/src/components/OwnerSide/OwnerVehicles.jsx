@@ -28,7 +28,7 @@ const OwnerVehicles = () => {
           <div>
             <h2 className="text-lg font-bold">3000 NPR / day</h2>
           </div>
-          <span className="bg-green-100 text-green-600 text-sm font-semibold px-3 py-1 rounded">Vehicle Accepted</span>
+          <span className="bg-green-100 text-green-600 text-sm font-semibold px-3 py-1 rounded">Vehicle Verified</span>
         </CardHeader>
 
         <CardContent className="p-4 flex flex-col md:flex-row items-center md:items-start">
