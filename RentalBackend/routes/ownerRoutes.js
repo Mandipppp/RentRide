@@ -20,9 +20,9 @@ router.put(
   );
 router.put('/change-password', authenticate, changePassword);
 
-router.put('/myvehicles', authenticate, getOwnerVehicles);
+router.get('/myvehicles', authenticate, getOwnerVehicles);
 router.get('/vehicle/:vehicleId', authenticate, getVehicleById);
-router.get('/updateVehicle/:vehicleId', authenticate, updateVehicleByOwner);
+router.post('/updateVehicle/:vehicleId', authenticate, updateVehicleByOwner);
 router.post(
   '/addVehicle',
   authenticate,

@@ -21,7 +21,7 @@ const deleteFiles = (files) => {
 
 const getOwnerVehicles = async (req, res) => {
     try {
-      const { ownerId } = req.user.id;
+      const ownerId  = req.user.id;
   
       // Validate if ownerId is provided
       if (!ownerId) {
@@ -33,10 +33,14 @@ const getOwnerVehicles = async (req, res) => {
   
       // Fetch vehicles associated with the ownerId
       const vehicles = await Vehicle.find({ ownerId })
-        .populate({
-          path: 'ownerId',
-          select: 'name email contactNumber', // Include owner details
-        })
+      .populate({
+        path: 'ownerId',
+        select: 'name email contactNumber kycId', // Include owner and KYC reference
+        populate: {
+          path: 'kycId', // Populate KYC data from the owner reference
+          select: 'overallStatus', // Select only the overallStatus from KYC
+        },
+      })
         .populate({
           path: 'registrationCertificate.verifiedBy insuranceCertificate.verifiedBy',
           select: 'name email', // Include admin details
