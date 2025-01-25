@@ -2,9 +2,19 @@ const multer = require('multer');
 const path = require('path');
 
 // Set storage engine
-const storage = multer.diskStorage({
+const storageOwner = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Specify upload directory
+    cb(null, 'uploads/owners/'); // Specify upload directory
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`); // Ensure unique file names
+  },
+});
+
+// Set storage engine
+const storageVehicle = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/vehicles/'); // Specify upload directory
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`); // Ensure unique file names
@@ -22,10 +32,18 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Initialize upload middleware
-const upload = multer({
-  storage,
+const uploadOwner = multer({
+  storageOwner,
   limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
   fileFilter,
 });
 
-module.exports = upload;
+// Initialize upload middleware
+const uploadVehicle = multer({
+  storageVehicle,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
+  fileFilter,
+});
+
+
+module.exports = uploadOwner, uploadVehicle;

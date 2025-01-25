@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 function OwnerNavigation() {
+  const location = useLocation(); // Hook to get the current path
+
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -82,10 +84,23 @@ function OwnerNavigation() {
         {/* Menu Links */}
         <ul className="flex space-x-8 text-gray-600">
           <li className="hover:text-black">
-            <a href="#">Dashboard</a>
+            <Link to="/ownerdashboard"  
+            className={`${
+                location.pathname === "/ownerdashboard"
+                  ? "text-blue-500 font-bold" // Active style
+                  : "text-gray-600 hover:text-blue-500"
+              } transition duration-200`}
+              >
+                Dashboard</Link>
           </li>
           <li className="hover:text-black">
-            <a href="#">My Vehicles</a>
+          <Link to="/ownervehicle"  
+            className={`${
+                location.pathname === "/ownervehicle"
+                  ? "text-blue-500 font-bold" // Active style
+                  : "text-gray-600 hover:text-blue-500"
+              } transition duration-200`}
+              >My Vehicles</Link>
           </li>
           <li className="hover:text-black">
             <a href="#">Bookings</a>

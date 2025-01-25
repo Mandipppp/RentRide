@@ -20,8 +20,8 @@ router.post('/setup-password/:token', setupPassword);
 router.post('/kyc/:ownerId',authenticate, checkAdmin, updateKyc);
 
 //vehicles
-router.get('getVehicles', authenticate, checkAdmin, getAllVehicles);
-router.get('vehicle/:id', authenticate, checkAdmin, getVehicleById);
+router.get('/getVehicles', authenticate, checkAdmin, getAllVehicles);
+router.get('/vehicle/:id', authenticate, checkAdmin, getVehicleById);
 
 
 

@@ -1,4 +1,4 @@
-const Vehicle = require('../models/vehicle'); 
+const Vehicle = require('../models/vehicle');
 
 const getAllVehicles = async (req, res) => {
   try {

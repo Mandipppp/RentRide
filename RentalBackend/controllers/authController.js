@@ -253,7 +253,7 @@ exports.login = async (req, res) => {
 
     if (user.role === 'owner') {
       // If it's an owner, create an owner-specific token and response
-      token = jwt.sign({ id: user._id, role: user.role, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      token = jwt.sign({ id: user._id, role: user.role, email: user.email }, process.env.JWT_SECRET, { expiresIn: '5h' });
       responseData = { token, owner: { name: user.name, email: user.email, role: user.role } };
     } else {
       // If it's a regular user, create a user-specific token and response

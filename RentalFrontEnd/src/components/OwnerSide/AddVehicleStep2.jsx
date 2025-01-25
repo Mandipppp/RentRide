@@ -3,32 +3,26 @@ import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 
 
-const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
-  const [pricingDetails, setPricingDetails] = useState({
-    seats: 0,
-    transmission: "",
-    fuelType: "",
-    mileage: "",
-    pricePerDay: "",
-    pricePerHour: "",
-    addOns: [],
-    features: "",
-    minRentalDays: 1,
-    maxRentalDays: 1,
-    description: "",
-    condition: "Good",
-    pickupLocation: "",
-    latitude: 0,
-    longitude: 0,
-  });
+const AddVehicleStep2 = ({
+  contVehicleDetails,
+  setcontVehicleDetails,
+  onPrevious,
+  onSubmit,
+}) => {
 
   const [currentAddOn, setCurrentAddOn] = useState({ name: "", pricePerDay: "" });
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [isFetchingLocations, setIsFetchingLocations] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setPricingDetails({ ...pricingDetails, [name]: value });
+    if (name === "features") {
+      // Split the features string into an array and store it
+      setcontVehicleDetails({ ...contVehicleDetails, [name]: value.split(",").map((feature) => feature.trim()) });
+    } else {
+      setcontVehicleDetails({ ...contVehicleDetails, [name]: value });
+    }
   };
 
   const handleAddOnChange = (e) => {
@@ -38,26 +32,39 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
 
   const handleAddAddOn = () => {
     if (currentAddOn.name && currentAddOn.pricePerDay) {
-      setPricingDetails({
-        ...pricingDetails,
-        addOns: [...pricingDetails.addOns, currentAddOn],
+      setcontVehicleDetails({
+        ...contVehicleDetails,
+        addOns: [...contVehicleDetails.addOns, currentAddOn],
       });
       setCurrentAddOn({ name: "", pricePerDay: "" });
     }
   };
 
   const handleRemoveAddOn = (index) => {
-    const updatedAddOns = pricingDetails.addOns.filter((_, i) => i !== index);
-    setPricingDetails({ ...pricingDetails, addOns: updatedAddOns });
+    const updatedAddOns = contVehicleDetails.addOns.filter((_, i) => i !== index);
+    setcontVehicleDetails({ ...contVehicleDetails, addOns: updatedAddOns });
   };
 
-  const handleSubmit = () => {
-    const formattedDetails = {
-        ...pricingDetails,
-        features: pricingDetails.features.split(",").map((feature) => feature.trim()), // Split and trim features
-      };
-    onSubmit(pricingDetails);
+  // Validate required fields
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Required fields validation
+    if (!contVehicleDetails.seats) newErrors.seats = "Seats are required.";
+    if (!contVehicleDetails.transmission) newErrors.transmission = "Transmission type is required.";
+    if (!contVehicleDetails.fuelType) newErrors.fuelType = "Fuel type is required.";
+    if (!contVehicleDetails.pricePerDay) newErrors.pricePerDay = "Price per day is required.";
+    if (!contVehicleDetails.condition) newErrors.condition = "Condition is required.";
+    if (!contVehicleDetails.minRentalDays) newErrors.minRentalDays = "Minimum rental days are required.";
+    if (!contVehicleDetails.maxRentalDays) newErrors.maxRentalDays = "Maximum rental days are required.";
+    if (!contVehicleDetails.pickupLocation) newErrors.pickupLocation = "Pickup location is required.";
+
+    setErrors(newErrors);
+
+    // Return true if there are no errors, false if there are errors
+    return Object.keys(newErrors).length === 0;
   };
+
 
   // Fetch location suggestions from Nominatim API (OpenStreetMap)
   const fetchLocationSuggestions = async (query) => {
@@ -88,8 +95,8 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
   };
 
   const handleLocationSelect = (address, lat, lon) => {
-    setPricingDetails({
-      ...pricingDetails,
+    setcontVehicleDetails({
+      ...contVehicleDetails,
       pickupLocation: address,
       latitude: lat,
       longitude: lon,
@@ -104,8 +111,8 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
         const lat = e.latlng.lat;
         const lon = e.latlng.lng;
 
-        setPricingDetails({
-          ...pricingDetails,
+        setcontVehicleDetails({
+          ...contVehicleDetails,
           latitude: lat,
           longitude: lon,
         });
@@ -121,7 +128,7 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
           })
           .then((response) => {
             const address = response.data.display_name;
-            setPricingDetails((prev) => ({
+            setcontVehicleDetails((prev) => ({
               ...prev,
               pickupLocation: address,
             }));
@@ -131,15 +138,15 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
     });
 
     return (
-      <Marker position={[pricingDetails.latitude, pricingDetails.longitude]} />
+      <Marker position={[contVehicleDetails.latitude, contVehicleDetails.longitude]} />
     );
   };
 
   useEffect(() => {
-    if (pricingDetails.pickupLocation) {
-      fetchLocationSuggestions(pricingDetails.pickupLocation);
+    if (contVehicleDetails.pickupLocation) {
+      fetchLocationSuggestions(contVehicleDetails.pickupLocation);
     }
-  }, [pricingDetails.pickupLocation]);
+  }, [contVehicleDetails.pickupLocation]);
 
   return (
     <div className="p-8">
@@ -153,6 +160,7 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
           className="border px-4 py-2 rounded"
           onChange={handleInputChange}
         />
+        {errors.seats && <p className="text-red-500 text-sm">{errors.seats}</p>}
         <select
           name="transmission"
           className="border px-4 py-2 rounded"
@@ -162,6 +170,8 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
           <option value="Automatic">Automatic</option>
           <option value="Manual">Manual</option>
         </select>
+        {errors.transmission && <p className="text-red-500 text-sm">{errors.transmission}</p>}
+
         <select
           name="fuelType"
           className="border px-4 py-2 rounded"
@@ -172,6 +182,7 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
           <option value="Diesel">Diesel</option>
           <option value="Electric">Electric</option>
         </select>
+        {errors.fuelType && <p className="text-red-500 text-sm">{errors.fuelType}</p>}
         <input
           type="number"
           name="mileage"
@@ -190,6 +201,7 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
           className="border px-4 py-2 rounded"
           onChange={handleInputChange}
         />
+        {errors.pricePerDay && <p className="text-red-500 text-sm">{errors.pricePerDay}</p>}
       </div>
 
     
@@ -199,13 +211,14 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
         <select
           name="condition"
           className="border px-4 py-2 rounded"
-          value={pricingDetails.condition}
+          value={contVehicleDetails.condition}
           onChange={handleInputChange}
         >
           <option value="Excellent">Excellent</option>
           <option value="Good">Good</option>
           <option value="Fair">Fair</option>
         </select>
+        {errors.condition && <p className="text-red-500 text-sm">{errors.condition}</p>}
       </div>
 
        {/* Features */}
@@ -215,15 +228,13 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
           name="features"
           placeholder="Write features separated by commas (e.g., GPS, Air Conditioning, Sunroof)"
           className="border px-4 py-2 rounded w-full h-20"
+          value={contVehicleDetails.features.join(" ,")}
           onChange={handleInputChange}
         ></textarea>
         <ul className="mt-2 list-disc list-inside">
-          {pricingDetails.features
-            .split(",")
-            .filter((feature) => feature.trim() !== "")
-            .map((feature, index) => (
-              <li key={index}>{feature.trim()}</li>
-            ))}
+          {contVehicleDetails.features.map((feature, index) => (
+            <li key={index}>{feature}</li>
+          ))}
         </ul>
       </div>
 
@@ -266,7 +277,7 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
           </button>
         </div>
         <ul>
-          {pricingDetails.addOns.map((addOn, index) => (
+          {contVehicleDetails.addOns.map((addOn, index) => (
             <li key={index} className="flex gap-4 mb-2">
               <span>
                 {addOn.name} - Rs. {addOn.pricePerDay}/day
@@ -291,6 +302,7 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
           className="border px-4 py-2 rounded"
           onChange={handleInputChange}
         />
+        {errors.minRentalDays && <p className="text-red-500 text-sm">{errors.minRentalDays}</p>}
         <input
           type="number"
           name="maxRentalDays"
@@ -298,13 +310,14 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
           className="border px-4 py-2 rounded"
           onChange={handleInputChange}
         />
+        {errors.maxRentalDays && <p className="text-red-500 text-sm">{errors.maxRentalDays}</p>}
       </div>
 
       {/* Pickup Location Section */}
       <div className="mb-6">
         <h3 className="font-semibold mb-2">Pickup Location</h3>
         <MapContainer
-          center={[pricingDetails.latitude || 51.505, pricingDetails.longitude || -0.09]} // Default location
+          center={[contVehicleDetails.latitude || 51.505, contVehicleDetails.longitude || -0.09]} // Default location
           zoom={13}
           style={{ height: "400px", width: "100%" }}
         >
@@ -320,13 +333,11 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
             name="pickupLocation"
             placeholder="Search for a location"
             className="border px-4 py-2 rounded w-full"
-            value={pricingDetails.pickupLocation}
+            value={contVehicleDetails.pickupLocation}
             onChange={(e) => handleInputChange(e)}
-            onBlur={() => fetchLocationSuggestions(pricingDetails.pickupLocation)} // Fetch when the input loses focus
+            onBlur={() => fetchLocationSuggestions(contVehicleDetails.pickupLocation)} // Fetch when the input loses focus
           />
-          <p className="mt-2 text-sm text-gray-600">
-            Type a location to see suggestions.
-          </p>
+          {errors.pickupLocation && <p className="text-red-500 text-sm">{errors.pickupLocation}</p>}
           <ul className="mt-2">
             {locationSuggestions.map((loc) => (
               <li
@@ -339,8 +350,8 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
             ))}
           </ul>
           <p className="mt-1 text-sm text-gray-600">
-            Selected Coordinates: Latitude: {pricingDetails.latitude}, Longitude:{" "}
-            {pricingDetails.longitude}
+            Selected Coordinates: Latitude: {contVehicleDetails.latitude}, Longitude:{" "}
+            {contVehicleDetails.longitude}
           </p>
         </div>
       </div>
@@ -355,7 +366,11 @@ const AddVehicleStep2 = ({ onPrevious, onSubmit }) => {
         </button>
         <button
           className="px-4 py-2 bg-green-500 text-white rounded"
-          onClick={handleSubmit}
+          onClick={() => {
+            if (validateForm()) {
+              onSubmit();
+            }
+          }}
         >
           Submit
         </button>

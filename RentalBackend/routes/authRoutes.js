@@ -3,7 +3,7 @@ const { registerUser, registerOwner, getUserDetails, login, registerEmail, verif
 const { authenticate } = require('../middlewares/authMiddleware');
 
 // **********
-const upload = require('../middlewares/uploadMiddleware');
+const uploadOwner = require('../middlewares/uploadMiddleware');
 
 const router = express.Router();
 
@@ -22,7 +22,7 @@ router.post('/registerUser', registerUser);
 // Use upload.fields for multiple files
 router.post(
     '/registerOwner',
-    upload.fields([
+    uploadOwner.fields([
       { name: 'profilePicture', maxCount: 1 },
       { name: 'citizenshipFront', maxCount: 1 },
       { name: 'citizenshipBack', maxCount: 1 },

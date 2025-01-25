@@ -1,5 +1,6 @@
 import React from 'react'
 import OwnerNavigation from './OwnerNavigation'
+import { Link } from 'react-router-dom'
 
 function OwnerDashboard() {
   return (
@@ -53,7 +54,7 @@ function OwnerDashboard() {
             <h2 className="text-3xl font-semibold text-gray-800">Quick Actions</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-6">
                 <div className="bg-white p-6 rounded-md shadow-md hover:bg-gray-100 transition">
-                    <button className="text-lg font-semibold text-blue-600">Add New Vehicle</button>
+                    <Link to="/owneraddvehicle" className="text-lg font-semibold text-blue-600">Add New Vehicle</Link>
                 </div>
                 <div className="bg-white p-6 rounded-md shadow-md hover:bg-gray-100 transition">
                     <button className="text-lg font-semibold text-yellow-600">View Pending Bookings</button>

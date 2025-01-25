@@ -22,6 +22,8 @@ import ResetPassword from "./components/LoginSignin/ResetPassword";
 import CompleteRenterSignup from "./components/LoginSignin/CompleteRenterSignup";
 import CompleteOwnerSignup from "./components/LoginSignin/CompleteOwnerSignup";
 import OwnerAddVehicle from "./components/OwnerSide/OwnerAddVehicle";
+import AdminVehicles from "./components/Admin/AdminVehicles";
+import OwnerVehicles from "./components/OwnerSide/OwnerVehicles";
 
 
 
@@ -96,6 +98,9 @@ const App = () => {
         <Route path="/adminusers" element={<AdminUsers />} />
         {/* <Route path="/users/:id" element={<AdminOwnerProfile />} /> */}
 
+        <Route path="/adminvehicles" element={<AdminVehicles />} />
+
+
 
 
 
@@ -108,7 +113,7 @@ const App = () => {
         <Route path="/ownerdashboard" element={<OwnerDashboard />} />
         <Route path="/ownerprofile" element={<OwnerProfilePage />} />
         <Route path="/owneraddvehicle" element={<OwnerAddVehicle />} />
-
+        <Route path="/ownervehicle" element={<OwnerVehicles />} />
 
 
 
