@@ -6,7 +6,7 @@ const VehicleSchema = new mongoose.Schema({
   type: { type: String, enum: ['Car', 'Bike', 'SUV', 'Truck', 'Van'], required: true },
   category: { type: String, enum: ['Two-Wheeler', 'Four-Wheeler'], required: true },
   fuel: { type: String, enum: ['Petrol', 'Diesel', 'Electric'], required: true },
-  fuel: { type: String, enum: ['Manual', 'Automatic']},
+  transmission: { type: String, enum: ['Manual', 'Automatic']},
   brand: { type: String },
   builtYear: {type: String},
   mileage: {type: Number},
@@ -24,7 +24,16 @@ const VehicleSchema = new mongoose.Schema({
   ],
   condition: { type: String, enum: ['Excellent', 'Good', 'Fair'], default: 'Good' },
   status: { type: String, enum: ['Available', 'Booked', 'Under Maintenance'], default: 'Available' },
-  imageUrls: { type: [String] },
+  imageUrls: {
+    type: [String],
+    validate: {
+      validator: function (v) {
+        return v.length >= 3 && v.length <= 5; // At least 3, at most 5
+      },
+      message: 'A minimum of 3 and a maximum of 5 images are required.',
+    },
+    required: true,
+  },
   insuranceStatus: { type: Boolean, default: false },
   pickupLocation: { type: String },
   latitude: { type: Number },

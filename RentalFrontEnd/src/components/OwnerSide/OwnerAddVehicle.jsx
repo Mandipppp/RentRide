@@ -1,70 +1,514 @@
 import React, { useState } from "react";
-import AddVehicleStep1 from "./AddVehicleStep1";
-import AddVehicleStep2 from "./AddVehicleStep2";
+import axios from "axios";
+import { reactLocalStorage } from "reactjs-localstorage";
 
-const OwnerAddVehicle = () => {
-  const [step, setStep] = useState(1);
-  const [vehicleDetails, setVehicleDetails] = useState({
-    category: "",
-    type: "",
-    builtYear: "",
+const AddVehicleForm = () => {
+  const [vehicleData, setVehicleData] = useState({
     name: "",
-    pictures: [],
+    type: "Car",
+    category: "Four-Wheeler",
+    fuel: "Petrol",
+    transmission: "Manual",
+    brand: "",
+    builtYear: "",
+    mileage: "",
+    registrationNumber: "",
+    description: "",
+    dailyPrice: "",
+    minRentalPeriod: 1,
+    maxRentalPeriod: "",
+    features: [],
+    addOns: [],
+    condition: "Good",
+    status: "Available",
+    pickupLocation: "",
+    latitude: "",
+    longitude: "",
     registrationCert: null,
     insuranceCert: null,
+    pictures: [],
   });
 
-  const [contVehicleDetails, setcontVehicleDetails] = useState({
-    seats: 0,
-    transmission: "",
-    fuelType: "",
-    mileage: "",
-    pricePerDay: "",
-    pricePerHour: "",
-    addOns: [],
-    features: [],
-    minRentalDays: 0,
-    maxRentalDays: 0,
-    description: "",
-    condition: "Good",
-    pickupLocation: "",
-    latitude: 0,
-    longitude: 0,
-  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [addOnsList, setAddOnsList] = useState([{ name: "", pricePerDay: "" }]);
 
-  const handleNext = () => setStep(step + 1);
-  const handlePrevious = () => setStep(step - 1);
-  const handleCancel = () => {
-    // Reset or redirect as needed
-    setStep(1);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "features") {
+      // Convert comma-separated values into an array
+      const featuresArray = value.split(",").map((feature) => feature.trim());
+      setVehicleData({
+        ...vehicleData,
+        [name]: featuresArray,
+      });
+    } else {
+      setVehicleData({
+        ...vehicleData,
+        [name]: value,
+      });
+    }
   };
 
-  const handleSubmit = () => {
-    const combinedData = { ...vehicleDetails, ...contVehicleDetails };
-    console.log("Submitted Data:", combinedData);
-    // Send combinedData to your API
+   const handleAddOnChange = (index, e) => {
+    const { name, value } = e.target;
+    const updatedAddOnsList = [...addOnsList];
+    updatedAddOnsList[index] = { ...updatedAddOnsList[index], [name]: value };
+    setAddOnsList(updatedAddOnsList);
+  };
+
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    if (name === "pictures") {
+      setVehicleData({
+        ...vehicleData,
+        [name]: files,
+      });
+    } else {
+      setVehicleData({
+        ...vehicleData,
+        [name]: files[0],
+      });
+    }
+  };
+
+  const handleAddAddOn = () => {
+    setAddOnsList([...addOnsList, { name: "", pricePerDay: "" }]);
+  };
+
+  const handleRemoveAddOn = (index) => {
+    const updatedAddOnsList = addOnsList.filter((_, i) => i !== index);
+    setAddOnsList(updatedAddOnsList);
+  };
+
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Convert addOns array to JSON before submitting
+    const formData = new FormData();
+    // Convert addOnsList to JSON and add to vehicleData
+    vehicleData.addOns = JSON.stringify(addOnsList);
+
+    vehicleData.features = JSON.stringify(vehicleData.features);
+
+    for (const key in vehicleData) {
+      if (key !== "pictures") {
+        formData.append(key, vehicleData[key]);
+      } else {
+        for (let i = 0; i < vehicleData.pictures.length; i++) {
+          formData.append("pictures", vehicleData.pictures[i]);
+        }
+      }
+    }
+
+    console.log("Output: ",formData.entries())
+
+    try {
+      const token = reactLocalStorage.get("access_token");
+
+      const response = await axios.post("http://localhost:3000/api/owner/addVehicle", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      console.log(response.data); 
+      alert("Vehicle added successfully!");
+    } catch (error) {
+      console.error("Error adding vehicle:", error);
+      alert("Error adding vehicle. Please try again.");
+    }
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage(currentPage - 1);
   };
 
   return (
-    <div>
-      {step === 1 && (
-        <AddVehicleStep1
-          vehicleDetails={vehicleDetails}
-          setVehicleDetails={setVehicleDetails}
-          onNext={handleNext}
-          onCancel={handleCancel}
-        />
-      )}
-      {step === 2 && (
-        <AddVehicleStep2
-          contVehicleDetails={contVehicleDetails}
-          setcontVehicleDetails={setcontVehicleDetails}
-          onPrevious={handlePrevious}
-          onSubmit={handleSubmit}
-        />
-      )}
+    <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+      <h2 className="text-3xl font-semibold text-center mb-6 text-gray-800">
+        {currentPage === 1 ? "Add Vehicle - Page 1" : "Add Vehicle - Page 2"}
+      </h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {currentPage === 1 && (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="form-group">
+                <label htmlFor="name" className="block text-lg font-medium text-gray-700">Vehicle Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  id="name"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Vehicle Name"
+                  value={vehicleData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="type" className="block text-lg font-medium text-gray-700">Vehicle Type</label>
+                <select
+                  name="type"
+                  id="type"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={vehicleData.type}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="Car">Car</option>
+                  <option value="Bike">Bike</option>
+                  <option value="SUV">SUV</option>
+                  <option value="Truck">Truck</option>
+                  <option value="Van">Van</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="form-group">
+                <label htmlFor="category" className="block text-lg font-medium text-gray-700">Category</label>
+                <select
+                  name="category"
+                  id="category"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={vehicleData.category}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="Two-Wheeler">Two-Wheeler</option>
+                  <option value="Four-Wheeler">Four-Wheeler</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="fuel" className="block text-lg font-medium text-gray-700">Fuel Type</label>
+                <select
+                  name="fuel"
+                  id="fuel"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={vehicleData.fuel}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="Petrol">Petrol</option>
+                  <option value="Diesel">Diesel</option>
+                  <option value="Electric">Electric</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="form-group">
+                <label htmlFor="transmission" className="block text-lg font-medium text-gray-700">Transmission</label>
+                <select
+                  name="transmission"
+                  id="transmission"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={vehicleData.transmission}
+                  onChange={handleChange}
+                >
+                  <option value="Manual">Manual</option>
+                  <option value="Automatic">Automatic</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="brand" className="block text-lg font-medium text-gray-700">Brand</label>
+                <input
+                  type="text"
+                  name="brand"
+                  id="brand"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Brand"
+                  value={vehicleData.brand}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="form-group">
+                <label htmlFor="builtYear" className="block text-lg font-medium text-gray-700">Built Year</label>
+                <input
+                  type="text"
+                  name="builtYear"
+                  id="builtYear"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Built Year"
+                  value={vehicleData.builtYear}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="mileage" className="block text-lg font-medium text-gray-700">Mileage</label>
+                <input
+                  type="number"
+                  name="mileage"
+                  id="mileage"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Mileage"
+                  value={vehicleData.mileage}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="registrationNumber" className="block text-lg font-medium text-gray-700">Registration Number</label>
+              <input
+                type="text"
+                name="registrationNumber"
+                id="registrationNumber"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Registration Number"
+                value={vehicleData.registrationNumber}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="dailyPrice" className="block text-lg font-medium text-gray-700">Daily Price</label>
+              <input
+                type="number"
+                name="dailyPrice"
+                id="dailyPrice"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Daily Price"
+                value={vehicleData.dailyPrice}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="flex justify-between">
+              <button
+                type="button"
+                onClick={handleNextPage}
+                className="bg-blue-500 text-white py-2 px-6 rounded-md font-semibold hover:bg-blue-600 transition duration-300"
+              >
+                Next
+              </button>
+            </div>
+          </>
+        )}
+
+        {currentPage === 2 && (
+          <>
+            <div className="form-group">
+              <label htmlFor="description" className="block text-lg font-medium text-gray-700">Description</label>
+              <textarea
+                name="description"
+                id="description"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Vehicle Description"
+                value={vehicleData.description}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="form-group">
+                <label htmlFor="minRentalPeriod" className="block text-lg font-medium text-gray-700">Min Rental Period</label>
+                <input
+                  type="number"
+                  name="minRentalPeriod"
+                  id="minRentalPeriod"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Min Rental Period"
+                  value={vehicleData.minRentalPeriod}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="maxRentalPeriod" className="block text-lg font-medium text-gray-700">Max Rental Period</label>
+                <input
+                  type="number"
+                  name="maxRentalPeriod"
+                  id="maxRentalPeriod"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Max Rental Period"
+                  value={vehicleData.maxRentalPeriod}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="features" className="block text-lg font-medium text-gray-700">Features</label>
+              <textarea
+                name="features"
+                id="features"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Seperate features with comma. (Eg: Sunroof, Gps,...)"
+                value={vehicleData.features}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="addOns" className="block text-lg font-medium text-gray-700">Add-ons</label>
+              <div>
+                {addOnsList.map((addOn, index) => (
+                  <div key={index} className="flex gap-4 mb-4">
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="Add-on Name"
+                      value={addOn.name}
+                      onChange={(e) => handleAddOnChange(index, e)}
+                      className="w-1/2 px-4 py-2 border border-gray-300 rounded-md"
+                    />
+                    <input
+                      type="number"
+                      name="pricePerDay"
+                      placeholder="Add-on Price"
+                      value={addOn.pricePerDay}
+                      onChange={(e) => handleAddOnChange(index, e)}
+                      className="w-1/4 px-4 py-2 border border-gray-300 rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAddOn(index)}
+                      className="text-red-500"
+                    >
+                      - Remove
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={handleAddAddOn}
+                  className="bg-green-500 text-white py-2 px-6 rounded-md font-semibold hover:bg-green-600 transition duration-300"
+                >
+                  + Add Add-on
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+                <label htmlFor="condition" className="block text-lg font-medium text-gray-700">Condition</label>
+                <select
+                  name="condition"
+                  id="condition"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={vehicleData.condition}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="Excellent">Excellent</option>
+                  <option value="Good">Good</option>
+                  <option value="Fair">Fair</option>
+                </select>
+              </div>
+
+            <div className="form-group">
+              <label htmlFor="pickupLocation" className="block text-lg font-medium text-gray-700">Pickup Location</label>
+              <input
+                type="text"
+                name="pickupLocation"
+                id="pickupLocation"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Pickup Location"
+                value={vehicleData.pickupLocation}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="form-group">
+                <label htmlFor="latitude" className="block text-lg font-medium text-gray-700">Latitude</label>
+                <input
+                  type="text"
+                  name="latitude"
+                  id="latitude"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Latitude"
+                  value={vehicleData.latitude}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="longitude" className="block text-lg font-medium text-gray-700">Longitude</label>
+                <input
+                  type="text"
+                  name="longitude"
+                  id="longitude"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Longitude"
+                  value={vehicleData.longitude}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="registrationCert" className="block text-lg font-medium text-gray-700">Registration Certificate</label>
+              <input
+                type="file"
+                name="registrationCert"
+                id="registrationCert"
+                onChange={handleFileChange}
+                className="w-full border border-gray-300 p-2 rounded-md"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="insuranceCert" className="block text-lg font-medium text-gray-700">Insurance Certificate</label>
+              <input
+                type="file"
+                name="insuranceCert"
+                id="insuranceCert"
+                onChange={handleFileChange}
+                className="w-full border border-gray-300 p-2 rounded-md"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="pictures" className="block text-lg font-medium text-gray-700">Vehicle Pictures</label>
+              <input
+                type="file"
+                name="pictures"
+                id="pictures"
+                onChange={handleFileChange}
+                className="w-full border border-gray-300 p-2 rounded-md"
+                multiple
+                required
+              />
+            </div>
+
+            <div className="flex justify-between">
+              <button
+                type="button"
+                onClick={handlePrevPage}
+                className="bg-gray-400 text-white py-2 px-6 rounded-md font-semibold hover:bg-gray-500 transition duration-300"
+              >
+                Previous
+              </button>
+              <button
+                type="submit"
+                className="bg-green-500 text-white py-2 px-6 rounded-md font-semibold hover:bg-green-600 transition duration-300"
+              >
+                Submit
+              </button>
+            </div>
+          </>
+        )}
+      </form>
     </div>
   );
 };
 
-export default OwnerAddVehicle;
+export default AddVehicleForm;

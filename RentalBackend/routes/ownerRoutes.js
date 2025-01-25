@@ -25,6 +25,7 @@ router.get('/vehicle/:vehicleId', authenticate, getVehicleById);
 router.get('/updateVehicle/:vehicleId', authenticate, updateVehicleByOwner);
 router.post(
   '/addVehicle',
+  authenticate,
   multer({ storage: uploadOwner.storageVehicle }).fields([
     { name: 'registrationCert', maxCount: 1 },
     { name: 'insuranceCert', maxCount: 1 },
