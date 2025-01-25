@@ -4,6 +4,7 @@ const { authenticate } = require('../middlewares/authMiddleware');
 
 // **********
 const uploadOwner = require('../middlewares/uploadMiddleware');
+const multer = require('multer');
 
 const router = express.Router();
 
@@ -21,14 +22,15 @@ router.post('/registerUser', registerUser);
 
 // Use upload.fields for multiple files
 router.post(
-    '/registerOwner',
-    uploadOwner.fields([
-      { name: 'profilePicture', maxCount: 1 },
-      { name: 'citizenshipFront', maxCount: 1 },
-      { name: 'citizenshipBack', maxCount: 1 },
-    ]),
-    registerOwner
-  );
+  '/registerOwner',
+  multer({ storage: uploadOwner.storageOwner }).fields([
+    { name: 'profilePicture', maxCount: 1 },
+    { name: 'citizenshipFront', maxCount: 1 },
+    { name: 'citizenshipBack', maxCount: 1 },
+  ]),
+  registerOwner
+);
+
 
 //////////////
 

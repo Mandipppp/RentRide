@@ -46,4 +46,4 @@ const uploadVehicle = multer({
 });
 
 
-module.exports = uploadOwner, uploadVehicle;
+module.exports = {uploadOwner, uploadVehicle, storageOwner, storageVehicle};

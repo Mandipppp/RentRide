@@ -29,7 +29,13 @@ const AddVehicleStep1 = ({
     if (!vehicleDetails.category) newErrors.category = "Category is required.";
     if (!vehicleDetails.type) newErrors.type = "Vehicle type is required.";
     if (!vehicleDetails.brand) newErrors.brand = "Brand is required.";
-    if (!vehicleDetails.builtYear) newErrors.builtYear = "Built Year is required.";
+    if (
+      !vehicleDetails.builtYear ||
+      vehicleDetails.builtYear < 1900 ||
+      vehicleDetails.builtYear > new Date().getFullYear()
+    ) {
+      newErrors.builtYear = "Enter a valid built year.";
+    }
     if (!vehicleDetails.name) newErrors.name = "Vehicle Name is required.";
     if (!vehicleDetails.registrationNumber)
       newErrors.registrationNumber = "Registration Number is required.";
