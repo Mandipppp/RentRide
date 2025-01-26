@@ -193,6 +193,54 @@ const getOwnerVehicles = async (req, res) => {
     }
   };
   
+  const deleteVehicle = async (req, res) => {
+    try {
+      const { vehicleId } = req.params;
+      const ownerId = req.user.id;
+  
+      // Find the vehicle by ID and owner ID to ensure the owner is authorized
+      const vehicle = await Vehicle.findOne({ _id: vehicleId, ownerId });
+  
+      if (!vehicle) {
+        return res.status(404).json({
+          success: false,
+          message: 'Vehicle not found or unauthorized.',
+        });
+      }
+  
+      // Collect all files to be deleted
+      const filesToDelete = [];
+  
+      if (vehicle.registrationCertificate && vehicle.registrationCertificate.file) {
+        filesToDelete.push({ path: vehicle.registrationCertificate.file });
+      }
+  
+      if (vehicle.insuranceCertificate && vehicle.insuranceCertificate.file) {
+        filesToDelete.push({ path: vehicle.insuranceCertificate.file });
+      }
+  
+      if (vehicle.imageUrls && Array.isArray(vehicle.imageUrls)) {
+        vehicle.imageUrls.forEach(imageUrl => filesToDelete.push({ path: imageUrl }));
+      }
+  
+      // Delete the files from the filesystem
+      deleteFiles(filesToDelete);
+  
+      // Delete the vehicle from the database
+      await Vehicle.deleteOne({ _id: vehicleId, ownerId });
+  
+      return res.status(200).json({
+        success: true,
+        message: 'Vehicle deleted successfully.',
+      });
+    } catch (error) {
+      console.error('Error deleting vehicle:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Server error. Please try again later.',
+      });
+    }
+  };
 
   
 const updateVehicleByOwner = async (req, res) => {
@@ -256,5 +304,5 @@ const updateVehicleByOwner = async (req, res) => {
   }
 };
 
-module.exports = { getOwnerVehicles, updateVehicleByOwner, addVehicle };
+module.exports = { getOwnerVehicles, updateVehicleByOwner, addVehicle, deleteVehicle };
   

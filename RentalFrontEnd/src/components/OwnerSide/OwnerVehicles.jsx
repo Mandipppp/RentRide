@@ -11,6 +11,9 @@ const OwnerVehicles = () => {
   const [owner, setOwner] = useState(null); // Separate state for owner details
   const [loading, setLoading] = useState(true); // State to track loading status
   const [error, setError] = useState(null); // State to track errors
+  const [showModal, setShowModal] = useState(false); // Modal visibility state
+  const [vehicleToDelete, setVehicleToDelete] = useState(null); // Vehicle to delete
+
 
   useEffect(() => {
     // Function to fetch the vehicles
@@ -37,6 +40,31 @@ const OwnerVehicles = () => {
 
     fetchVehicles();
   }, []);
+
+  // Function to handle vehicle deletion
+  const handleRemoveVehicle = () => {
+    if (!vehicleToDelete) return;
+
+    const token = reactLocalStorage.get("access_token");
+
+    axios
+      .delete(`http://localhost:3000/api/owner/vehicle/${vehicleToDelete}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then(() => {
+        setVehicles(vehicles.filter(vehicle => vehicle._id !== vehicleToDelete));
+        alert('Vehicle removed successfully!');
+        setShowModal(false);
+        setVehicleToDelete(null);
+      })
+      .catch((err) => {
+        console.error('Error removing vehicle:', err);
+        alert('Failed to remove vehicle. Please try again later.');
+        setShowModal(false);
+      });
+  };
 
   if (loading) {
     return <div className="p-6 bg-gray-100 min-h-screen">Loading...</div>;
@@ -115,7 +143,12 @@ const OwnerVehicles = () => {
                   </div>
                   <div className="mt-0 flex space-x-4 justify-end md:ml-auto">
                     <Button variant="secondary">Edit Vehicle</Button>
-                    <Button variant="destructive">Remove Vehicle</Button>
+                    <Button variant="destructive" onClick={() => {
+                        setShowModal(true);
+                        setVehicleToDelete(vehicle._id);
+                      }}>
+                        Remove Vehicle
+                      </Button>
                     <Button variant="warning">Disable Vehicle</Button>
                   </div>
                 </CardFooter>
@@ -126,6 +159,25 @@ const OwnerVehicles = () => {
         ))
       )}
       </div>
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-96">
+            <h2 className="text-xl font-semibold mb-4">Confirm Deletion</h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to delete this vehicle? This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <Button variant="secondary" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleRemoveVehicle}>
+                Confirm
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
