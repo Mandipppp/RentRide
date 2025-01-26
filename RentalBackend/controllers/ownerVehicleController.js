@@ -30,34 +30,53 @@ const getOwnerVehicles = async (req, res) => {
           message: 'Owner ID is required.',
         });
       }
+
+          // Fetch owner and KYC details separately
+        const owner = await Owner.findById(ownerId)
+        .select('name email contactNumber kycId') // Include necessary owner details
+        .populate({
+          path: 'kycId', // Populate KYC details
+          select: 'overallStatus', // Select only the overallStatus from KYC
+        });
+
+      if (!owner) {
+        return res.status(404).json({
+          success: false,
+          message: 'Owner not found.',
+        });
+      }
   
       // Fetch vehicles associated with the ownerId
       const vehicles = await Vehicle.find({ ownerId })
-      .populate({
-        path: 'ownerId',
-        select: 'name email contactNumber kycId', // Include owner and KYC reference
-        populate: {
-          path: 'kycId', // Populate KYC data from the owner reference
-          select: 'overallStatus', // Select only the overallStatus from KYC
-        },
-      })
         .populate({
           path: 'registrationCertificate.verifiedBy insuranceCertificate.verifiedBy',
           select: 'name email', // Include admin details
         });
   
       // Check if any vehicles were found
-      if (vehicles.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: 'No vehicles found for the given owner.',
-        });
-      }
+      // if (vehicles.length === 0) {
+      //   return res.status(404).json({
+      //     success: false,
+      //     owner: {
+      //       name: owner.name,
+      //       email: owner.email,
+      //       contactNumber: owner.contactNumber,
+      //       kyc: owner.kycId,
+      //     },
+      //     message: 'No vehicles found for the given owner.',
+      //   });
+      // }
   
       // Respond with the list of vehicles
       return res.status(200).json({
         success: true,
-        data: vehicles,
+        owner: {
+          name: owner.name,
+          email: owner.email,
+          contactNumber: owner.contactNumber,
+          kyc: owner.kycId,
+        },
+        vehicles,
       });
     } catch (error) {
       console.error('Error fetching vehicles for the owner:', error);

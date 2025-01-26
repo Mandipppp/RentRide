@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '../Ui/Button';
 import { Card, CardContent, CardFooter, CardHeader } from '../Ui/Card';
 import OwnerNavigation from './OwnerNavigation';
-import carImg from "../Images/HomeCar.png";
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { reactLocalStorage } from 'reactjs-localstorage';
 
 const OwnerVehicles = () => {
   const [vehicles, setVehicles] = useState([]); // State to store the vehicles
+  const [owner, setOwner] = useState(null); // Separate state for owner details
   const [loading, setLoading] = useState(true); // State to track loading status
   const [error, setError] = useState(null); // State to track errors
 
@@ -24,8 +24,9 @@ const OwnerVehicles = () => {
           },
         })
         .then((response) => {
-          setVehicles(response.data.data);
-          console.log("Fetched vehicles:", response.data.data);
+          setVehicles(response.data.vehicles || []);
+          setOwner(response.data.owner || null);
+          // console.log("Fetched vehicles:", response.data.vehicle);
           setLoading(false);
         })
         .catch((err) => {
@@ -39,10 +40,6 @@ const OwnerVehicles = () => {
 
   if (loading) {
     return <div className="p-6 bg-gray-100 min-h-screen">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="p-6 bg-gray-100 min-h-screen text-red-500">{error}</div>;
   }
 
   return (
@@ -59,20 +56,30 @@ const OwnerVehicles = () => {
           </Button>
         </header>
 
-        {vehicles[0].ownerId.kycId.overallStatus !== 'verified' && (
-        <p className="text-sm text-red-500 mb-4">
-          *Your documents are under review. Meanwhile, you can add your vehicles.*
-        </p>
+        {/* KYC Status Message */}
+        {owner.kyc.overallStatus !== 'verified' && (
+          <p className="text-sm text-red-500 mb-4">
+            *Your documents are under review. Meanwhile, you can add your vehicles.*
+          </p>
         )}
 
-        {vehicles.map(vehicle => (
+         {/* Conditional rendering for error or vehicle list */}
+         {vehicles.length === 0 ? (
+          <div className="text-center p-12 bg-white shadow-lg rounded-lg">
+            <h2 className="text-3xl font-semibold text-gray-700">Welcome to Your Vehicle Dashboard!</h2>
+            <p className="text-base text-gray-500 mt-6">
+              You have not added any vehicles yet. Click the "Add Vehicle" button below to add your first vehicle.
+            </p>
+          </div>
+        ) : (
+          vehicles.map(vehicle => (
           <Card key={vehicle._id} className="bg-white shadow-md rounded-lg overflow-hidden mb-4">
             <CardHeader className="p-4 flex items-center justify-between border-b">
               <div>
                 <h2 className="text-lg font-bold">{vehicle.dailyPrice} NPR / day</h2>
               </div>
               <span className={`text-sm font-semibold px-3 py-1 rounded ${vehicle.isVerified ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
-                {vehicle.verified ? 'Vehicle Verified' : 'Pending Verification'}
+                {vehicle.isVerified ? 'Vehicle Verified' : 'Pending Verification'}
               </span>
             </CardHeader>
 
@@ -116,7 +123,8 @@ const OwnerVehicles = () => {
             </CardContent>
 
           </Card>
-        ))}
+        ))
+      )}
       </div>
     </div>
   );
