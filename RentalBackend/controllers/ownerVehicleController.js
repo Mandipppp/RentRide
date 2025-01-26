@@ -242,6 +242,72 @@ const getOwnerVehicles = async (req, res) => {
     }
   };
 
+  const disableVehicle = async (req, res) => {
+    try {
+      const { vehicleId } = req.params;
+      const ownerId = req.user.id;
+  
+      // Find the vehicle by ID and owner ID to ensure the owner is authorized
+      const vehicle = await Vehicle.findOne({ _id: vehicleId, ownerId });
+  
+      if (!vehicle) {
+        return res.status(404).json({
+          success: false,
+          message: 'Vehicle not found or unauthorized.',
+        });
+      }
+  
+      // Update the status of the vehicle to 'Under Maintenance'
+      vehicle.status = 'Under Maintenance';
+      await vehicle.save();
+  
+      return res.status(200).json({
+        success: true,
+        message: 'Vehicle status updated to "Under Maintenance".',
+        vehicle,
+      });
+    } catch (error) {
+      console.error('Error disabling vehicle:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Server error. Please try again later.',
+      });
+    }
+  };
+  
+  const enableVehicle = async (req, res) => {
+    try {
+      const { vehicleId } = req.params;
+      const ownerId = req.user.id;
+  
+      // Find the vehicle by ID and owner ID to ensure the owner is authorized
+      const vehicle = await Vehicle.findOne({ _id: vehicleId, ownerId });
+  
+      if (!vehicle) {
+        return res.status(404).json({
+          success: false,
+          message: 'Vehicle not found or unauthorized.',
+        });
+      }
+  
+      // Update the status of the vehicle to 'Available'
+      vehicle.status = 'Available';
+      await vehicle.save();
+  
+      return res.status(200).json({
+        success: true,
+        message: 'Vehicle status updated to "Available".',
+        vehicle,
+      });
+    } catch (error) {
+      console.error('Error enabling vehicle:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Server error. Please try again later.',
+      });
+    }
+  };
+
   
 const updateVehicleByOwner = async (req, res) => {
   try {
@@ -304,5 +370,5 @@ const updateVehicleByOwner = async (req, res) => {
   }
 };
 
-module.exports = { getOwnerVehicles, updateVehicleByOwner, addVehicle, deleteVehicle };
+module.exports = { getOwnerVehicles, updateVehicleByOwner, addVehicle, deleteVehicle, disableVehicle, enableVehicle };
   

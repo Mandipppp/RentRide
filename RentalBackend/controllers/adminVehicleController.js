@@ -3,23 +3,18 @@ const Vehicle = require('../models/vehicle');
 const getAllVehicles = async (req, res) => {
   try {
     // Extract query parameters
-    const { name, type, status, category, registrationNumber } = req.query;
+    const { name, registrationNumber } = req.query;
+    // console.log(name);
 
     const filter = {};
-    if (name) {
-      filter.name = { $regex: name, $options: 'i' }; // Case-insensitive partial match for name
-    }
-    if (type) {
-      filter.type = type; // Exact match for type
-    }
-    if (status) {
-      filter.status = status; // Exact match for status
-    }
-    if (category) {
-      filter.category = category; // Exact match for category
-    }
-    if (registrationNumber) {
-      filter.registrationNumber = { $regex: registrationNumber, $options: 'i' }; // Case-insensitive partial match for registrationNumber
+    if (name || registrationNumber) {
+      filter.$or = [];
+      if (name) {
+        filter.$or.push({ name: { $regex: name, $options: 'i' } });
+      }
+      if (registrationNumber) {
+        filter.$or.push({ registrationNumber: { $regex: registrationNumber, $options: 'i' } });
+      }
     }
 
     // Fetch vehicles from the database based on the filter
@@ -48,10 +43,11 @@ const getAllVehicles = async (req, res) => {
     });
   } catch (error) {
     // Handle any errors
-    console.error('Error fetching vehicles:', error);
+    console.error('Error fetching vehicles:', error.message);
     return res.status(500).json({
       success: false,
       message: 'Server error. Please try again later.',
+      error: error.message,
     });
   }
 };

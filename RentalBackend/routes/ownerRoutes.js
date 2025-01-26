@@ -1,7 +1,7 @@
 const express = require('express');
 const { authenticate } = require('../middlewares/authMiddleware');
 const { getOwnerProfile, updateOwner, changePassword } = require('../controllers/ownerSelfController');
-const { getOwnerVehicles, updateVehicleByOwner, addVehicle, deleteVehicle } = require('../controllers/ownerVehicleController');
+const { getOwnerVehicles, updateVehicleByOwner, addVehicle, deleteVehicle, disableVehicle, enableVehicle } = require('../controllers/ownerVehicleController');
 const { getVehicleById } = require('../controllers/adminVehicleController');
 const uploadOwner = require('../middlewares/uploadMiddleware');
 const multer = require('multer');
@@ -34,6 +34,10 @@ router.post(
   addVehicle
 );
 router.delete('/vehicle/:vehicleId', authenticate, deleteVehicle);
+// Route to disable a vehicle
+router.patch('/vehicle/:vehicleId/disable', authenticate, disableVehicle);
+// Route to enable a vehicle
+router.patch('/vehicle/:vehicleId/enable', authenticate, enableVehicle);
 
 
 module.exports = router;

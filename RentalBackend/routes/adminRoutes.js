@@ -10,6 +10,9 @@ router.get('/getOwners',authenticate, checkAdmin, getAllOwners);
 
 router.get('/getUsers',authenticate, checkAdmin, getAllUsers);
 
+router.get('/getVehicles', authenticate, checkAdmin, getAllVehicles);
+
+
 // Route to get a specific owner by ID
 router.get('/:id', authenticate, checkAdmin, getOwnerById);
 router.get('/renter/:id', authenticate, checkAdmin, getUserById);
@@ -20,8 +23,7 @@ router.post('/setup-password/:token', setupPassword);
 router.post('/kyc/:ownerId',authenticate, checkAdmin, updateKyc);
 
 //vehicles
-router.get('/getVehicles', authenticate, checkAdmin, getAllVehicles);
-router.get('/vehicle/:id', authenticate, checkAdmin, getVehicleById);
+// router.get('/vehicle/:id', authenticate, checkAdmin, getVehicleById);
 
 
 

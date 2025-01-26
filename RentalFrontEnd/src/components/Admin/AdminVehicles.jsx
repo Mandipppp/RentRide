@@ -14,11 +14,13 @@ const AdminVehicles = () => {
     const token = reactLocalStorage.get("access_token");
     if (token) {
       setAccessToken(token);
-      getVehicles(token); // Fetch all vehicle details initially
+      getData(token); // Fetch all vehicle details initially
+    }else {
+      navigate("/login");
     }
-  }, []);
+  }, [navigate]);
 
-  const getVehicles = (token, query = "") => {
+  const getData= (token, query = "") => {
     // Construct the API URL with the search query if present
     const url = query
       ? `http://localhost:3000/api/admin/getVehicles?name=${query}&registrationNumber=${query}`
@@ -51,7 +53,7 @@ const AdminVehicles = () => {
 
     // Fetch vehicles based on the search query
     if (accessToken) {
-      getVehicles(accessToken, query);
+      getData(accessToken, query);
     }
   };
 

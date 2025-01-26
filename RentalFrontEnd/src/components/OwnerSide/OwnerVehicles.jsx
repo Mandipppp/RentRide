@@ -5,6 +5,8 @@ import OwnerNavigation from './OwnerNavigation';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { reactLocalStorage } from 'reactjs-localstorage';
+import { toast, ToastContainer } from 'react-toastify';
+
 
 const OwnerVehicles = () => {
   const [vehicles, setVehicles] = useState([]); // State to store the vehicles
@@ -55,14 +57,56 @@ const OwnerVehicles = () => {
       })
       .then(() => {
         setVehicles(vehicles.filter(vehicle => vehicle._id !== vehicleToDelete));
-        alert('Vehicle removed successfully!');
+        toast.success('Vehicle removed successfully!');
         setShowModal(false);
         setVehicleToDelete(null);
       })
       .catch((err) => {
         console.error('Error removing vehicle:', err);
-        alert('Failed to remove vehicle. Please try again later.');
+        toast.error('Failed to remove vehicle. Please try again later.');
         setShowModal(false);
+      });
+  };
+
+  const handleDisableVehicle = (vehicleId) => {
+    const token = reactLocalStorage.get("access_token");
+
+    axios
+      .patch(`http://localhost:3000/api/owner/vehicle/${vehicleId}/disable`, null, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        setVehicles(vehicles.map(vehicle => 
+          vehicle._id === vehicleId ? { ...vehicle, status: 'Under Maintenance' } : vehicle
+        ));
+        toast.success('Vehicle disabled successfully!');
+      })
+      .catch((err) => {
+        console.error('Error disabling vehicle:', err);
+        toast.error('Failed to disable vehicle. Please try again later.');
+      });
+  };
+
+  const handleEnableVehicle = (vehicleId) => {
+    const token = reactLocalStorage.get("access_token");
+
+    axios
+      .patch(`http://localhost:3000/api/owner/vehicle/${vehicleId}/enable`, null, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        setVehicles(vehicles.map(vehicle => 
+          vehicle._id === vehicleId ? { ...vehicle, status: 'Available' } : vehicle
+        ));
+        toast.success('Vehicle enabled successfully!');
+      })
+      .catch((err) => {
+        console.error('Error enabling vehicle:', err);
+        toast.error('Failed to enable vehicle. Please try again later.');
       });
   };
 
@@ -72,6 +116,7 @@ const OwnerVehicles = () => {
 
   return (
     <div>
+      <ToastContainer />
       <OwnerNavigation />
       <div className="p-6 bg-gray-100 min-h-screen">
         <header className="flex justify-between items-center pb-6">
@@ -149,7 +194,14 @@ const OwnerVehicles = () => {
                       }}>
                         Remove Vehicle
                       </Button>
-                    <Button variant="warning">Disable Vehicle</Button>
+                      {vehicle.status === 'Available' ? (
+                      <Button variant="warning" onClick={() => handleDisableVehicle(vehicle._id)}>
+                        Disable Vehicle
+                      </Button>
+                    ) : (
+                      <Button variant="success" onClick={() => handleEnableVehicle(vehicle._id)}>
+                        Enable Vehicle
+                      </Button>)}
                   </div>
                 </CardFooter>
               </div>
