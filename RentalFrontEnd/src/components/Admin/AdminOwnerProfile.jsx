@@ -50,7 +50,7 @@ const AdminOwnerProfile = () => {
   }, []);
 
   const getDetails = (token) => {
-    const url = `http://localhost:3000/api/admin/${id}`;
+    const url = `http://localhost:3000/api/admin/owner/${id}`;
     axios
       .get(url, {
         headers: {
@@ -197,7 +197,9 @@ const AdminOwnerProfile = () => {
                 className="bg-white shadow-md rounded-lg p-6 w-full md:w-1/3"
               >
                 <h2 className="text-lg font-semibold mb-4">
-                  {section.replace(/([A-Z])/g, " $1")}
+                {section
+                .replace(/([A-Z])/g, " $1") // Add space between camel case words
+                .replace(/^./, (str) => str.toUpperCase())} {/* Capitalize first letter */}
                 </h2>
                 <img
                   src={`http://localhost:3000/${owner?.kycId?.documents[section]?.file}`}

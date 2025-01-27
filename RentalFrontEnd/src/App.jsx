@@ -24,6 +24,7 @@ import CompleteOwnerSignup from "./components/LoginSignin/CompleteOwnerSignup";
 import OwnerAddVehicle from "./components/OwnerSide/OwnerAddVehicle";
 import AdminVehicles from "./components/Admin/AdminVehicles";
 import OwnerVehicles from "./components/OwnerSide/OwnerVehicles";
+import AdminVehicleDetails from "./components/Admin/AdminVehicleDetails";
 
 
 
@@ -99,6 +100,8 @@ const App = () => {
         {/* <Route path="/users/:id" element={<AdminOwnerProfile />} /> */}
 
         <Route path="/adminvehicles" element={<AdminVehicles />} />
+        <Route path="/adminvehicles/:id" element={<AdminVehicleDetails />} />
+
 
 
 

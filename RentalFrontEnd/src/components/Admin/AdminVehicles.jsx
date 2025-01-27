@@ -101,6 +101,11 @@ const AdminVehicles = () => {
     }
   };
 
+  // Function to handle navigation to the user's details page
+  const handleUserClick = (vehicleId) => {
+    navigate(`/adminvehicles/${vehicleId}`); // Navigate to the user's details page
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mt-6 pt-16">
       <Navbar />
@@ -232,6 +237,7 @@ const AdminVehicles = () => {
               <tr
                 key={vehicle._id}
                 className="border-b hover:bg-gray-50 transition duration-150 cursor-pointer"
+                onClick={() => handleUserClick(vehicle._id)}
               >
                 <td className="py-3 px-4">{index + 1}</td>
                 <td className="py-3 px-4 flex items-center">

@@ -14,7 +14,7 @@ router.get('/getVehicles', authenticate, checkAdmin, getAllVehicles);
 
 
 // Route to get a specific owner by ID
-router.get('/:id', authenticate, checkAdmin, getOwnerById);
+router.get('/owner/:id', authenticate, checkAdmin, getOwnerById);
 router.get('/renter/:id', authenticate, checkAdmin, getUserById);
 
 router.post('/add-admin', authenticate, checkAdmin, addAdmin);
