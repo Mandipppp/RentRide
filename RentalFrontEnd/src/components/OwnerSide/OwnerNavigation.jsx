@@ -148,7 +148,7 @@ function OwnerNavigation() {
                     {filteredNotifications.map((notification) => (
                       <li
                       key={notification._id}
-                      className="py-3 px-0 border-b relative" 
+                      className="py-3 px-0 pr-8 border-b relative" 
                       onClick={() => markAsRead(notification._id)}
                     >
                       <div className="flex justify-between items-center">

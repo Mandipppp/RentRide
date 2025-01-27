@@ -34,7 +34,6 @@ const VehicleSchema = new mongoose.Schema({
     },
     required: true,
   },
-  insuranceStatus: { type: Boolean, default: false },
   pickupLocation: { type: String },
   latitude: { type: Number },
   longitude: { type: Number },
@@ -45,7 +44,7 @@ const VehicleSchema = new mongoose.Schema({
     file: { type: String, required: true }, // Path to registration document
     status: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' },
     comments: { type: String }, // Admin comments on rejection
-    verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
+    verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     submittedAt: { type: Date, default: Date.now },
     verifiedAt: { type: Date },
   },
@@ -53,7 +52,7 @@ const VehicleSchema = new mongoose.Schema({
     file: { type: String, required: true }, // Path to insurance document
     status: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' },
     comments: { type: String },
-    verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
+    verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     submittedAt: { type: Date, default: Date.now },
     verifiedAt: { type: Date },
   },
