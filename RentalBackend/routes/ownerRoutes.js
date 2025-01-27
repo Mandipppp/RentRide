@@ -1,7 +1,7 @@
 const express = require('express');
 const { authenticate } = require('../middlewares/authMiddleware');
 const { getOwnerProfile, updateOwner, changePassword } = require('../controllers/ownerSelfController');
-const { getOwnerVehicles, updateVehicleByOwner, addVehicle, deleteVehicle, disableVehicle, enableVehicle } = require('../controllers/ownerVehicleController');
+const { getOwnerVehicles, updateVehicle, addVehicle, deleteVehicle, disableVehicle, enableVehicle } = require('../controllers/ownerVehicleController');
 const { getVehicleById } = require('../controllers/adminVehicleController');
 const uploadOwner = require('../middlewares/uploadMiddleware');
 const multer = require('multer');
@@ -22,7 +22,19 @@ router.put('/change-password', authenticate, changePassword);
 
 router.get('/myvehicles', authenticate, getOwnerVehicles);
 router.get('/vehicle/:vehicleId', authenticate, getVehicleById);
-router.post('/updateVehicle/:vehicleId', authenticate, updateVehicleByOwner);
+
+router.put(
+  '/updateVehicle/:vehicleId', 
+  authenticate,
+  multer({ storage: uploadOwner.storageVehicle }).fields([
+  { name: 'registrationCert', maxCount: 1 },
+  { name: 'insuranceCert', maxCount: 1 },
+  { name: 'pictures', maxCount: 5 },
+  ]), 
+  updateVehicle
+);
+
+
 router.post(
   '/addVehicle',
   authenticate,

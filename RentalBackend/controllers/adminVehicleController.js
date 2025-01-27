@@ -3,9 +3,8 @@ const Vehicle = require('../models/vehicle');
 const getAllVehicles = async (req, res) => {
   try {
     // Extract query parameters
-    const { name, registrationNumber } = req.query;
-    // console.log(name);
-
+    const { name, registrationNumber, type, category, status } = req.query;
+    
     const filter = {};
     if (name || registrationNumber) {
       filter.$or = [];
@@ -15,6 +14,20 @@ const getAllVehicles = async (req, res) => {
       if (registrationNumber) {
         filter.$or.push({ registrationNumber: { $regex: registrationNumber, $options: 'i' } });
       }
+    }
+    
+    if (type) {
+      filter.type = type;
+    }
+
+    // Filter by category (if provided)
+    if (category) {
+      filter.category = category;
+    }
+
+    // Filter by status (if provided)
+    if (status) {
+      filter.status = status;
     }
 
     // Fetch vehicles from the database based on the filter

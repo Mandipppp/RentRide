@@ -309,66 +309,118 @@ const getOwnerVehicles = async (req, res) => {
   };
 
   
-const updateVehicleByOwner = async (req, res) => {
-  try {
-    const { vehicleId } = req.params;
-    const ownerId = req.user.id;
-    const allowedFields = [
-      'name',
-      'description',
-      'dailyPrice',
-      'features',
-      'addOns',
-      'imageUrls',
-      'pickupLocation',
-      'status',
-      'condition',
-      'mileage',
-      'latitude',
-      'longitude',
-    ];
-
-    // Filter the fields that the owner is trying to update
-    const updates = {};
-    for (const key of Object.keys(req.body)) {
-      if (allowedFields.includes(key)) {
-        updates[key] = req.body[key];
+  const updateVehicle = async (req, res) => {
+    const ownerId = req.user.id; // The owner ID from the authenticated user
+    const { vehicleId } = req.params; 
+    const {
+      name,
+      type,
+      category,
+      fuel,
+      transmission,
+      brand,
+      builtYear,
+      mileage,
+      registrationNumber,
+      description,
+      dailyPrice,
+      minRentalPeriod,
+      maxRentalPeriod,
+      features,
+      condition,
+      status,
+      pickupLocation,
+      latitude,
+      longitude,
+    } = req.body;
+  
+    try {
+      // Find the vehicle and ensure it belongs to the owner
+      const vehicle = await Vehicle.findById(vehicleId);
+      if (!vehicle) {
+        return res.status(404).json({ message: "Vehicle not found." });
       }
-    }
+  
+      if (vehicle.ownerId.toString() !== ownerId) {
+        return res.status(403).json({ message: "You are not authorized to update this vehicle." });
+      }
+  
+      // Update vehicle-related fields
+      const vehicleUpdateFields = {};
+      if (name) vehicleUpdateFields.name = name;
+      if (type) vehicleUpdateFields.type = type;
+      if (category) vehicleUpdateFields.category = category;
+      if (fuel) vehicleUpdateFields.fuel = fuel;
+      if (transmission) vehicleUpdateFields.transmission = transmission;
+      if (brand) vehicleUpdateFields.brand = brand;
+      if (builtYear) vehicleUpdateFields.builtYear = builtYear;
+      if (mileage) vehicleUpdateFields.mileage = mileage;
+      if (registrationNumber) vehicleUpdateFields.registrationNumber = registrationNumber;
+      if (description) vehicleUpdateFields.description = description;
+      if (dailyPrice) vehicleUpdateFields.dailyPrice = dailyPrice;
+      if (minRentalPeriod) vehicleUpdateFields.minRentalPeriod = minRentalPeriod;
+      if (maxRentalPeriod) vehicleUpdateFields.maxRentalPeriod = maxRentalPeriod;
+      if (features) vehicleUpdateFields.features = features;
+      if (condition) vehicleUpdateFields.condition = condition;
+      if (status) vehicleUpdateFields.status = status;
+      if (pickupLocation) vehicleUpdateFields.pickupLocation = pickupLocation;
+      if (latitude) vehicleUpdateFields.latitude = latitude;
+      if (longitude) vehicleUpdateFields.longitude = longitude;
+  
+      // Handle file uploads for registration and insurance certificates
+      const documentUpdateFields = {};
+      const updatedFields = []; // To track which documents are updated
+  
+      if (req.files && req.files.registrationCert) {
+        documentUpdateFields['registrationCertificate.file'] = req.files.registrationCert[0].path;
+        documentUpdateFields['registrationCertificate.status'] = 'Pending'; // Reset status
+        documentUpdateFields['registrationCertificate.comments'] = ''; // Clear comments
+        updatedFields.push('registrationCertificate');
+      }
+      if (req.files && req.files.insuranceCert) {
+        documentUpdateFields['insuranceCertificate.file'] = req.files.insuranceCert[0].path;
+        documentUpdateFields['insuranceCertificate.status'] = 'Pending'; // Reset status
+        documentUpdateFields['insuranceCertificate.comments'] = ''; // Clear comments
+        updatedFields.push('insuranceCertificate');
+      }
+  
+      // Update imageUrls
+      if (req.files && req.files.pictures) {
+        const imageUrls = req.files.pictures.map((file) => file.path);
+        if (imageUrls.length >= 3 && imageUrls.length <= 5) {
+          vehicleUpdateFields.imageUrls = imageUrls;
+        } else {
+          return res.status(400).json({
+            message: "A minimum of 3 and a maximum of 5 images are required for imageUrls.",
+          });
+        }
+      }
 
-    if (Object.keys(updates).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No valid fields provided for update.',
+      vehicleUpdateFields.updatedAt = Date.now();
+  
+      // Update vehicle details in the database
+      const updatedVehicle = await Vehicle.findByIdAndUpdate(
+        vehicleId,
+        {
+          $set: { ...vehicleUpdateFields, ...documentUpdateFields },
+        },
+        { new: true, runValidators: true } // Return updated document and validate input
+      );
+  
+      if (!updatedVehicle) {
+        return res.status(404).json({ message: "Failed to update the vehicle." });
+      }
+  
+      res.status(200).json({
+        message: "Vehicle details updated successfully.",
+        updatedVehicle,
       });
+    } catch (error) {
+      console.error("Error updating Vehicle data:", error);
+      res.status(500).json({ message: "Internal server error." });
     }
+  };
+  
 
-    // Update the vehicle if it belongs to the owner
-    const updatedVehicle = await Vehicle.findOneAndUpdate(
-      { _id: vehicleId, ownerId }, // Ensure the vehicle belongs to the owner
-      { $set: updates },
-      { new: true } // Return the updated document
-    );
-
-    if (!updatedVehicle) {
-      return res.status(404).json({
-        success: false,
-        message: 'Vehicle not found or unauthorized.',
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: updatedVehicle,
-    });
-  } catch (error) {
-    console.error('Error updating vehicle:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error. Please try again later.',
-    });
-  }
-};
-
-module.exports = { getOwnerVehicles, updateVehicleByOwner, addVehicle, deleteVehicle, disableVehicle, enableVehicle };
+module.exports = { getOwnerVehicles, updateVehicle, addVehicle, deleteVehicle, disableVehicle, enableVehicle };
   

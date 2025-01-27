@@ -3,11 +3,15 @@ import axios from "axios";
 import Navbar from "./Navbar";
 import { reactLocalStorage } from "reactjs-localstorage";
 import { useNavigate } from "react-router-dom";
+import { FaCar, FaMotorcycle, FaTruck, FaSearch } from "react-icons/fa"; // Import icons
 
 const AdminVehicles = () => {
   const [vehicles, setVehicles] = useState([]);
   const [accessToken, setAccessToken] = useState("");
   const [searchQuery, setSearchQuery] = useState(""); // State to hold the search query
+  const [selectedType, setSelectedType] = useState(""); // Selected type filter
+  const [selectedCategory, setSelectedCategory] = useState(""); // Selected category filter
+  const [selectedStatus, setSelectedStatus] = useState(""); // Selected status filter
   const navigate = useNavigate(); // Initialize navigate hook
 
   useEffect(() => {
@@ -15,30 +19,38 @@ const AdminVehicles = () => {
     if (token) {
       setAccessToken(token);
       getData(token); // Fetch all vehicle details initially
-    }else {
+    } else {
       navigate("/login");
     }
   }, [navigate]);
 
-  const getData= (token, query = "") => {
-    // Construct the API URL with the search query if present
-    const url = query
-      ? `http://localhost:3000/api/admin/getVehicles?name=${query}&registrationNumber=${query}`
-      : "http://localhost:3000/api/admin/getVehicles";
+  const getData = (token, query = "", type = "", category = "", status = "") => {
+    let url = "http://localhost:3000/api/admin/getVehicles";
+    let params = [];
+
+    if (query) {
+      params.push(`name=${query}`);
+      params.push(`registrationNumber=${query}`);
+    }
+    if (type) params.push(`type=${type}`);
+    if (category) params.push(`category=${category}`);
+    if (status) params.push(`status=${status}`);
+
+    if (params.length > 0) {
+      url += "?" + params.join("&");
+    }
 
     axios
       .get(url, {
         headers: {
-          Authorization: `Bearer ${token}`, // Include token in Authorization header
+          Authorization: `Bearer ${token}`,
         },
       })
       .then((res) => {
-        // Set the vehicles data into state
         setVehicles(res.data.data);
       })
       .catch((error) => {
         if (error.response && error.response.status === 403) {
-          // Navigate to error page if the user is not an admin
           navigate("/unauthorized");
         } else {
           console.error("Error fetching vehicle details:", error);
@@ -50,24 +62,48 @@ const AdminVehicles = () => {
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-
-    // Fetch vehicles based on the search query
     if (accessToken) {
-      getData(accessToken, query);
+      getData(accessToken, query, selectedType, selectedCategory, selectedStatus);
     }
   };
 
-  // Function to handle navigation to the vehicle's details page
-  const handleVehicleClick = (vehicleId) => {
-    // navigate(`/vehicles/${vehicleId}`); // Navigate to the vehicle's details page
+  const handleTypeClick = (type) => {
+    const newType = selectedType === type ? "" : type;
+    setSelectedType(newType);
+    if (accessToken) {
+      getData(accessToken, searchQuery, newType, selectedCategory, selectedStatus);
+    }
+  };
+
+  const handleCategoryClick = (category) => {
+    const newCategory = selectedCategory === category ? "" : category;
+    setSelectedCategory(newCategory);
+    if (accessToken) {
+      getData(accessToken, searchQuery, selectedType, newCategory, selectedStatus);
+    }
+  };
+
+  const handleStatusClick = (status) => {
+    const newStatus = selectedStatus === status ? "" : status;
+    setSelectedStatus(newStatus);
+    if (accessToken) {
+      getData(accessToken, searchQuery, selectedType, selectedCategory, newStatus);
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSelectedType("");
+    setSelectedCategory("");
+    setSelectedStatus("");
+    setSearchQuery("");
+    if (accessToken) {
+      getData(accessToken); // Reset all filters and fetch all data
+    }
   };
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mt-6 pt-16">
-      {/* Navbar */}
       <Navbar />
-
-      {/* Title */}
       <h2 className="text-4xl font-bold mb-4">Vehicles</h2>
 
       {/* Search Bar */}
@@ -75,16 +111,109 @@ const AdminVehicles = () => {
         <input
           type="text"
           value={searchQuery}
-          onChange={handleSearchChange} // Update search query and fetch filtered data
+          onChange={handleSearchChange}
           placeholder="Search by name or registration number"
           className="w-full py-2 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
         />
         <span className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500">
-          <i className="fas fa-search"></i>
+          <FaSearch />
         </span>
       </div>
 
-      {/* Table */}
+      {/* Filter Buttons */}
+      <div className="mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button
+            className={`py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 ${
+              selectedType === "Car" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+            onClick={() => handleTypeClick("Car")}
+          >
+            <FaCar className="inline mr-2" /> Car
+          </button>
+          <button
+            className={`py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 ${
+              selectedType === "Bike" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+            onClick={() => handleTypeClick("Bike")}
+          >
+            <FaMotorcycle className="inline mr-2" /> Bike
+          </button>
+          <button
+            className={`py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 ${
+              selectedType === "SUV" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+            onClick={() => handleTypeClick("SUV")}
+          >
+            <FaCar className="inline mr-2" /> SUV
+          </button>
+          <button
+            className={`py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 ${
+              selectedType === "Truck" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+            onClick={() => handleTypeClick("Truck")}
+          >
+            <FaTruck className="inline mr-2" /> Truck
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button
+            className={`py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 ${
+              selectedCategory === "Two-Wheeler" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+            onClick={() => handleCategoryClick("Two-Wheeler")}
+          >
+            Two-Wheeler
+          </button>
+          <button
+            className={`py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 ${
+              selectedCategory === "Four-Wheeler" ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+            onClick={() => handleCategoryClick("Four-Wheeler")}
+          >
+            Four-Wheeler
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            className={`py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 ${
+              selectedStatus === "Available" ? "bg-green-500 text-white" : "bg-gray-200"
+            }`}
+            onClick={() => handleStatusClick("Available")}
+          >
+            Available
+          </button>
+          <button
+            className={`py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 ${
+              selectedStatus === "Booked" ? "bg-yellow-500 text-white" : "bg-gray-200"
+            }`}
+            onClick={() => handleStatusClick("Booked")}
+          >
+            Booked
+          </button>
+          <button
+            className={`py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 ${
+              selectedStatus === "Under Maintenance" ? "bg-red-500 text-white" : "bg-gray-200"
+            }`}
+            onClick={() => handleStatusClick("Under Maintenance")}
+          >
+            Under Maintenance
+          </button>
+        </div>
+
+        <div className="mt-4">
+          <button
+            onClick={handleClearFilters}
+            className="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-200 ease-in-out"
+          >
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
+      {/* Vehicle Table */}
       <table className="w-full text-left border-collapse">
         <thead className="bg-gray-100">
           <tr>
@@ -103,7 +232,6 @@ const AdminVehicles = () => {
               <tr
                 key={vehicle._id}
                 className="border-b hover:bg-gray-50 transition duration-150 cursor-pointer"
-                onClick={() => handleVehicleClick(vehicle._id)} // Navigate on click
               >
                 <td className="py-3 px-4">{index + 1}</td>
                 <td className="py-3 px-4 flex items-center">
