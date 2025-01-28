@@ -86,28 +86,39 @@ const AdminVehicleDetails = () => {
       }
   
       try {
+        // Prepare the payload dynamically based on available updates
+        const payload = {};
+
+        if (updates.registrationCertificate?.status) {
+          payload.registrationStatus = updates.registrationCertificate.status;
+          payload.registrationCertificateComments = updates.registrationCertificate.reason || ''; // Optional comment
+        }
+
+        if (updates.insuranceCertificate?.status) {
+          payload.insuranceStatus = updates.insuranceCertificate.status;
+          payload.insuranceCertificateComments = updates.insuranceCertificate.reason || ''; // Optional comment
+        }
+
+        // Make the API request only with the necessary fields
         const response = await axios.put(
-          `http://localhost:3000/api/admin/verify-vehicle/${vehicle._id}`,{
-          registrationStatus: updates.registrationCertificate.status, 
-          insuranceStatus: updates.insuranceCertificate.status,
-          registrationCertificateComments: updates.registrationCertificate.reason,
-          insuranceCertificateComments: updates.insuranceCertificate.reason,
-          },
+          `http://localhost:3000/api/admin/verify-vehicle/${vehicle._id}`,
+          payload,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
           }
         );
-  
+
         toast.success(response.data.message);
+
         // Reload the page after a successful response
         setTimeout(() => {
           window.location.reload();
         }, 2000);
       } catch (error) {
-        console.error("Error updating KYC:", error.response?.data || error.message);
-        toast.error("Failed to update KYC. Please try again.");
+        console.error("Error updating Vehicle:", error.response?.data || error.message);
+        toast.error("Failed to update Vehicle. Please try again.");
       }
     };
   

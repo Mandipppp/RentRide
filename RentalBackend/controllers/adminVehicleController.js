@@ -109,69 +109,61 @@ const getVehicleById = async (req, res) => {
   
 const verifyVehicle = async (req, res) => {
   const { vehicleId } = req.params; // Vehicle ID from the request
-  const { registrationStatus, insuranceStatus, registrationCertificateComments, insuranceCertificateComments } = req.body; // Status and comments for verification
-  console.log(registrationCertificateComments);
+  const {
+    registrationStatus,
+    insuranceStatus,
+    registrationCertificateComments,
+    insuranceCertificateComments,
+  } = req.body; // Extracted data from the request body
+
   try {
     // Find the vehicle by ID
     const vehicle = await Vehicle.findById(vehicleId).populate('ownerId');
     if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
 
-    // If both registration and insurance statuses are 'Verified', set the vehicle as verified and insured
-    let updatedFields = {};
+    let updatedFields = {}; // Dynamically build update fields
     let updated = false;
 
-    // Verify registration certificate
+    // Update registration certificate fields if provided
     if (registrationStatus) {
-      vehicle.registrationCertificate.status = registrationStatus;
-      vehicle.registrationCertificate.comments = registrationCertificateComments || ''; // Set registration comments
-      vehicle.registrationCertificate.verifiedBy = req.user.id;
-      vehicle.registrationCertificate.verifiedAt = Date.now();
-      if (registrationStatus === 'Verified') {
-        updatedFields.isVerified = true;
-      }
+      updatedFields['registrationCertificate.status'] = registrationStatus;
+      updatedFields['registrationCertificate.comments'] =
+        registrationCertificateComments || ''; // Set comments or default to empty
+      updatedFields['registrationCertificate.verifiedBy'] = req.user.id;
+      updatedFields['registrationCertificate.verifiedAt'] = Date.now();
       updated = true;
     }
 
-    // Verify insurance certificate
+    // Update insurance certificate fields if provided
     if (insuranceStatus) {
-      vehicle.insuranceCertificate.status = insuranceStatus;
-      vehicle.insuranceCertificate.comments = insuranceCertificateComments || ''; // Set insurance comments
-      vehicle.insuranceCertificate.verifiedBy = req.user.id;
-      vehicle.insuranceCertificate.verifiedAt = Date.now();
+      updatedFields['insuranceCertificate.status'] = insuranceStatus;
+      updatedFields['insuranceCertificate.comments'] =
+        insuranceCertificateComments || ''; // Set comments or default to empty
+      updatedFields['insuranceCertificate.verifiedBy'] = req.user.id;
+      updatedFields['insuranceCertificate.verifiedAt'] = Date.now();
+
       if (insuranceStatus === 'Verified') {
-        updatedFields.isInsured = true;
+        updatedFields.isInsured = true; // Set the insured status
       }
       updated = true;
     }
 
-    // If any document was updated, update the vehicle fields
+    // Update overall verification status if both certificates are verified
+    if (registrationStatus === 'Verified' && insuranceStatus === 'Verified') {
+      updatedFields.isVerified = true; // Set the vehicle as verified
+    }
+
+    // Only update the vehicle if any fields were modified
     if (updated) {
-      // Update the vehicle's verification status
-      await Vehicle.findByIdAndUpdate(
-        vehicleId,
-        {
-          $set: {
-            ...updatedFields,
-            'registrationCertificate.status': registrationStatus,
-            'registrationCertificate.comments': registrationCertificateComments || '',
-            'registrationCertificate.verifiedBy': req.user.id,
-            'registrationCertificate.verifiedAt': Date.now(),
-            'insuranceCertificate.status': insuranceStatus,
-            'insuranceCertificate.comments': insuranceCertificateComments || '',
-            'insuranceCertificate.verifiedBy': req.user.id,
-            'insuranceCertificate.verifiedAt': Date.now(),
-            updatedAt: Date.now(),
-          },
-        },
-        { new: true }
-      );
+      updatedFields.updatedAt = Date.now(); // Update the modification timestamp
+      await Vehicle.findByIdAndUpdate(vehicleId, { $set: updatedFields }, { new: true });
     }
 
     // Prepare email content
     const ownerEmail = vehicle.ownerId.email;
     const ownerName = vehicle.ownerId.name;
     const emailSubject =
-      updatedFields.isVerified && updatedFields.isInsured
+      updatedFields.isVerified
         ? 'Vehicle Verification Successful'
         : 'Vehicle Verification Status Update';
      
@@ -234,7 +226,7 @@ const verifyVehicle = async (req, res) => {
               <p>We would like to inform you about the status of your vehicle verification:</p>
               <p><strong>Status:</strong> ${updatedFields.isVerified ? 'Verified' : 'Pending'} / ${updatedFields.isInsured ? 'Insured' : 'Pending'}</p>
               ${updatedFields.isVerified && updatedFields.isInsured ? `
-                <p>Your vehicle has been successfully verified and insured.</p>
+                <p>Your vehicle has been successfully verified.</p>
               ` : `
                 <p>Your vehicle verification is still pending. Please review the status and resubmit the necessary documents if required.</p>
               `}
@@ -268,8 +260,8 @@ const verifyVehicle = async (req, res) => {
 
     // Create a notification for the owner
     const notificationMessage =
-      updatedFields.isVerified && updatedFields.isInsured
-        ? 'Your vehicle has been successfully verified and insured.'
+      updatedFields.isVerified
+        ? 'Your vehicle has been successfully verified.'
         : 'Your vehicle verification status has been updated. Please review the status of your documents.';
 
     const notification = new Notification({
