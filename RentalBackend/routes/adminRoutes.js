@@ -25,7 +25,7 @@ router.post('/kyc/:ownerId',authenticate, checkAdmin, updateKyc);
 router.put('/verify-vehicle/:vehicleId', authenticate, checkAdmin, verifyVehicle);
 
 //vehicles
-router.get('/vehicle/:id', authenticate, checkAdmin, getVehicleById);
+router.get('/vehicle/:vehicleId', authenticate, checkAdmin, getVehicleById);
 
 
 

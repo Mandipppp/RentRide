@@ -118,6 +118,10 @@ const OwnerVehicles = () => {
     navigate(`/ownervehicle/${vehicleId}`); // Navigate to the user's details page
   };
 
+  const handleDocumentsClick = (vehicleId) => {
+    navigate(`/ownervehicledocuments/${vehicleId}`); // Navigate to the user's details page
+  };
+
   if (loading) {
     return <div className="p-6 bg-gray-100 min-h-screen">Loading...</div>;
   }
@@ -195,6 +199,7 @@ const OwnerVehicles = () => {
                     <span className="text-lg font-bold">{vehicle.rating || 'N/A'}</span>
                   </div>
                   <div className="mt-0 flex space-x-4 justify-end md:ml-auto">
+                    <Button variant="secondary" onClick={() => handleDocumentsClick(vehicle._id)}>Edit Vehicle Documents</Button>
                     <Button variant="secondary" onClick={() => handleUserClick(vehicle._id)}>Edit Vehicle</Button>
                     <Button variant="destructive" onClick={() => {
                         setShowModal(true);

@@ -26,6 +26,7 @@ import AdminVehicles from "./components/Admin/AdminVehicles";
 import OwnerVehicles from "./components/OwnerSide/OwnerVehicles";
 import AdminVehicleDetails from "./components/Admin/AdminVehicleDetails";
 import OwnerVehicleDetails from "./components/OwnerSide/OwnerVehicleDetails";
+import OwnerVehicleDocuments from "./components/OwnerSide/OwnerVehicleDocuments";
 
 
 
@@ -119,6 +120,7 @@ const App = () => {
         <Route path="/owneraddvehicle" element={<OwnerAddVehicle />} />
         <Route path="/ownervehicle" element={<OwnerVehicles />} />
         <Route path="/ownervehicle/:vehicleId" element={<OwnerVehicleDetails />} />
+        <Route path="/ownervehicledocuments/:vehicleId" element={<OwnerVehicleDocuments />} />
 
 
 

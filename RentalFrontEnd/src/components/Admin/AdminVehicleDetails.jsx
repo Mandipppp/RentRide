@@ -11,6 +11,7 @@ const AdminVehicleDetails = () => {
     const [accessToken, setAccessToken] = useState("");
     const [vehicle, setVehicle] = useState(null);
     const [loading, setLoading] = useState(true);
+    const vehicleId = id;
   
     const [verificationStatus, setVerificationStatus] = useState({
       registrationCertificate: false,
@@ -46,7 +47,7 @@ const AdminVehicleDetails = () => {
     }, []);
   
     const getDetails = (token) => {
-      const url = `http://localhost:3000/api/admin/vehicle/${id}`;
+      const url = `http://localhost:3000/api/admin/vehicle/${vehicleId}`;
       axios
         .get(url, {
           headers: {
