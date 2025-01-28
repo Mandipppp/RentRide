@@ -35,8 +35,8 @@ const VehicleSchema = new mongoose.Schema({
     required: true,
   },
   pickupLocation: { type: String },
-  latitude: { type: Number },
-  longitude: { type: Number },
+  latitude: { type: Number, required: false, default: null },
+  longitude: { type: Number, required: false, default: null },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   // Verification Fields
