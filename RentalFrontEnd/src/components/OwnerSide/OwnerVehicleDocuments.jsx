@@ -9,12 +9,12 @@ function OwnerVehicleDocuments() {
   const [vehicleData, setvehicleData] = useState(null);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    profilePicture: "",
-    citizenshipFront: "",
+    registrationCertificate: "",
+    insuranceCertificate: "",
   });
   const [remData, setRemData] = useState({
-    profilePicture: { status: "", comments: "" },
-    citizenshipFront: { status: "", comments: "" },
+    registrationCertificate: { status: "", comments: "" },
+    insuranceCertificate: { status: "", comments: "" },
   });
   
   const navigate = useNavigate();
@@ -33,31 +33,34 @@ function OwnerVehicleDocuments() {
         .then((response) => {
           const vehicleDatas = response.data.data;
           setvehicleData(vehicleDatas);
-        //   console.log(vehicleData?.insuranceCertificate?.file);
-  
-          setFormData({
-            profilePicture: vehicleData?.registrationCertificate?.file || "",
-            citizenshipFront: vehicleData?.insuranceCertificate?.file || "",
-          });
-
-          setRemData({
-            profilePicture: {
-              status: vehicleData?.registrationCertificate?.status || "pending",
-              comments: vehicleData?.registrationCertificate?.comments || "",
-            },
-            citizenshipFront: {
-              status: vehicleData?.insuranceCertificate?.status || "pending",
-              comments: vehicleData?.insuranceCertificate?.comments || "",
-            },
-          });
-          
         })
         .catch((err) => {
           setError("Failed to fetch vehicle data.");
           toast.error("Failed to fetch vehicle data.");
         });
     }
-  }, [navigate]);
+  }, [vehicleId, navigate]);
+  
+  useEffect(() => {
+    if (vehicleData) {
+      setFormData({
+        registrationCertificate: vehicleData.registrationCertificate?.file || "",
+        insuranceCertificate: vehicleData.insuranceCertificate?.file || "",
+      });
+  
+      setRemData({
+        registrationCertificate: {
+          status: vehicleData.registrationCertificate?.status || "pending",
+          comments: vehicleData.registrationCertificate?.comments || "",
+        },
+        insuranceCertificate: {
+          status: vehicleData.insuranceCertificate?.status || "pending",
+          comments: vehicleData.insuranceCertificate?.comments || "",
+        },
+      });
+    }
+  }, [vehicleData]);
+  
 
   if (error) {
     return <div>{error}</div>;
@@ -88,11 +91,11 @@ function OwnerVehicleDocuments() {
   
     const updatePayload = new FormData();
 
-    if (remData.profilePicture.status === "Rejected" && formData.profilePicture instanceof File) {
-      updatePayload.append("registationCert", formData.profilePicture);
+    if (remData.registrationCertificate.status === "Rejected" && formData.registrationCertificate instanceof File) {
+      updatePayload.append("registationCert", formData.registrationCertificate);
     }
-    if (remData.citizenshipFront.status === "Rejected" && formData.citizenshipFront instanceof File) {
-      updatePayload.append("insuranceCert", formData.citizenshipFront);
+    if (remData.insuranceCertificate.status === "Rejected" && formData.insuranceCertificate instanceof File) {
+      updatePayload.append("insuranceCert", formData.insuranceCertificate);
     }
   
     if ([...updatePayload.keys()].length === 0) {
@@ -123,7 +126,16 @@ function OwnerVehicleDocuments() {
   return (
     <section className="flex-1 bg-white shadow-md rounded-md p-6">
       <ToastContainer />
-      <h2 className="text-2xl font-bold">Vehicle Document Details</h2>
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => navigate("/ownervehicle")}
+          className="flex items-center text-gray-600 hover:text-gray-900"
+        >
+          <i className="fa-solid fa-arrow-left mr-2"></i>
+          Back
+        </button>
+        <h2 className="text-2xl font-bold ml-4">Vehicle Document Details</h2>
+      </div>
       <span
       className={
     vehicleData?.registrationCertificate?.status === "Verified" &&  vehicleData?.insuranceCertificate?.status === "Verified"
@@ -142,33 +154,33 @@ function OwnerVehicleDocuments() {
         
           <div className='flex flex-col gap-6'>
             <div>
-              <label htmlFor="profilePicture" className="block text-gray-700 font-medium">
+              <label htmlFor="registrationCertificate" className="block text-gray-700 font-medium">
                 Registration Certificate{" "}
-              {remData.profilePicture.status && (
+              {remData.registrationCertificate.status && (
                 <span
                   className={
-                    remData.profilePicture.status === "Rejected"
+                    remData.registrationCertificate.status === "Rejected"
                       ? "text-red-500"
-                      : remData.profilePicture.status === "Verified"
+                      : remData.registrationCertificate.status === "Verified"
                       ? "text-green-500"
                       : "text-yellow-500"
                   }
                 >
-                  ({remData.profilePicture.status.toUpperCase()}: {remData.profilePicture.comments || "No comments"})
+                  ({remData.registrationCertificate.status.toUpperCase()}: {remData.registrationCertificate.comments || "No comments"})
                 </span>
               )}
               </label>
-              {formData.profilePicture && (
+              {formData.registrationCertificate && (
                 <img
-                  src={`http://localhost:3000/${formData.profilePicture}`}
+                  src={`http://localhost:3000/${formData.registrationCertificate}`}
                   alt="Registration Certificate"
-                  className="w-32 h-32 rounded-full border mt-2"
+                  className="w-60 h-44 border mt-2"
                 />
               )}
-              {remData.profilePicture.status === "Rejected" && (
+              {remData.registrationCertificate.status === "Rejected" && (
               <input
                 type="file"
-                id="profilePicture"
+                id="registrationCertificate"
                 accept="image/*"
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-md px-4 py-2 mt-2 focus:outline-none focus:ring focus:ring-blue-300"
@@ -176,33 +188,33 @@ function OwnerVehicleDocuments() {
             </div>
 
             <div>
-              <label htmlFor="citizenshipFront" className="block text-gray-700 font-medium">
+              <label htmlFor="insuranceCertificate" className="block text-gray-700 font-medium">
                 Insurance Certificate{" "}
-              {remData.citizenshipFront.status && (
+              {remData.insuranceCertificate.status && (
                 <span
                   className={
-                    remData.citizenshipFront.status === "Rejected"
+                    remData.insuranceCertificate.status === "Rejected"
                       ? "text-red-500"
-                      : remData.citizenshipFront.status === "Verified"
+                      : remData.insuranceCertificate.status === "Verified"
                       ? "text-green-500"
                       : "text-yellow-500"
                   }
                 >
-                  ({remData.citizenshipFront.status.toUpperCase()}: {remData.citizenshipFront.comments || "No comments"})
+                  ({remData.insuranceCertificate.status.toUpperCase()}: {remData.insuranceCertificate.comments || "No comments"})
                 </span>
               )}
               </label>
-              {formData.citizenshipFront && (
+              {formData.insuranceCertificate && (
                 <img
-                  src={`http://localhost:3000/${formData.citizenshipFront}`}
+                  src={`http://localhost:3000/${formData.insuranceCertificate}`}
                   alt="Citizenship Front"
-                  className="w-48 h-32 border mt-2"
+                  className="w-60 h-44 border mt-2"
                 />
               )}
-              {remData.citizenshipFront.status === "Rejected" && (
+              {remData.insuranceCertificate.status === "Rejected" && (
               <input
                 type="file"
-                id="citizenshipFront"
+                id="insuranceCertificate"
                 accept="image/*"
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-md px-4 py-2 mt-2 focus:outline-none focus:ring focus:ring-blue-300"
