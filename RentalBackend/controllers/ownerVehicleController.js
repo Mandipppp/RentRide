@@ -332,6 +332,7 @@ const getOwnerVehicles = async (req, res) => {
       pickupLocation,
       latitude,
       longitude,
+      addOns,
     } = req.body;
   
     try {
@@ -360,12 +361,27 @@ const getOwnerVehicles = async (req, res) => {
       if (dailyPrice) vehicleUpdateFields.dailyPrice = dailyPrice;
       if (minRentalPeriod) vehicleUpdateFields.minRentalPeriod = minRentalPeriod;
       if (maxRentalPeriod) vehicleUpdateFields.maxRentalPeriod = maxRentalPeriod;
-      if (features) vehicleUpdateFields.features = features;
+      // if (features) vehicleUpdateFields.features = features;
       if (condition) vehicleUpdateFields.condition = condition;
       if (status) vehicleUpdateFields.status = status;
       if (pickupLocation) vehicleUpdateFields.pickupLocation = pickupLocation;
       if (latitude) vehicleUpdateFields.latitude = latitude;
       if (longitude) vehicleUpdateFields.longitude = longitude;
+       // Parse and update addOns if provided
+    if (addOns) {
+      try {
+        vehicleUpdateFields.addOns = JSON.parse(addOns);
+      } catch (err) {
+        return res.status(400).json({ message: "Invalid format for addOns field." });
+      }
+    }
+    if (features) {
+      try {
+        vehicleUpdateFields.features = JSON.parse(features);
+      } catch (err) {
+        return res.status(400).json({ message: "Invalid format for features field." });
+      }
+    }
   
       // Handle file uploads for registration and insurance certificates
       const documentUpdateFields = {};

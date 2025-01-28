@@ -71,10 +71,10 @@ const getAllVehicles = async (req, res) => {
 
 const getVehicleById = async (req, res) => {
     try {
-      const { id } = req.params;
+      const { vehicleId } = req.params;
   
       // Fetch the vehicle by ID
-      const vehicle = await Vehicle.findById(id)
+      const vehicle = await Vehicle.findById(vehicleId)
         .populate({
           path: 'ownerId',
           select: 'name email contactNumber', // Include only specific fields from the owner
