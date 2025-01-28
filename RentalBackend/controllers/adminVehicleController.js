@@ -148,9 +148,13 @@ const verifyVehicle = async (req, res) => {
       updated = true;
     }
 
-    // Update overall verification status if both certificates are verified
-    if (registrationStatus === 'Verified' && insuranceStatus === 'Verified') {
-      updatedFields.isVerified = true; // Set the vehicle as verified
+    if (
+      (registrationStatus === 'Verified' || vehicle.registrationCertificate.status === 'Verified') &&
+      (insuranceStatus === 'Verified' || vehicle.insuranceCertificate.status === 'Verified')
+    ) {
+      updatedFields.isVerified = true;
+    } else {
+      updatedFields.isVerified = false; // Optionally handle unverified case if desired
     }
 
     // Only update the vehicle if any fields were modified

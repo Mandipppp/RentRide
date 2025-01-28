@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { reactLocalStorage } from "reactjs-localstorage";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const EditVehicle = () => {
+  const navigate = useNavigate();
+
   const { vehicleId } = useParams();
   const [vehicleData, setVehicleData] = useState(null);
   const [formData, setFormData] = useState({});
@@ -151,7 +153,16 @@ const EditVehicle = () => {
   return (
     <div className="p-8 max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
       <ToastContainer />
-      <h2 className="text-3xl font-bold mb-6 text-center">Edit Vehicle Details</h2>
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => navigate("/ownervehicle")}
+          className="flex items-center text-gray-600 hover:text-gray-900"
+        >
+          <i className="fa-solid fa-arrow-left mr-2"></i>
+          Back
+        </button>
+        <h2 className="text-3xl font-bold ml-6">Edit Vehicle Details</h2>
+      </div>
       {error && <div className="text-red-500 mb-4 text-center">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
