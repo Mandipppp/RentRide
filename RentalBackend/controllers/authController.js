@@ -233,15 +233,19 @@ exports.registerOwner = async (req, res) => {
 
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
   try {
     // Attempt to find the user by email in both User and Owner models
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = await Owner.findOne({ email });
+    let user;
+
+    if (role === "renter" || role === "admin") {
+      user = await User.findOne({ email, role }); // Match both email & role
+    } else if (role === "owner") {
+      user = await Owner.findOne({ email, role }); // Check in Owner collection
     }
 
-    if (!user) return res.status(404).json({ message: 'User or Owner not found' });
+    if (!user) return res.status(404).json({ message: "User with this role not found" });
+
 
     // Compare the password for both User and Owner
     const isMatch = await bcrypt.compare(password, user.password);
@@ -257,7 +261,7 @@ exports.login = async (req, res) => {
       responseData = { token, owner: { name: user.name, email: user.email, role: user.role } };
     } else {
       // If it's a regular user, create a user-specific token and response
-      token = jwt.sign({ id: user._id, role: user.role, email: user.email, name: user.name, contact: user.contactNumber }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      token = jwt.sign({ id: user._id, role: user.role, email: user.email, name: user.name, contact: user.contactNumber }, process.env.JWT_SECRET, { expiresIn: '5h' });
       responseData = { token, user: { name: user.name, email: user.email, role: user.role } };
     }
 

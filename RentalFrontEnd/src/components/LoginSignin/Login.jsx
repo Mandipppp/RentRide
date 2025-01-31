@@ -16,6 +16,7 @@ const Login = () => {
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
+    role: "renter",
   });
 
   const handleInputChange = (e) => {
@@ -69,6 +70,20 @@ const Login = () => {
       <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-2xl font-medium mb-6 text-center">LOGIN</h2>
         <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+            <label className="block text-sm font-medium text-gray-700">I am a:</label>
+            <select
+              name="role"
+              value={loginData.role}
+              onChange={handleInputChange}
+              className="w-full px-4 py-2 mt-2 border-b-4 border-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="renter">Renter</option>
+              <option value="owner">Owner</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
           <div>
             <input
               type="email"
