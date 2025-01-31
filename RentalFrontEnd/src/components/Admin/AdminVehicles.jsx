@@ -227,7 +227,9 @@ const AdminVehicles = () => {
             <th className="py-3 px-4 text-gray-600 font-medium">Type</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Category</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Registration</th>
-            <th className="py-3 px-4 text-gray-600 font-medium">Status</th>
+            <th className="py-3 px-4 text-gray-600 font-medium">Avaibality Status</th>
+            <th className="py-3 px-4 text-gray-600 font-medium">Verification Status</th>
+
             <th className="py-3 px-4"></th>
           </tr>
         </thead>
@@ -261,6 +263,23 @@ const AdminVehicles = () => {
                   }`}
                 >
                   {vehicle.status}
+                </td>
+                <td
+                  className={`py-3 px-4 font-medium ${
+                    vehicle.registrationCertificate.status === "Verified" && vehicle.insuranceCertificate.status === "Verified"
+                      ? "text-green-500"
+                      : vehicle.registrationCertificate.status === "Pending" || vehicle.insuranceCertificate.status === "Pending"
+                      ? "text-yellow-500"
+                      : "text-red-500"
+                  }`}
+                >
+                  {
+                    vehicle.registrationCertificate.status === "Verified" && vehicle.insuranceCertificate.status === "Verified"
+                      ? "Verified"
+                      : vehicle.registrationCertificate.status === "Pending" || vehicle.insuranceCertificate.status === "Pending"
+                      ? "Pending"
+                      : "Rejected"
+                  }
                 </td>
                 <td className="py-3 px-4">
                   <button className="text-gray-500 hover:text-blue-500">
