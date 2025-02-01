@@ -7,6 +7,7 @@ const SignupRenter = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
     setEmail(e.target.value);
@@ -14,6 +15,7 @@ const SignupRenter = () => {
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     axios
       .post("http://localhost:3000/api/auth/registerEmail", { email, type: 'user'})
       .then((res) => {
@@ -25,6 +27,8 @@ const SignupRenter = () => {
           toast.error(err.response.data.message || "Something went wrong.");
         }
         setError(err.response ? err.response.data.message : "Error occurred");
+      }).finally(() => {
+        setLoading(false);
       });
   };
 
@@ -63,14 +67,36 @@ const SignupRenter = () => {
           {countdown === 0 ? (
             <button
               type="submit"
-              className="w-full py-2 px-4 bg-green-600 hover:bg-green-800 text-white rounded-full"
+              className="w-full py-2 px-4 bg-green-600 hover:bg-green-800 text-white rounded-full flex justify-center items-center"
+              disabled={loading}
             >
-              {countdown === 0 ? "Send Verification Email" : "Resend Email"}
+              {loading ? (
+                <svg
+                  className="animate-spin h-5 w-5 mr-3 text-white"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  ></path>
+                </svg>
+              ) : (
+                "Send Verification Email"
+              )}
             </button>
           ) : (
-            <p className="text-gray-600 text-center">
-              Please wait {countdown} seconds to resend.
-            </p>
+            <p className="text-gray-600 text-center">Please wait {countdown} seconds to resend.</p>
           )}
         </form>
       </div>
