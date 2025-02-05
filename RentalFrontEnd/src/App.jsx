@@ -27,6 +27,8 @@ import OwnerVehicles from "./components/OwnerSide/OwnerVehicles";
 import AdminVehicleDetails from "./components/Admin/AdminVehicleDetails";
 import OwnerVehicleDetails from "./components/OwnerSide/OwnerVehicleDetails";
 import OwnerVehicleDocuments from "./components/OwnerSide/OwnerVehicleDocuments";
+import BrowseVehicles from "./components/UserSide/BrowseVehicles";
+import ContactPage from "./components/UserSide/ContactPage";
 
 
 
@@ -123,6 +125,12 @@ const App = () => {
         <Route path="/ownervehicledocuments/:vehicleId" element={<OwnerVehicleDocuments />} />
 
 
+
+      {/* USER */}
+
+
+      <Route path="/browsevehicles" element={<BrowseVehicles />} />
+      <Route path="/contact" element={<ContactPage />} />
 
 
 

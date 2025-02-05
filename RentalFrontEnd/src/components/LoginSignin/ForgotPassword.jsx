@@ -59,7 +59,7 @@ const ForgotPassword = () => {
           {countdown === 0 ? (
             <button
               type="submit"
-              className="w-full py-2 px-4 bg-green-600 hover:bg-green-800 text-white rounded-full flex justify-center items-center"
+              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-800 text-white rounded-full flex justify-center items-center"
               disabled={loading}
             >
               {loading ? (
