@@ -5,6 +5,7 @@ const { authenticate, checkAdmin } = require('../middlewares/authMiddleware');
 const { getAllUsers, getUserById } = require('../controllers/adminUserController');
 const { addAdmin, setupPassword } = require('../controllers/adminAdminController');
 const { getAllVehicles, getVehicleById, verifyVehicle } = require('../controllers/adminVehicleController');
+const { getAllContacts, updateContactStatus } = require('../controllers/adminContactController');
 // Route to get all owners
 router.get('/getOwners',authenticate, checkAdmin, getAllOwners);
 
@@ -27,6 +28,9 @@ router.put('/verify-vehicle/:vehicleId', authenticate, checkAdmin, verifyVehicle
 //vehicles
 router.get('/vehicle/:vehicleId', authenticate, checkAdmin, getVehicleById);
 
+//contact-us-queries
+router.get('/getContactQueries', authenticate, checkAdmin, getAllContacts);
+router.put("/contact-query/:id/respond", authenticate, checkAdmin, updateContactStatus);
 
 
 module.exports = router;

@@ -1,9 +1,11 @@
 import React, { useContext } from "react";
 // import { UserContext } from "../../App";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { UserContext } from "../UserContext/UserContext";
 
 const Navigation = () => {
+  const location = useLocation(); // Hook to get the current path
+
   const { isAuthenticated, loading } = useContext(UserContext);
 
   if (loading) {
@@ -31,7 +33,14 @@ const Navigation = () => {
             <a href="#">Vehicles</a>
           </li>
           <li className="hover:text-black">
-            <a href="#">Contact Us</a>
+            <Link to="/contact"  
+            className={`${
+                location.pathname === "/contact"
+                  ? "text-blue-500 font-bold" // Active style
+                  : "text-gray-600 hover:text-blue-500"
+              } transition duration-200`}
+              >
+                Contact Us</Link>
           </li>
           {isAuthenticated && (
             <li className="hover:text-black">

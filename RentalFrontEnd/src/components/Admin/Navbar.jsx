@@ -5,14 +5,14 @@ const Navbar = () => {
   const location = useLocation(); // Hook to get the current path
 
   const menuItems = [
-    { name: "Users", path: "/users" },
+    { name: "Users", path: "/adminusers" },
     { name: "Owners", path: "/adminowners" },
     { name: "Vehicles", path: "/adminvehicles" },
     { name: "Booking", path: "/booking" },
     { name: "Reviews", path: "/reviews" },
     { name: "Pages", path: "/pages" },
     { name: "Contact Us", path: "/contact" },
-    { name: "Queries", path: "/queries" },
+    { name: "Queries", path: "/admincontactqueries" },
   ];
 
   return (

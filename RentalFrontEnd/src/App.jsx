@@ -29,6 +29,7 @@ import OwnerVehicleDetails from "./components/OwnerSide/OwnerVehicleDetails";
 import OwnerVehicleDocuments from "./components/OwnerSide/OwnerVehicleDocuments";
 import BrowseVehicles from "./components/UserSide/BrowseVehicles";
 import ContactPage from "./components/UserSide/ContactPage";
+import AdminContactUsQueries from "./components/Admin/AdminContactUsQueries";
 
 
 
@@ -101,6 +102,8 @@ const App = () => {
         <Route path="/adminprofile" element={<AdminProfile />} />
 
         <Route path="/adminusers" element={<AdminUsers />} />
+        <Route path="/admincontactqueries" element={<AdminContactUsQueries />} />
+
         {/* <Route path="/users/:id" element={<AdminOwnerProfile />} /> */}
 
         <Route path="/adminvehicles" element={<AdminVehicles />} />
