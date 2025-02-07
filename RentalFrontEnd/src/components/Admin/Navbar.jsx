@@ -8,10 +8,10 @@ const Navbar = () => {
     { name: "Users", path: "/adminusers" },
     { name: "Owners", path: "/adminowners" },
     { name: "Vehicles", path: "/adminvehicles" },
-    { name: "Booking", path: "/booking" },
-    { name: "Reviews", path: "/reviews" },
-    { name: "Pages", path: "/pages" },
-    { name: "Contact Us", path: "/contact" },
+    { name: "Booking", path: "/adminbooking" },
+    { name: "Reviews", path: "/adminreviews" },
+    { name: "Pages", path: "/adminpages" },
+    { name: "Contact Us", path: "/admincontact" },
     { name: "Queries", path: "/admincontactqueries" },
   ];
 

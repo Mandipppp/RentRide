@@ -27,10 +27,24 @@ const Navigation = () => {
         {/* Menu Links */}
         <ul className="flex space-x-8 text-gray-600">
           <li className="hover:text-black">
-            <a href="#">Home</a>
+          <Link to="/home"  
+            className={`${
+                location.pathname === "/home"
+                  ? "text-blue-500 font-bold" // Active style
+                  : "text-gray-600 hover:text-blue-500"
+              } transition duration-200`}
+              >
+                Home</Link>
           </li>
           <li className="hover:text-black">
-            <a href="#">Vehicles</a>
+            <Link to="/browsevehicles"  
+            className={`${
+                location.pathname === "/browsevehicles"
+                  ? "text-blue-500 font-bold" // Active style
+                  : "text-gray-600 hover:text-blue-500"
+              } transition duration-200`}
+              >
+                Vehicles</Link>
           </li>
           <li className="hover:text-black">
             <Link to="/contact"  
