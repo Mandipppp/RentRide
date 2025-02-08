@@ -21,12 +21,14 @@ exports.getAvailableVehicles = async (req, res) => {
       if (verified === "true") {
         query.isVerified = true;
       }
-  
-      // Filter by add-ons if provided
+
+
       if (addOns) {
-        const addOnList = addOns.split(",");
+        const addOnList = addOns.split(",").map(addOn => 
+          addOn.toLowerCase().replace(/[-\s]/g, "_")  // Convert to lowercase and replace spaces/hyphens with _
+        );
         // console.log(addOnList);
-        query["addOns.name"] = { $all: addOnList };
+        query["addOns.name"] = { $all: addOnList };  // Search for all required add-ons
       }
   
       // Filter by rental date availability
@@ -40,13 +42,13 @@ exports.getAvailableVehicles = async (req, res) => {
         }
   
         query.$or = [
-            { bookings: { $not: { $elemMatch: { startDate: { $lt: drop }, endDate: { $gt: pickup } } } } },
-            { bookings: { $exists: false } },
-          ];
-    
-          // Ensure rental period is within min and max limits
-          query.minRentalPeriod = { $lte: rentalPeriod };
-          query.maxRentalPeriod = { $gte: rentalPeriod };
+        { bookings: { $not: { $elemMatch: { startDate: { $lt: drop }, endDate: { $gt: pickup } } } } },
+        { bookings: { $exists: false } },
+      ];
+
+      // Ensure rental period is within min and max limits
+      query.minRentalPeriod = { $lte: rentalPeriod };
+      query.maxRentalPeriod = { $gte: rentalPeriod };
       }
   
       // Fetch vehicles based on query

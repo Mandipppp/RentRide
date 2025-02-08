@@ -133,7 +133,18 @@ const getOwnerVehicles = async (req, res) => {
       const imageUrls = req.files.pictures.map(picture => picture.path);
   
       // Parse addOns and features
-      const parsedAddOns = addOns ? JSON.parse(addOns) : [];
+      // const parsedAddOns = addOns ? JSON.parse(addOns) : [];
+      // Parse and normalize add-ons
+      let parsedAddOns = [];
+      try {
+          if (addOns) {
+              parsedAddOns = JSON.parse(addOns)
+                  .map(addOn => addOn.toLowerCase().replace(/[-\s]/g, "_")) // Normalize format
+                  .filter((value, index, self) => self.indexOf(value) === index); // Remove duplicates
+          }
+      } catch (error) {
+          return res.status(400).json({ message: 'Invalid add-ons format.' });
+      }
       const parsedFeatures = features ? JSON.parse(features) : [];
   
       // Create the vehicle

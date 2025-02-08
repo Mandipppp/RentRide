@@ -63,7 +63,7 @@ export default function BrowseVehicles() {
       setVehicles(response.data);
       // console.log(response.data);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch vehicles.");
+      console.log(err.response?.data?.message || "Failed to fetch vehicles.");
     }
   };
 
