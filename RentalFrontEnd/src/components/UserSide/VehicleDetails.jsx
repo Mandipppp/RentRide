@@ -2,9 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '../Ui/Button';
 import { Card } from '../Ui/Card';
 import car from '../Images/HomeCar.png';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { reactLocalStorage } from 'reactjs-localstorage';
 import axios from 'axios';
+
+// Helper function to calculate the number of days between two dates
+const calculateDaysDifference = (startDate, endDate) => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const timeDifference = end - start;
+  return Math.ceil(timeDifference / (1000 * 3600 * 24)); // Convert time difference to days
+};
 
 
 export default function VehicleDetails() {
@@ -13,6 +21,16 @@ export default function VehicleDetails() {
   const [currentImage, setCurrentImage] = useState(0);
   const [token, setToken] = useState("");
   const navigate = useNavigate();
+  const [baseCost, setBaseCost] = useState(0);
+  const [addOnsCost, setAddOnsCost] = useState(0);
+
+  const [totalCost, setTotalCost] = useState(0);
+  const [selectedAddOns, setSelectedAddOns] = useState([]);
+
+  // Get filters from location state
+  const location = useLocation();
+  const { filters } = location.state || {};  // Destructure filters from the state
+
 
   
   useEffect(() => {
@@ -43,6 +61,33 @@ export default function VehicleDetails() {
     }
   }, [vehicleId, token]);
 
+  useEffect(() => {
+    if (vehicle && filters) {
+      const { pickupDate, dropDate } = filters;
+
+      if (pickupDate && dropDate) {
+        // Calculate number of days
+        const numDays = calculateDaysDifference(pickupDate, dropDate);
+
+        // Calculate base vehicle cost
+        const onlyVehicleCost = vehicle.dailyPrice * numDays;
+
+        // Set total cost
+        setBaseCost(onlyVehicleCost);
+      }
+    }
+  }, [vehicle, filters]);
+
+  useEffect(() => {
+    // Recalculate the total cost whenever selected add-ons change
+    const addOnsCost = selectedAddOns.reduce(
+      (acc, addon) => acc + addon.pricePerDay * calculateDaysDifference(filters?.pickupDate, filters?.dropDate),
+      0
+    );
+    setAddOnsCost(addOnsCost);
+    setTotalCost(baseCost + addOnsCost);
+  }, [selectedAddOns, baseCost, filters]);
+
   // Auto change image every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
@@ -50,6 +95,22 @@ export default function VehicleDetails() {
     }, 3000);
     return () => clearInterval(interval);
   }, [currentImage]);
+
+  const handleAddOnToggle = (addon) => {
+    setSelectedAddOns((prevSelected) => {
+      if (prevSelected.some((item) => item.name === addon.name)) {
+        return prevSelected.filter((item) => item.name !== addon.name); // Remove addon
+      } else {
+        return [...prevSelected, addon]; // Add addon
+      }
+    });
+  };
+
+  const handleDeleteAddOn = (addon) => {
+    setSelectedAddOns((prevSelected) =>
+      prevSelected.filter((item) => item.name !== addon.name)
+    );
+  };
 
   if (!vehicle) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -69,6 +130,7 @@ export default function VehicleDetails() {
         </button>
         <h2 className="font-bold text-xl text-gray-800 ml-6">Vehicle Details</h2>
       </div>
+     
         {/* Car Image and Info */}
         <div className="flex flex-col items-left">
             {/* Image Carousel */}
@@ -129,7 +191,7 @@ export default function VehicleDetails() {
         {/* Owner Info */}
         <div className="flex items-center mt-8 bg-gray-50 p-2 rounded-full shadow-md">
           <img
-            src={car}
+            src={`http://localhost:3000/${vehicle.ownerId.kycId.documents.profilePicture.file}`}
             alt="Owner"
             className="w-12 h-12 rounded-full border-gray-300 object-cover"
           />
@@ -138,6 +200,34 @@ export default function VehicleDetails() {
             <p className="text-gray-800 text-lg">{vehicle.ownerId.name}</p>
           </div>
         </div>
+
+         {/* Display Booking Criteria (Filters) */}
+         <div className="bg-gray-50 p-4 rounded-lg shadow-md mb-4 mt-6">
+        <h3 className="font-semibold text-lg text-gray-800">Your Booking Criteria</h3>
+        <div className="overflow-x-auto mt-4">
+          <table className="table-auto w-full text-gray-700">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 border-r border-gray-300">Pick-up Location</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 border-r border-gray-300">Pick-up Date</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 border-r border-gray-300">Pick-up Time</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 border-r border-gray-300">Return Date</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">Return Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">{filters?.pickAndDropLocation || "N/A"}</td>
+                <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">{filters?.pickupDate || "N/A"}</td>
+                <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">{filters?.pickupTime || "N/A"}</td>
+                <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">{filters?.dropDate || "N/A"}</td>
+                <td className="px-6 py-4 text-sm font-medium">{filters?.dropTime || "N/A"}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
 
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div>
@@ -161,19 +251,26 @@ export default function VehicleDetails() {
               </div>
           </div>
 
-
-            {/* Available Add-Ons */}
-            <div className="bg-gray-50 p-6 rounded-lg mt-8 shadow-md">
-              <h3 className="font-semibold text-lg text-gray-800">Available Add-Ons</h3>
-              <ul className="mt-4 text-gray-700">
-                  {vehicle.addOns?.map((addon, index) => (
-                  <li key={index} className="flex justify-between py-2">
-                    <span>{addon.name}</span> <span className="text-green-600">+{addon.pricePerDay} NPR/day</span>
-                  </li>
-                ))}
-               
-              </ul>
-            </div>
+ {/* Add-Ons Section */}
+ <div className="bg-gray-50 p-6 rounded-lg mt-8 shadow-md">
+          <h3 className="font-semibold text-lg text-gray-800">Available Add-Ons</h3>
+          <ul className="mt-4 text-gray-700">
+            {vehicle.addOns?.map((addon, index) => (
+              <li key={index} className="flex justify-between py-2">
+                <span>{addon.name}</span>
+                <div className="flex items-center">
+                  <span className="text-green-600">+{addon.pricePerDay} NPR/day</span>
+                  <button
+                    onClick={() => handleAddOnToggle(addon)}
+                    className={`ml-4 text-blue-500 ${selectedAddOns.some((item) => item.name === addon.name) ? 'text-red-500' : ''}`}
+                  >
+                    {selectedAddOns.some((item) => item.name === addon.name) ? 'Remove' : 'Add'}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
             
             </div>
 
@@ -187,13 +284,32 @@ export default function VehicleDetails() {
             </div>
 
 
-            {/* Cost Breakdown */}
+            {/* Bill Section */}
             <div className="bg-gray-50 p-6 shadow-md rounded-lg mt-6">
               <h3 className="font-semibold text-lg">Vehicle Cost</h3>
-              <p className="mt-2 flex justify-between "><span>4 Days - 3000 NPR/day</span> <span>Rs 12,000</span></p>
-              <h3 className="font-semibold text-lg mt-2">Add Ons</h3>
-              <p className="mt-2 flex justify-between"><span>Child Seat - 200 NPR/day</span> <span>Rs 800</span></p>
-              <p className="font-bold mt-4 flex justify-between"><span>Total</span> <span>Rs 12,800</span></p>
+              <p className="mt-2 flex justify-between "><span>{calculateDaysDifference(filters?.pickupDate, filters?.dropDate)} Days - {vehicle.dailyPrice} NPR/day</span> <span>Rs {baseCost}</span></p>
+              
+              <h3 className="font-semibold text-lg mt-4">Add Ons</h3>
+              {selectedAddOns.length > 0 ? (selectedAddOns.map((addon, index) => (
+                <div key={index} className="flex justify-between mt-2">
+                  <span>{addon.name} - {addon.pricePerDay} NPR/day</span>
+                  <div>
+                  <span className='pr-3'>Rs {calculateDaysDifference(filters?.pickupDate, filters?.dropDate)*addon.pricePerDay}</span>
+                  <button
+                    onClick={() => handleDeleteAddOn(addon)}
+                    className="text-red-500"
+                  >
+                    Delete
+                  </button>
+                  </div>
+                </div>
+              ))
+            ):(
+              <p className="text-gray-500 mt-2">No add-ons selected</p> // Message when no add-ons are selected
+            )
+            }
+
+              <p className="font-bold mt-4 flex justify-between"><span>Total</span> <span>Rs {totalCost}</span></p>
             </div>
 
             {/* Book Now Button */}

@@ -22,6 +22,14 @@ const BookingSchema = new mongoose.Schema({
     default: 'Pending' 
   }, // Payment completion status
 
+  addOns: [
+    {
+      name: { type: String, required: true }, // Name of the add-on
+      pricePerDay: { type: Number, required: true }, // Price of the add-on per day
+      totalPrice: { type: Number, required: true } // Total price of the add-on for the entire booking
+    }
+  ], // Add-ons selected for this booking
+  
   amountDue: { type: Number, required: true }, // Total rental cost
   amountPaid: { type: Number, default: 0 }, // Amount already paid
 

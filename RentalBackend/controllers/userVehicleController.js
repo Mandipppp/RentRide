@@ -95,6 +95,10 @@ exports.getVehicleById = async (req, res) => {
       .populate({
         path: 'ownerId',
         select: 'name email contactNumber', // Include only specific fields from the owner
+        populate: {
+          path: 'kycId',
+          select: 'documents.profilePicture.file', // Include only the profile picture
+        }
       });
 
       if (!vehicle) {

@@ -8,7 +8,7 @@ export default function BrowseVehicles() {
   const [vehicles, setVehicles] = useState([]);
   const today = new Date().toISOString().split("T")[0];
   const navigate = useNavigate();
-  
+
   const [filters, setFilters] = useState({
     pickAndDropLocation: "",
     pickupDate: today,
@@ -68,6 +68,13 @@ export default function BrowseVehicles() {
       console.log(err.response?.data?.message || "Failed to fetch vehicles.");
     }
   };
+
+  const handleVehicleClick = (vehicleId) => {
+    navigate(`/vehicleDetails/${vehicleId}`, {
+      state: { filters }  // Pass the filters state along with navigation
+    });
+  };
+  
 
 
   return (
@@ -143,7 +150,7 @@ export default function BrowseVehicles() {
             <div 
             key={index} 
             className="bg-white border p-6 rounded-lg shadow-lg flex flex-col w-full"
-            onClick={() => navigate(`/vehicleDetails/${vehicle._id}`)}>
+            onClick={() => handleVehicleClick(vehicle._id)}>
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-xl font-bold">Rs. {vehicle.dailyPrice} <span className="text-sm font-normal">/ day</span></p>
