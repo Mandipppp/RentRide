@@ -2,10 +2,12 @@ import { useState } from "react";
 import Navigation from "./Navigation";
 import { reactLocalStorage } from "reactjs-localstorage";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function BrowseVehicles() {
   const [vehicles, setVehicles] = useState([]);
   const today = new Date().toISOString().split("T")[0];
+  const navigate = useNavigate();
   
   const [filters, setFilters] = useState({
     pickAndDropLocation: "",
@@ -138,7 +140,10 @@ export default function BrowseVehicles() {
       <div className="w-2/3 p-6">
         <div className="grid grid-cols-1 gap-6 items-start">
           {vehicles.map((vehicle, index) => (
-            <div key={index} className="bg-white border p-6 rounded-lg shadow-lg flex flex-col w-full">
+            <div 
+            key={index} 
+            className="bg-white border p-6 rounded-lg shadow-lg flex flex-col w-full"
+            onClick={() => navigate(`/vehicleDetails/${vehicle._id}`)}>
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-xl font-bold">Rs. {vehicle.dailyPrice} <span className="text-sm font-normal">/ day</span></p>

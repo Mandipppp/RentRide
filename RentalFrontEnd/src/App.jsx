@@ -135,7 +135,7 @@ const App = () => {
 
       <Route path="/browsevehicles" element={<BrowseVehicles />} />
       <Route path="/contact" element={<ContactPage />} />
-      <Route path="/vehicleDetails" element={<VehicleDetails />} />
+      <Route path="/vehicleDetails/:vehicleId" element={<VehicleDetails />} />
 
 
         

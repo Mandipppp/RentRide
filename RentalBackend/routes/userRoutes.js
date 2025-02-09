@@ -2,7 +2,7 @@ const express = require('express');
 const { authenticate } = require('../middlewares/authMiddleware');
 const { getProfile, updateUser, changePassword } = require('../controllers/userSelfController');
 const { submitContactForm } = require('../controllers/userContactController');
-const { getAvailableVehicles } = require('../controllers/userVehicleController');
+const { getAvailableVehicles, getVehicleById } = require('../controllers/userVehicleController');
 const router = express.Router();
 
 router.get("/me", authenticate, getProfile);
@@ -13,4 +13,6 @@ router.post("/contact-query", authenticate, submitContactForm);
 
 
 router.get("/vehicles", authenticate, getAvailableVehicles);
+router.get("/vehicles/:vehicleId", authenticate, getVehicleById);
+
 module.exports = router;
