@@ -127,7 +127,7 @@ export default function VehicleDetails() {
       };
       fetchBookingStatus();
     }
-  }, [vehicleId, token]);
+  }, [vehicleId, token, isBooked]);
   
 
   const handleDeleteAddOn = (addon) => {

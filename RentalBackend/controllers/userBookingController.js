@@ -1,8 +1,9 @@
 const Booking = require('../models/Booking');
 const Notification = require('../models/notification');
 const Vehicle = require('../models/vehicle');
-// const User = require('../models/user'); 
-// const Owner = require('../models/Owner');
+const User = require('../models/user'); 
+const Owner = require('../models/owner');
+const nodemailer = require("nodemailer");
 
 // Create a new booking
 exports.createBooking = async (req, res) => {
@@ -18,6 +19,7 @@ exports.createBooking = async (req, res) => {
     } = req.body;
 
     const renterId = req.user.id;
+    const renter = await User.findById(renterId);
     // Fetch vehicle details
     const vehicle = await Vehicle.findById(vehicleId);
     if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
@@ -40,6 +42,7 @@ exports.createBooking = async (req, res) => {
 
     // Get owner ID from vehicle
     const ownerId = vehicle.ownerId;
+    const owner = await Owner.findById(ownerId);
 
     // Calculate total days
     const totalDays = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
@@ -97,6 +100,107 @@ exports.createBooking = async (req, res) => {
 
     await notification.save();
 
+    // Send Email Notification
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: owner.email,
+      subject: `New Booking Request for Your Vehicle: ${vehicle.name}`,
+      html: `
+        <html>
+      <head>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            background-color: #f4f4f4;
+            padding: 20px;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .header h1 {
+            color: #4CAF50;
+          }
+          .content {
+            font-size: 16px;
+          }
+          .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+          }
+          .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            display: inline-block;
+            font-size: 16px;
+            border-radius: 5px;
+            text-decoration: none;
+          }
+          .button:hover {
+            background-color: #45a049;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>New Booking Request</h1>
+          </div>
+          <div class="content">
+            <p>Dear <strong>${owner.name}</strong>,</p>
+            
+            <p>We’re excited to inform you that your vehicle, <strong>${vehicle.name}</strong>, has received a new booking request from <strong>${renter.name}</strong>.</p>
+
+            <p><strong>Booking Details:</strong></p>
+            <ul>
+              <li><strong>Pickup Date:</strong> ${startDate}</li>
+              <li><strong>Drop-off Date:</strong> ${endDate}</li>
+              <li><strong>Pickup Location:</strong> ${pickAndDropLocation}</li>
+              <li><strong>Pickup Time:</strong> ${pickupTime || "Not specified"}</li>
+              <li><strong>Drop-off Time:</strong> ${dropTime || "Not specified"}</li>
+              <li><strong>Total Days:</strong> ${totalDays}</li>
+              <li><strong>Amount Due:</strong> $${amountDue}</li>
+            </ul>
+
+            <p>Please review and respond to this request at your earliest convenience.</p>
+
+            <p><a href="${process.env.BASE_URL}/owner/bookings" class="button">View Booking</a></p>
+
+            <p>Thank you for choosing RentRide!</p>
+
+            <p>Best regards,<br/>The RentRide Team</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2025 RentRide. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+      `,
+    };
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail(mailOptions);
+
     res.status(201).json({ message: 'Booking request sent', booking: newBooking });
 
   } catch (error) {
@@ -147,6 +251,7 @@ exports.cancelUserBooking = async (req, res) => {
   try {
     const { bookingId } = req.params;
     const userId = req.user.id;
+    const renter = await User.findById(userId);
 
     // Find the booking
     const booking = await Booking.findById(bookingId);
@@ -155,6 +260,8 @@ exports.cancelUserBooking = async (req, res) => {
     }
     const vehicle = await Vehicle.findById(booking.vehicleId);
 
+    const ownerId = vehicle.ownerId;
+    const owner = await Owner.findById(ownerId);
     // Check if the user is authorized (either renter or owner)
     if (String(booking.renterId) !== userId) {
       return res.status(403).json({ message: 'Not authorized to cancel this booking' });
@@ -197,6 +304,102 @@ exports.cancelUserBooking = async (req, res) => {
     });
 
     await notification.save();
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: owner.email,
+      subject: `Booking Cancellation Notice for Your Vehicle: ${vehicle.name}`,
+      html: `
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                color: #333;
+                background-color: #f4f4f4;
+                padding: 20px;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 20px;
+              }
+              .header h1 {
+                color: #d9534f;
+              }
+              .content {
+                font-size: 16px;
+              }
+              .footer {
+                margin-top: 30px;
+                font-size: 12px;
+                color: #777;
+                text-align: center;
+              }
+              .button {
+                background-color: #d9534f;
+                color: white;
+                padding: 10px 20px;
+                text-align: center;
+                display: inline-block;
+                font-size: 16px;
+                border-radius: 5px;
+                text-decoration: none;
+              }
+              .button:hover {
+                background-color: #c9302c;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Booking Cancelled</h1>
+              </div>
+              <div class="content">
+                <p>Dear <strong>${owner.name}</strong>,</p>
+                
+                <p>We regret to inform you that a booking for your vehicle, <strong>${vehicle.name}</strong>, has been cancelled by the renter, <strong>${renter.name}</strong>.</p>
+    
+                <p><strong>Booking Details:</strong></p>
+                <ul>
+                  <li><strong>Pickup Date:</strong> ${booking.startDate}</li>
+                  <li><strong>Drop-off Date:</strong> ${booking.endDate}</li>
+                  <li><strong>Cancellation Fee (if applicable):</strong> Rs. ${cancellationFee}</li>
+                  <li><strong>Refund Amount (if applicable):</strong> Rs. ${refundAmount}</li>
+                </ul>
+    
+                <p>We apologize for any inconvenience this may have caused. You may check your bookings and availability on your dashboard.</p>
+    
+                <p><a href="${process.env.BASE_URL}/owner/bookings" class="button">View Bookings</a></p>
+    
+                <p>If you have any questions or need further assistance, please don't hesitate to contact us.</p>
+    
+                <p>Best regards,<br/>The RentRide Team</p>
+              </div>
+              <div class="footer">
+                <p>&copy; 2025 RentRide. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    };
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail(mailOptions);
 
     res.status(200).json({
       message: 'Booking cancelled successfully',
