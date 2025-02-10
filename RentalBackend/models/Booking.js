@@ -8,11 +8,13 @@ const BookingSchema = new mongoose.Schema({
   startDate: { type: Date, required: true }, // Rental start date
   endDate: { type: Date, required: true }, // Rental end date
   totalDays: { type: Number, required: true }, // Duration in days
-  pickAndDropLocation: {type: String, required: true},
+  pickAndDropLocation: {type: String, required: false},
+  pickupTime: { type: String, default: null }, // Optional pickup time
+  dropTime: { type: String, default: null }, // Optional drop-off time
 
   bookingStatus: { 
     type: String, 
-    enum: ['Pending', 'Confirmed', 'Cancelled', 'Completed'], 
+    enum: ['Pending', 'Accepted', 'Confirmed', 'Cancelled', 'Completed'], 
     default: 'Pending' 
   }, // Status of booking
 

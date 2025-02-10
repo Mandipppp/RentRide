@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { reactLocalStorage } from 'reactjs-localstorage';
 import Navigation from "./Navigation";
-import { reactLocalStorage } from "reactjs-localstorage";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from 'react-toastify';
+
+
 
 export default function BrowseVehicles() {
   const [vehicles, setVehicles] = useState([]);
@@ -49,6 +52,10 @@ export default function BrowseVehicles() {
   const handleSearch = async () => {
     const token = reactLocalStorage.get("access_token");
     // console.log("Filters: ", filters);
+    if (!filters.pickupDate || !filters.dropDate) {
+      toast.error("Please select both pickup and drop dates before searching.");
+      return;
+    }
 
     try {
       const response = await axios.get("http://localhost:3000/api/users/vehicles", {
@@ -79,6 +86,7 @@ export default function BrowseVehicles() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <ToastContainer />
       <Navigation />
       <div className="flex w-full p-6">
         {/* Search Panel */}
@@ -103,13 +111,7 @@ export default function BrowseVehicles() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 mb-6">
-          <div
-            className={`border p-2 rounded-lg flex items-center justify-center cursor-pointer transition ${filters.verified ? "bg-green-500 text-white" : "bg-gray-100"}`}
-            onClick={() => setFilters({ ...filters, verified: !filters.verified })}
-          >
-            <i className="fa-solid fa-file-shield text-xl mr-2"></i>
-            <span className="font-semibold">Verified</span>
-          </div>
+          
 
           <div className="border p-4 rounded-lg">
             <p className="font-semibold mb-2">Add-On</p>
@@ -140,7 +142,14 @@ export default function BrowseVehicles() {
             </div>
           </div>
         </div>
-          <button className="w-full bg-green-500 text-white p-3 rounded" onClick={handleSearch}>Search</button>
+        <div
+          className={`border mb-6 p-2 rounded-lg flex items-center justify-center cursor-pointer transition ${filters.verified ? "bg-green-500 text-white" : "bg-gray-100"}`}
+          onClick={() => setFilters({ ...filters, verified: !filters.verified })}
+        >
+          <i className="fa-solid fa-file-shield text-xl mr-2"></i>
+          <span className="font-semibold">Verified</span>
+        </div>
+          <button className="w-full bg-green-500 text-white p-3 rounded disabled:opacity-50" onClick={handleSearch} disabled={!filters.pickupDate || !filters.dropDate}>Search</button>
         </div>
 
       {/* Results Panel */}

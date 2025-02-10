@@ -5,6 +5,8 @@ import car from '../Images/HomeCar.png';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { reactLocalStorage } from 'reactjs-localstorage';
 import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+
 
 // Helper function to calculate the number of days between two dates
 const calculateDaysDifference = (startDate, endDate) => {
@@ -94,7 +96,7 @@ export default function VehicleDetails() {
       setCurrentImage((prev) => (prev + 1) % (vehicle?.imageUrls?.length || 1));
     }, 3000);
     return () => clearInterval(interval);
-  }, [currentImage]);
+  }, [currentImage,vehicle?.imageUrls]);
 
   const handleAddOnToggle = (addon) => {
     setSelectedAddOns((prevSelected) => {
@@ -112,6 +114,42 @@ export default function VehicleDetails() {
     );
   };
 
+  const handleBooking = async () => {
+    if (!filters) {
+      alert("Please select booking criteria.");
+      return;
+    }
+  
+    try {
+      const bookingData = {
+        vehicleId: vehicle._id,
+        startDate: filters.pickupDate,
+        endDate: filters.dropDate,
+        pickAndDropLocation: filters.pickAndDropLocation,
+        pickupTime: filters.pickupTime,
+        dropTime: filters.dropTime,
+        addOns: selectedAddOns,
+      };
+
+      console.log("Booking data:",bookingData);
+  
+      const response = await axios.post(
+        "http://localhost:3000/api/user/booking/createBooking",
+        bookingData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      toast.success("Booking request sent successfully!");
+      // navigate("/bookings"); // Redirect to bookings page
+    } catch (error) {
+      console.error("Booking failed:", error.response?.data || error.message);
+      toast.error("Failed to create booking. Please try again.");
+    }
+  };
+  
+
   if (!vehicle) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -120,6 +158,8 @@ export default function VehicleDetails() {
     <div className="bg-gray-100 min-h-screen p-2">
       
       <div className="max-w-6xl mx-auto bg-white shadow-md rounded-lg p-6">
+      <ToastContainer />
+
       <div className="flex items-center mb-6">
         <button
           onClick={() => navigate("/browsevehicles")}
@@ -313,7 +353,7 @@ export default function VehicleDetails() {
             </div>
 
             {/* Book Now Button */}
-            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg">
+            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={handleBooking}>
               Book Now
             </Button>
           </div>
