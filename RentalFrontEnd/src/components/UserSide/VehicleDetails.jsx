@@ -32,7 +32,9 @@ export default function VehicleDetails() {
   // Get filters from location state
   const location = useLocation();
   const { filters } = location.state || {};  // Destructure filters from the state
-
+  const {isRequested} = location.state;
+  const [isBooked, setIsBooked] = useState(isRequested);
+  const [bookingId, setBookingId] = useState(null);
 
   
   useEffect(() => {
@@ -54,7 +56,7 @@ export default function VehicleDetails() {
           );
           setVehicle(response.data);
 
-          console.log(response.data);
+          // console.log(response.data);
         } catch (err) {
           setError("Failed to fetch vehicle details.");
         }
@@ -108,6 +110,26 @@ export default function VehicleDetails() {
     });
   };
 
+  useEffect(() => {
+    if (token) {
+      const fetchBookingStatus = async () => {
+        try {
+          const response = await axios.get(
+            `http://localhost:3000/api/user/booking/${vehicleId}`, 
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (response.data && response.data.status !== "cancelled") {
+            setBookingId(response.data._id)
+          }
+        } catch (error) {
+          console.error("Failed to fetch booking status:", error);
+        }
+      };
+      fetchBookingStatus();
+    }
+  }, [vehicleId, token]);
+  
+
   const handleDeleteAddOn = (addon) => {
     setSelectedAddOns((prevSelected) =>
       prevSelected.filter((item) => item.name !== addon.name)
@@ -116,7 +138,7 @@ export default function VehicleDetails() {
 
   const handleBooking = async () => {
     if (!filters) {
-      alert("Please select booking criteria.");
+      toast.error("Please select booking criteria.");
       return;
     }
   
@@ -131,7 +153,7 @@ export default function VehicleDetails() {
         addOns: selectedAddOns,
       };
 
-      console.log("Booking data:",bookingData);
+      // console.log("Booking data:",bookingData);
   
       const response = await axios.post(
         "http://localhost:3000/api/user/booking/createBooking",
@@ -142,6 +164,8 @@ export default function VehicleDetails() {
       );
   
       toast.success("Booking request sent successfully!");
+      setIsBooked(true);
+      // isRequested = true;
       // navigate("/bookings"); // Redirect to bookings page
     } catch (error) {
       console.error("Booking failed:", error.response?.data || error.message);
@@ -149,7 +173,24 @@ export default function VehicleDetails() {
     }
   };
   
-
+  const handleCancelBooking = async () => {
+    try {
+      const response = await axios.put(
+        `http://localhost:3000/api/user/booking/cancel/${bookingId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      toast.success("Booking cancelled successfully!");
+      setIsBooked(false); //Update local state
+    } catch (error) {
+      console.error("Cancellation failed:", error.response?.data || error.message);
+      toast.error("Failed to cancel booking. Please try again.");
+    }
+  };
+  
   if (!vehicle) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -353,9 +394,15 @@ export default function VehicleDetails() {
             </div>
 
             {/* Book Now Button */}
+            {isBooked ? (
+              <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
+                Cancel Booking
+              </Button>
+            ):(
             <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={handleBooking}>
               Book Now
             </Button>
+          )}
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { reactLocalStorage } from 'reactjs-localstorage';
 import Navigation from "./Navigation";
 import axios from "axios";
@@ -11,6 +11,7 @@ export default function BrowseVehicles() {
   const [vehicles, setVehicles] = useState([]);
   const today = new Date().toISOString().split("T")[0];
   const navigate = useNavigate();
+  const [requestedVehicleIds, setRequestedVehicleIds] = useState([]);
 
   const [filters, setFilters] = useState({
     pickAndDropLocation: "",
@@ -22,6 +23,28 @@ export default function BrowseVehicles() {
     addOns: [],
     fuel: "Petrol"
   });
+
+  //fetch all the vehicles id that the user has requested
+  useEffect(() => {
+    fetchRequestedBookings();
+  }, []);
+
+  const fetchRequestedBookings = async () => {
+    const token = reactLocalStorage.get("access_token");
+
+    try {
+      const response = await axios.get("http://localhost:3000/api/user/booking/getUsersBookings", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const bookedIds = response.data.map(booking => booking);
+      setRequestedVehicleIds(bookedIds);
+      // console.log("Booking ids",response.data.map(booking => booking));
+
+    } catch (err) {
+      console.log(err.response?.data?.message || "Failed to fetch booking requests.");
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -77,8 +100,9 @@ export default function BrowseVehicles() {
   };
 
   const handleVehicleClick = (vehicleId) => {
+    const isRequested = requestedVehicleIds.includes(vehicleId);
     navigate(`/vehicleDetails/${vehicleId}`, {
-      state: { filters }  // Pass the filters state along with navigation
+      state: { filters , isRequested}  // Pass the filters state along with navigation
     });
   };
   
@@ -155,11 +179,18 @@ export default function BrowseVehicles() {
       {/* Results Panel */}
       <div className="w-2/3 p-6">
         <div className="grid grid-cols-1 gap-6 items-start">
-          {vehicles.map((vehicle, index) => (
+          {vehicles.map((vehicle, index) => {
+              const isRequested = requestedVehicleIds.includes(vehicle._id);
+              return (
             <div 
             key={index} 
             className="bg-white border p-6 rounded-lg shadow-lg flex flex-col w-full"
             onClick={() => handleVehicleClick(vehicle._id)}>
+            {isRequested && (
+              <p className="text-yellow-500 px-3 py-1 rounded">
+                Booking Requested
+              </p>
+            )}
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-xl font-bold">Rs. {vehicle.dailyPrice} <span className="text-sm font-normal">/ day</span></p>
@@ -175,7 +206,8 @@ export default function BrowseVehicles() {
                 <p><i className="fa-solid fa-gas-pump mr-2"></i> {vehicle.fuel}</p>
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       </div>
 
