@@ -224,20 +224,66 @@ exports.getAllBookings = async (req, res) => {
   }
 }
 
+exports.getBookingById = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    // Fetch booking details and populate vehicle and owner details
+    const booking = await Booking.findById(bookingId)
+      .populate('vehicleId')
+      .populate({
+        path: 'ownerId',
+        populate: { path: 'kycId' } // Get owner details along with KYC
+      });
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.status(200).json({ success: true, booking });
+  } catch (error) {
+    console.error('Error fetching booking details:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+exports.getAllVehicleBookings = async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+    const bookings = await Booking.find({
+      vehicleId,
+      bookingStatus: { $in: ["Accepted", "Confirmed"] }, // Filter by status
+    });
+
+    res.status(200).json({ bookings });
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 exports.getRenterBookings = async (req, res) => {
   try {
     const renterId = req.user.id; // Extract renter ID from authenticated user
 
     const bookings = await Booking.find({ renterId })
       .populate('ownerId', 'name email') // Populate owner details
-      .populate('vehicleId', 'name type builtYear dailyPrice') // Populate vehicle details
+      .populate('vehicleId', 'name type builtYear dailyPrice imageUrls') // Populate vehicle details
       .sort({ createdAt: -1 }); // Sort by latest bookings
+
+      // Categorize bookings
+    const categorizedBookings = {
+      upcoming: bookings.filter(b => ["Pending", "Accepted", "Confirmed"].includes(b.bookingStatus)),
+      completed: bookings.filter(b => b.bookingStatus === "Completed"),
+      cancelled: bookings.filter(b => b.bookingStatus === "Cancelled"),
+    };
 
     if (!bookings.length) {
       return res.status(404).json({ message: 'No bookings found for this renter.' });
     }
 
-    res.status(200).json({ success: true, bookings });
+    res.status(200).json({ success: true, bookings:categorizedBookings });
   } catch (error) {
     console.error('Error fetching renter bookings:', error);
     res.status(500).json({ message: 'Server error' });

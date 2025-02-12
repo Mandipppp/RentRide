@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '../Ui/Button';
-import { Card } from '../Ui/Card';
-import car from '../Images/HomeCar.png';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { reactLocalStorage } from 'reactjs-localstorage';
 import axios from 'axios';
@@ -17,25 +15,24 @@ const calculateDaysDifference = (startDate, endDate) => {
 };
 
 
-export default function VehicleDetails() {
-  const { vehicleId } = useParams();
-  const [vehicle, setVehicle] = useState(null);
+export default function UserBookedVehicleDetails() {
+  const { bookingId } = useParams();
+  const [booking, setBooking] = useState(null);
   const [currentImage, setCurrentImage] = useState(0);
   const [token, setToken] = useState("");
   const navigate = useNavigate();
   const [baseCost, setBaseCost] = useState(0);
   const [addOnsCost, setAddOnsCost] = useState(0);
+  const [existingBookings, setExistingBookings] = useState([]);
 
   const [totalCost, setTotalCost] = useState(0);
   const [selectedAddOns, setSelectedAddOns] = useState([]);
-  const [existingBookings, setExistingBookings] = useState([]);
-
-  // Get filters from location state
-  const location = useLocation();
-  const { filters } = location.state || {};  // Destructure filters from the state
-  const {isRequested} = location.state;
-  const [isBooked, setIsBooked] = useState(isRequested);
-  const [bookingId, setBookingId] = useState(null);
+  // Form field states
+  const [updatedPickAndDropLocation, setUpdatedPickAndDropLocation] = useState("");
+  const [updatedStartDate, setUpdatedStartDate] = useState("");
+  const [updatedEndDate, setUpdatedEndDate] = useState("");
+  const [updatedPickUpTime, setUpdatedPickUpTime] = useState("");
+  const [updatedDropTime, setUpdatedDropTime] = useState("");
 
   
   useEffect(() => {
@@ -47,102 +44,68 @@ export default function VehicleDetails() {
 
   useEffect(() => {
     if (token) {
-      const fetchVehicle = async () => {
+      const fetchBooking= async () => {
         try {
           const response = await axios.get(
-            `http://localhost:3000/api/users/vehicles/${vehicleId}`,
+            `http://localhost:3000/api/user/booking/getBooking/${bookingId}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
-          setVehicle(response.data);
+          setBooking(response.data.booking);
+          
 
-          // console.log(response.data);
+        //   console.log(response.data);
         } catch (err) {
           console.log("Failed to fetch vehicle details.");
         }
       };
-      fetchVehicle();
+      fetchBooking();
     }
-  }, [vehicleId, token]);
-
-  useEffect(() => {
-    if (vehicle && filters) {
-      const { pickupDate, dropDate } = filters;
-
-      if (pickupDate && dropDate) {
-        // Calculate number of days
-        const numDays = calculateDaysDifference(pickupDate, dropDate);
-
-        // Calculate base vehicle cost
-        const onlyVehicleCost = vehicle.dailyPrice * numDays;
-
-        // Set total cost
-        setBaseCost(onlyVehicleCost);
-      }
-    }
-  }, [vehicle, filters]);
+  }, [bookingId, token]);
 
   useEffect(() => {
     // Recalculate the total cost whenever selected add-ons change
     const addOnsCost = selectedAddOns.reduce(
-      (acc, addon) => acc + addon.pricePerDay * calculateDaysDifference(filters?.pickupDate, filters?.dropDate),
+      (acc, addon) => acc + addon.pricePerDay * calculateDaysDifference(booking.startDate, booking.endDate),
       0
     );
     setAddOnsCost(addOnsCost);
     setTotalCost(baseCost + addOnsCost);
-  }, [selectedAddOns, baseCost, filters]);
-
-  // Auto change image every 3 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % (vehicle?.imageUrls?.length || 1));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [currentImage,vehicle?.imageUrls]);
-
-  const handleAddOnToggle = (addon) => {
-    setSelectedAddOns((prevSelected) => {
-      if (prevSelected.some((item) => item.name === addon.name)) {
-        return prevSelected.filter((item) => item.name !== addon.name); // Remove addon
-      } else {
-        return [...prevSelected, addon]; // Add addon
-      }
-    });
-  };
+  }, [selectedAddOns, baseCost]);
 
   useEffect(() => {
-    if (token) {
-      const fetchBookingStatus = async () => {
-        try {
-          const response = await axios.get(
-            `http://localhost:3000/api/user/booking/${vehicleId}`, 
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          if (response.data && response.data.status !== "cancelled") {
-            setBookingId(response.data._id)
-          }
-        } catch (error) {
-          console.error("Failed to fetch booking status:", error);
-        }
-      };
-      fetchBookingStatus();
-    }
-  }, [vehicleId, token, isBooked]);
+      if (booking) {
+        const initialAddOns = booking.addOns || [];
+        setSelectedAddOns(initialAddOns);
   
+        if (booking.startDate && booking.endDate) {
+          // Calculate number of days
+          const numDays = calculateDaysDifference(booking.startDate, booking.endDate);
+  
+          // Calculate base vehicle cost
+          const onlyVehicleCost = booking.vehicleId.dailyPrice * numDays;
+  
+          // Set total cost
+          setBaseCost(onlyVehicleCost);
+          // Set initial values for editing
+        setUpdatedPickAndDropLocation(booking.pickAndDropLocation);
+        setUpdatedStartDate(booking.startDate);
+        setUpdatedEndDate(booking.endDate);
+        setUpdatedPickUpTime(booking.pickupTime);
+        setUpdatedDropTime(booking.dropTime);
+        }
+      }
+    }, [booking]);
 
-  const handleDeleteAddOn = (addon) => {
-    setSelectedAddOns((prevSelected) =>
-      prevSelected.filter((item) => item.name !== addon.name)
-    );
-  };
+    
 
-  useEffect(() => {
-    if (vehicle) {
+    useEffect(() => {
+    if (booking) {
         const fetchExistingBookings = async () => {
         try {
             const response = await axios.get(
-            `http://localhost:3000/api/user/booking/getVehicleBookings/${vehicleId}`,
+            `http://localhost:3000/api/user/booking/getVehicleBookings/${booking.vehicleId._id}`,
             {
                 headers: { Authorization: `Bearer ${token}` },
             }
@@ -157,13 +120,40 @@ export default function VehicleDetails() {
 
         fetchExistingBookings();
     }
-    }, [vehicle, token]);
+    }, [booking, token]);
+
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Add padding for months less than 10
+        const day = date.getDate().toString().padStart(2, '0'); // Add padding for days less than 10
+        return `${year}-${month}-${day}`;
+      };
+  // Auto change image every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % (booking?.vehicleId?.imageUrls?.length || 1));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [currentImage, booking?.vehicleId?.imageUrls]);
+
+  const handleAddOnToggle = (addon) => {
+    setSelectedAddOns((prevSelected) => {
+      if (prevSelected.some((item) => item.name === addon.name)) {
+        return prevSelected.filter((item) => item.name !== addon.name); // Remove addon
+      } else {
+        return [...prevSelected, addon]; // Add addon
+      }
+    });
+  };
 
   const isDateConflict = (newStartDate, newEndDate) => {
     const newStart = new Date(newStartDate);
     const newEnd = new Date(newEndDate);
   
     return existingBookings.some((existingBooking) => {
+      if (existingBooking._id === booking._id) return false; // Ignore current booking
   
       const existingStart = new Date(existingBooking.startDate);
       const existingEnd = new Date(existingBooking.endDate);
@@ -176,46 +166,32 @@ export default function VehicleDetails() {
     });
   };
 
-  const handleBooking = async () => {
-    if (!filters) {
-      toast.error("Please select booking criteria.");
+  const handleDateChange = (e, type) => {
+    const newDate = e.target.value;
+    let updatedBooking = { ...booking };
+  
+    if (type === "start") {
+      updatedBooking.startDate = newDate;
+    } else {
+      updatedBooking.endDate = newDate;
+    }
+  
+    if (isDateConflict(updatedBooking.startDate, updatedBooking.endDate)) {
+      toast.error("Selected dates conflict with another booking. Please choose different dates.");
       return;
     }
-    if (isDateConflict(filters.pickupDate, filters.dropDate)) {
-        toast.error("Selected dates conflict with another booking. Please choose different dates.");
-        return;
-      }
   
-    try {
-      const bookingData = {
-        vehicleId: vehicle._id,
-        startDate: filters.pickupDate,
-        endDate: filters.dropDate,
-        pickAndDropLocation: filters.pickAndDropLocation,
-        pickupTime: filters.pickupTime,
-        dropTime: filters.dropTime,
-        addOns: selectedAddOns,
-      };
-
-      // console.log("Booking data:",bookingData);
-  
-      const response = await axios.post(
-        "http://localhost:3000/api/user/booking/createBooking",
-        bookingData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-  
-      toast.success("Booking request sent successfully!");
-      setIsBooked(true);
-      // isRequested = true;
-      // navigate("/bookings"); // Redirect to bookings page
-    } catch (error) {
-      console.error("Booking failed:", error.response?.data || error.message);
-      toast.error("Failed to create booking. Please try again.");
-    }
+    setBooking(updatedBooking);
   };
+  
+  
+
+  const handleDeleteAddOn = (addon) => {
+    setSelectedAddOns((prevSelected) =>
+      prevSelected.filter((item) => item.name !== addon.name)
+    );
+  };
+
   
   const handleCancelBooking = async () => {
     try {
@@ -228,14 +204,13 @@ export default function VehicleDetails() {
       );
   
       toast.success("Booking cancelled successfully!");
-      setIsBooked(false); //Update local state
     } catch (error) {
       console.error("Cancellation failed:", error.response?.data || error.message);
       toast.error("Failed to cancel booking. Please try again.");
     }
   };
   
-  if (!vehicle) {
+  if (!booking) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
@@ -247,13 +222,13 @@ export default function VehicleDetails() {
 
       <div className="flex items-center mb-6">
         <button
-          onClick={() => navigate("/browsevehicles")}
+          onClick={() => navigate("/myBookings")}
           className="flex items-center text-gray-600 hover:text-gray-900"
         >
           <i className="fa-solid fa-arrow-left mr-2"></i>
           Back
         </button>
-        <h2 className="font-bold text-xl text-gray-800 ml-6">Vehicle Details</h2>
+        <h2 className="font-bold text-xl text-gray-800 ml-6">Booking Details</h2>
       </div>
      
         {/* Car Image and Info */}
@@ -261,19 +236,19 @@ export default function VehicleDetails() {
             {/* Image Carousel */}
         <div className="relative">
           <img
-            src={`http://localhost:3000/${vehicle.imageUrls[currentImage]}`}
+            src={`http://localhost:3000/${booking?.vehicleId?.imageUrls[currentImage]}`}
             alt="Vehicle"
             className="w-full h-64 object-contain rounded-md transition-opacity duration-500 ease-in-out"
           />
           {/* Next & Previous Buttons */}
           <button
-            onClick={() => setCurrentImage((prev) => (prev > 0 ? prev - 1 : vehicle.imageUrls.length - 1))}
+            onClick={() => setCurrentImage((prev) => (prev > 0 ? prev - 1 : booking.vehicleId.imageUrls.length - 1))}
             className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-gray-300 text-white hover:bg-gray-800 px-3 py-1 rounded-full"
           >
             <i className="fa-solid fa-chevron-left"></i>
           </button>
           <button
-            onClick={() => setCurrentImage((prev) => (prev < vehicle.imageUrls.length - 1 ? prev + 1 : 0))}
+            onClick={() => setCurrentImage((prev) => (prev < booking.vehicleId.imageUrls.length - 1 ? prev + 1 : 0))}
             className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-300 text-white hover:bg-gray-800 px-3 py-1 rounded-full"
           >
             <i className="fa-solid fa-chevron-left fa-rotate-180"></i>
@@ -282,7 +257,7 @@ export default function VehicleDetails() {
 
         {/* Thumbnail Selector */}
         <div className="flex gap-2 mt-3 justify-center">
-          {vehicle.imageUrls.map((img, index) => (
+          {booking.vehicleId.imageUrls.map((img, index) => (
             <img
               key={index}
               src={`http://localhost:3000/${img}`}
@@ -295,10 +270,10 @@ export default function VehicleDetails() {
 
             <div className="flex flex-row justify-between">
                 <div className="flex flex-col">
-                    <h2 className="text-xl font-bold mt-4">{vehicle.name}</h2>
-                    <p className="text-gray-500">{vehicle.type} - {vehicle.builtYear || "N\A"}</p>
-                    <p className={vehicle.isVerified ? "text-green-500 font-bold" : "text-red-500 font-bold"}>
-                      {vehicle.isVerified ? "Admin Verified" : "Not Admin Verified"}
+                    <h2 className="text-xl font-bold mt-4">{booking.vehicleId.name}</h2>
+                    <p className="text-gray-500">{booking.vehicleId.type} - {booking.vehicleId.builtYear || "N\A"}</p>
+                    <p className={booking.vehicleId.isVerified ? "text-green-500 font-bold" : "text-red-500 font-bold"}>
+                      {booking.vehicleId.isVerified ? "Admin Verified" : "Not Admin Verified"}
                     </p>
 
 
@@ -308,7 +283,7 @@ export default function VehicleDetails() {
                         <i className="fa-solid fa-star text-yellow-500"></i>
                         <span className="ml-1 text-gray-600">4.5</span>
                     </div>
-                    <p className="text-lg font-bold mt-2">{vehicle.dailyPrice} NPR/day</p>
+                    <p className="text-lg font-bold mt-2">{booking.vehicleId.dailyPrice} NPR/day</p>
                 </div>
             </div>
         </div>
@@ -316,17 +291,17 @@ export default function VehicleDetails() {
         {/* Owner Info */}
         <div className="flex items-center mt-8 bg-gray-50 p-2 rounded-full shadow-md">
           <img
-            src={`http://localhost:3000/${vehicle.ownerId.kycId.documents.profilePicture.file}`}
+            src={`http://localhost:3000/${booking.ownerId.kycId.documents.profilePicture.file}`}
             alt="Owner"
             className="w-12 h-12 rounded-full border-gray-300 object-cover"
           />
           <div className="ml-4">
             <p className="text-green-600 font-semibold">Owner</p>
-            <p className="text-gray-800 text-lg">{vehicle.ownerId.name}</p>
+            <p className="text-gray-800 text-lg">{booking.vehicleId.ownerId.name}</p>
           </div>
         </div>
 
-         {/* Display Booking Criteria (Filters) */}
+         {/* Display Booking Criteria */}
          <div className="bg-gray-50 p-4 rounded-lg shadow-md mb-4 mt-6">
         <h3 className="font-semibold text-lg text-gray-800">Your Booking Criteria</h3>
         <div className="overflow-x-auto mt-4">
@@ -342,11 +317,45 @@ export default function VehicleDetails() {
             </thead>
             <tbody>
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">{filters?.pickAndDropLocation || "N/A"}</td>
-                <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">{filters?.pickupDate || "N/A"}</td>
-                <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">{filters?.pickupTime || "N/A"}</td>
-                <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">{filters?.dropDate || "N/A"}</td>
-                <td className="px-6 py-4 text-sm font-medium">{filters?.dropTime || "N/A"}</td>
+                <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">
+                    <input
+                      type="text"
+                      placeholder={!updatedPickAndDropLocation && "N/A"}
+                      value={updatedPickAndDropLocation}
+                      onChange={(e) => setUpdatedPickAndDropLocation(e.target.value)}
+                      className="border px-3 py-2 rounded-md"
+                    />
+                </td>
+                <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">
+                <input
+  type="date"
+  value={formatDate(booking?.startDate)}
+  onChange={(e) => handleDateChange(e, "start")}
+/>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">
+                    <input
+                      type="time"
+                      value={updatedPickUpTime}
+                      onChange={(e) => setUpdatedPickUpTime(e.target.value)}
+                      className="border px-3 py-2 rounded-md"
+                    />
+                  </td>
+                  <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">
+                  <input
+  type="date"
+  value={formatDate(booking?.endDate)}
+  onChange={(e) => handleDateChange(e, "end")}
+/>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-medium">
+                    <input
+                      type="time"
+                      value={updatedDropTime}
+                      onChange={(e) => setUpdatedDropTime(e.target.value)}
+                      className="border px-3 py-2 rounded-md"
+                    />
+                  </td>
               </tr>
             </tbody>
           </table>
@@ -360,19 +369,19 @@ export default function VehicleDetails() {
             <div className="bg-gray-50 grid grid-cols-2 border border-gray-50 rounded-lg shadow-md mt-6 text-center">
               <div className="border-r border-gray-300 p-4">
                   <p className="text-gray-500">Seats</p>
-                  <p className="text-lg font-semibold">{vehicle.seats || "N/A"}</p>
+                  <p className="text-lg font-semibold">{booking.vehicleId.seats || "N/A"}</p>
               </div>
               <div className="p-4">
                   <p className="text-gray-500">Fuel Type</p>
-                  <p className="text-lg font-semibold">{vehicle.fuel || "N/A"}</p>
+                  <p className="text-lg font-semibold">{booking.vehicleId.fuel || "N/A"}</p>
               </div>
               <div className="border-t border-r border-gray-300 p-4">
                   <p className="text-gray-500">Transmission</p>
-                  <p className="text-lg font-semibold">{vehicle.transmission || "N/A"}</p>
+                  <p className="text-lg font-semibold">{booking.vehicleId.transmission || "N/A"}</p>
               </div>
               <div className="border-t p-4">
                   <p className="text-gray-500">Fuel Usage</p>
-                  <p className="text-lg font-semibold">{vehicle.mileage + "KM/ 1L" || "N/A"}</p>
+                  <p className="text-lg font-semibold">{booking.vehicleId.mileage + "KM/ 1L" || "N/A"}</p>
               </div>
           </div>
 
@@ -380,7 +389,7 @@ export default function VehicleDetails() {
  <div className="bg-gray-50 p-6 rounded-lg mt-8 shadow-md">
           <h3 className="font-semibold text-lg text-gray-800">Available Add-Ons</h3>
           <ul className="mt-4 text-gray-700">
-            {vehicle.addOns?.map((addon, index) => (
+            {booking.vehicleId.addOns?.map((addon, index) => (
               <li key={index} className="flex justify-between py-2">
                 <span>{addon.name}</span>
                 <div className="flex items-center">
@@ -404,7 +413,7 @@ export default function VehicleDetails() {
             <div className="bg-gray-50 p-6 rounded-lg mt-8 shadow-md">
               <h3 className="font-semibold text-lg text-gray-800">Features</h3>
               <ul className="mt-4 text-gray-700">
-                {vehicle.features?.map((feature, index) => <li key={index}>{feature}</li>)}
+                {booking.vehicleId.features?.map((feature, index) => <li key={index}>{feature}</li>)}
               </ul>
             </div>
 
@@ -412,14 +421,14 @@ export default function VehicleDetails() {
             {/* Bill Section */}
             <div className="bg-gray-50 p-6 shadow-md rounded-lg mt-6">
               <h3 className="font-semibold text-lg">Vehicle Cost</h3>
-              <p className="mt-2 flex justify-between "><span>{calculateDaysDifference(filters?.pickupDate, filters?.dropDate)} Days - {vehicle.dailyPrice} NPR/day</span> <span>Rs {baseCost}</span></p>
+              <p className="mt-2 flex justify-between "><span>{calculateDaysDifference(booking.startDate, booking.endDate)} Days - {booking.vehicleId.dailyPrice} NPR/day</span> <span>Rs {baseCost}</span></p>
               
               <h3 className="font-semibold text-lg mt-4">Add Ons</h3>
               {selectedAddOns.length > 0 ? (selectedAddOns.map((addon, index) => (
                 <div key={index} className="flex justify-between mt-2">
                   <span>{addon.name} - {addon.pricePerDay} NPR/day</span>
                   <div>
-                  <span className='pr-3'>Rs {calculateDaysDifference(filters?.pickupDate, filters?.dropDate)*addon.pricePerDay}</span>
+                  <span className='pr-3'>Rs {calculateDaysDifference(booking.startDate, booking.endDate)*addon.pricePerDay}</span>
                   <button
                     onClick={() => handleDeleteAddOn(addon)}
                     className="text-red-500"
@@ -438,38 +447,19 @@ export default function VehicleDetails() {
             </div>
 
             {/* Book Now Button */}
-            {isBooked ? (
-              <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
-                Cancel Booking
-              </Button>
-            ):(
-            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={handleBooking}>
-              Book Now
+           
+            <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
+            Cancel Booking
             </Button>
-          )}
+    
+            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg">
+                Edit Booking
+            </Button>
           </div>
         </div>
 
        
       </div>
-      {/* Reviews */}
-      <div className="max-w-6xl mx-auto bg-white shadow-md rounded-lg p-6 mt-8">
-          <h3 className="font-bold text-xl text-gray-800">Reviews</h3>
-          <Card className="p-6 mt-4 bg-green-50 rounded-lg shadow-md">
-            <div className="flex items-center">
-              <i className="fa-solid fa-star text-yellow-500" />
-              <i className="fa-solid fa-star text-yellow-500" />
-              <i className="fa-solid fa-star text-yellow-500" />
-              <i className="fa-solid fa-star text-yellow-500" />
-              <i className="fa-solid fa-star text-gray-300" />
-            </div>
-            <p className="mt-4 text-gray-700">“Smooth ride and super clean! The car was delivered on time and exceeded my expectations.”</p>
-            <div className="flex items-center mt-4">
-              <img src={car} alt="Reviewer" className="w-8 h-8 rounded-full border-gray-300 object-cover" />
-              <p className="ml-3 text-gray-800">Raju Narayan</p>
-            </div>
-          </Card>
-        </div>
     </div>
   );
 }
