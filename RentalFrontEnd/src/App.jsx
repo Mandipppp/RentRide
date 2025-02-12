@@ -33,6 +33,7 @@ import AdminContactUsQueries from "./components/Admin/AdminContactUsQueries";
 import VehicleDetails from "./components/UserSide/VehicleDetails";
 import UserBookings from "./components/UserSide/UserBookings";
 import UserBookedVehicleDetails from "./components/UserSide/UserBookedVehicleDetails";
+import PaymentButton from "./components/Payment/PaymentButton";
 
 
 
@@ -143,8 +144,8 @@ const App = () => {
       <Route path="/myBookings" element={<UserBookings />} />
 
 
-
-        
+    {/* Payment */}
+    <Route path="/payment-button" element={<PaymentButton />} />
         
 
       </Routes>

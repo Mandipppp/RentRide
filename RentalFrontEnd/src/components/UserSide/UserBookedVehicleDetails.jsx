@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '../Ui/Button';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { reactLocalStorage } from 'reactjs-localstorage';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
@@ -33,6 +33,10 @@ export default function UserBookedVehicleDetails() {
   const [updatedEndDate, setUpdatedEndDate] = useState("");
   const [updatedPickUpTime, setUpdatedPickUpTime] = useState("");
   const [updatedDropTime, setUpdatedDropTime] = useState("");
+
+  const [paymentUrl, setPaymentUrl] = useState("");
+  const [status, setStatus] = useState(null); // 'null', 'verifying', 'success', 'failed'
+  const [searchParams] = useSearchParams();
 
   
   useEffect(() => {
@@ -242,6 +246,49 @@ export default function UserBookedVehicleDetails() {
       toast.error("Failed to cancel booking. Please try again.");
     }
   };
+
+  const handlePayment = async () => {
+    try {
+      const response = await axios.post("http://localhost:3000/api/auth/payment/initiate", {
+        amount: booking.amountDue*100, // Amount in paisa
+        purchase_order_id: bookingId,
+        purchase_order_name: booking.vehicleId.name,
+        return_url: `http://localhost:5173/bookingVehicleDetails/${bookingId}`, // Redirect URL after payment
+        website_url: `http://localhost:5173/bookingVehicleDetails/${bookingId}`,
+      });
+
+      setPaymentUrl(response.data.payment_url);
+      window.location.href = response.data.payment_url; // Redirect to Khalti
+    } catch (error) {
+      console.error("Payment initiation failed:", error.response?.data);
+      setStatus("failed");
+    }
+  }
+
+  // Verify payment when payment is successful and pidx is available in the URL
+  useEffect(() => {
+    const verifyPayment = async () => {
+      const pidx = searchParams.get("pidx");
+      if (pidx) {
+        try {
+          setStatus("verifying");
+          const response = await axios.post("http://localhost:3000/api/auth/payment/verify", { pidx });
+          if (response.data.status === "Completed") {
+            setStatus("success");
+            toast.success('Payment successful!');
+          } else {
+            setStatus("failed");
+            toast.error('Payment verification failed. Please try again.');
+          }
+        } catch (error) {
+          setStatus("failed");
+          toast.error('Payment verification failed. Please try again.');
+        }
+      }
+    };
+
+    verifyPayment();
+  }, [searchParams]);
   
   if (!booking) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -499,7 +546,7 @@ export default function UserBookedVehicleDetails() {
 
             {booking.bookingStatus === "Accepted" && <div>
     
-            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handleEditBooking}>
+            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handlePayment}>
                 Pay Now
             </Button>
             <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>

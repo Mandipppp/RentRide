@@ -6,6 +6,7 @@ const ownerRoutes = require('./routes/ownerRoutes');
 const resetPassRoutes = require('./routes/resetPassRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const userBookingRoutes = require('./routes/userBookingRoutes');
+const paymentRoutes = require("./routes/paymentRoutes");
 
 
 require('dotenv').config();
@@ -34,6 +35,9 @@ app.use('/api/owner', ownerRoutes);
 app.use('/api/notification', notificationRoutes);
 app.use('/api/user/booking', userBookingRoutes);
 
+
+// Payment Routes
+app.use("/api/auth/payment", paymentRoutes);
 
 
 
