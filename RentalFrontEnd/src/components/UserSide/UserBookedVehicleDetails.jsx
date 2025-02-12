@@ -111,7 +111,6 @@ export default function UserBookedVehicleDetails() {
             }
             );
             setExistingBookings(response.data.bookings); // Store all bookings
-        console.log("gg",response.data.bookings);
 
         } catch (err) {
             console.error("Failed to fetch existing bookings.");
@@ -192,6 +191,40 @@ export default function UserBookedVehicleDetails() {
     );
   };
 
+  const handleEditBooking = async () => {
+    // Prepare the updated data
+    const updatedBookingData = {
+      pickAndDropLocation: updatedPickAndDropLocation,
+      startDate: updatedStartDate,
+      endDate: updatedEndDate,
+      pickupTime: updatedPickUpTime,
+      dropTime: updatedDropTime,
+      addOns: selectedAddOns, // Add any selected add-ons
+    };
+  
+    try {
+      const response = await axios.put(
+        `http://localhost:3000/api/user/booking/editBooking/${bookingId}`,
+        updatedBookingData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      if (response.status === 200) {
+        // If the update is successful
+        toast.success("Booking updated successfully!");
+        // setBooking(response.data.booking); // Update the state with the new booking info
+        // console.log(response.data.booking);
+      }
+    // console.log("updated data: ",updatedBookingData);
+    } catch (error) {
+      // Handle any errors from the API
+      toast.error("Failed to update booking. Please try again.");
+      console.error("Error updating booking:", error.response?.data || error.message);
+    }
+  };
+  
   
   const handleCancelBooking = async () => {
     try {
@@ -320,18 +353,20 @@ export default function UserBookedVehicleDetails() {
                 <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">
                     <input
                       type="text"
-                      placeholder={!updatedPickAndDropLocation && "N/A"}
+                      placeholder={!updatedPickAndDropLocation? "N/A":""}
                       value={updatedPickAndDropLocation}
                       onChange={(e) => setUpdatedPickAndDropLocation(e.target.value)}
                       className="border px-3 py-2 rounded-md"
+                      disabled={booking.bookingStatus!=="Pending"}
                     />
                 </td>
                 <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">
-                <input
-  type="date"
-  value={formatDate(booking?.startDate)}
-  onChange={(e) => handleDateChange(e, "start")}
-/>
+                    <input
+                    type="date"
+                    value={formatDate(booking?.startDate)}
+                    onChange={(e) => handleDateChange(e, "start")}
+                    disabled={booking.bookingStatus!=="Pending"}
+                    />
                   </td>
                   <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">
                     <input
@@ -339,14 +374,16 @@ export default function UserBookedVehicleDetails() {
                       value={updatedPickUpTime}
                       onChange={(e) => setUpdatedPickUpTime(e.target.value)}
                       className="border px-3 py-2 rounded-md"
+                      disabled={booking.bookingStatus!=="Pending"}
                     />
                   </td>
                   <td className="px-6 py-4 text-sm font-medium border-r border-gray-300">
-                  <input
-  type="date"
-  value={formatDate(booking?.endDate)}
-  onChange={(e) => handleDateChange(e, "end")}
-/>
+                    <input
+                    type="date"
+                    value={formatDate(booking?.endDate)}
+                    onChange={(e) => handleDateChange(e, "end")}
+                    disabled={booking.bookingStatus!=="Pending"}
+                    />
                   </td>
                   <td className="px-6 py-4 text-sm font-medium">
                     <input
@@ -354,6 +391,8 @@ export default function UserBookedVehicleDetails() {
                       value={updatedDropTime}
                       onChange={(e) => setUpdatedDropTime(e.target.value)}
                       className="border px-3 py-2 rounded-md"
+                      disabled={booking.bookingStatus!=="Pending"}
+
                     />
                   </td>
               </tr>
@@ -394,12 +433,13 @@ export default function UserBookedVehicleDetails() {
                 <span>{addon.name}</span>
                 <div className="flex items-center">
                   <span className="text-green-600">+{addon.pricePerDay} NPR/day</span>
+                  {booking.bookingStatus === "Pending" &&
                   <button
                     onClick={() => handleAddOnToggle(addon)}
                     className={`ml-4 text-blue-500 ${selectedAddOns.some((item) => item.name === addon.name) ? 'text-red-500' : ''}`}
                   >
                     {selectedAddOns.some((item) => item.name === addon.name) ? 'Remove' : 'Add'}
-                  </button>
+                  </button>}
                 </div>
               </li>
             ))}
@@ -446,15 +486,26 @@ export default function UserBookedVehicleDetails() {
               <p className="font-bold mt-4 flex justify-between"><span>Total</span> <span>Rs {totalCost}</span></p>
             </div>
 
-            {/* Book Now Button */}
            
-            <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
-            Cancel Booking
-            </Button>
+           {booking.bookingStatus === "Pending" && <div>
     
-            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg">
-                Edit Booking
+            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handleEditBooking}>
+                Update Booking
             </Button>
+            <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
+                Cancel Booking
+            </Button>
+            </div>}
+
+            {booking.bookingStatus === "Accepted" && <div>
+    
+            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handleEditBooking}>
+                Pay Now
+            </Button>
+            <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
+                Cancel Booking
+            </Button>
+            </div>}
           </div>
         </div>
 

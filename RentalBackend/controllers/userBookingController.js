@@ -209,6 +209,81 @@ exports.createBooking = async (req, res) => {
   }
 };
 
+// Update a pending booking
+exports.editPendingBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const {
+      startDate,
+      endDate,
+      pickAndDropLocation,
+      pickupTime,
+      dropTime,
+      addOns
+    } = req.body;
+
+    const renterId = req.user.id;
+    const booking = await Booking.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    if (booking.renterId.toString() !== renterId) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    if (booking.bookingStatus !== 'Pending') {
+      return res.status(400).json({ message: 'Only pending bookings can be edited' });
+    }
+
+    // Fetch vehicle details
+    const vehicle = await Vehicle.findById(booking.vehicleId);
+    if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
+
+    // Calculate total days
+    const totalDays = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
+    if (totalDays <= 0) return res.status(400).json({ message: 'Invalid booking duration' });
+
+    // Validate optional pickup and drop times (if provided)
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (pickupTime && !timeRegex.test(pickupTime)) {
+      return res.status(400).json({ message: 'Invalid pickup time format. Use HH:mm (24-hour format).' });
+    }
+    if (dropTime && !timeRegex.test(dropTime)) {
+      return res.status(400).json({ message: 'Invalid drop time format. Use HH:mm (24-hour format).' });
+    }
+
+    // Calculate add-ons total price and update addOns
+    const updatedAddOns = addOns.map((addOn) => {
+      const totalPrice = (addOn.pricePerDay || 0) * totalDays;
+      return { ...addOn, totalPrice };
+    });
+    const addOnsTotal = updatedAddOns.reduce((sum, addOn) => sum + addOn.totalPrice, 0);
+
+    // Calculate total amount due
+    const amountDue = (vehicle.dailyPrice * totalDays) + addOnsTotal;
+
+    // Update booking details
+    booking.startDate = startDate;
+    booking.endDate = endDate;
+    booking.totalDays = totalDays;
+    booking.pickAndDropLocation = pickAndDropLocation;
+    booking.pickupTime = pickupTime;
+    booking.dropTime = dropTime;
+    booking.addOns = updatedAddOns;
+    booking.amountDue = amountDue;
+    booking.updatedAt = Date.now();
+
+    await booking.save();
+
+    res.status(200).json({ message: 'Booking updated successfully', booking });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 
 exports.getAllBookings = async (req, res) => {
   try {
