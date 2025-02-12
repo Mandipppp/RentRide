@@ -31,6 +31,7 @@ import BrowseVehicles from "./components/UserSide/BrowseVehicles";
 import ContactPage from "./components/UserSide/ContactPage";
 import AdminContactUsQueries from "./components/Admin/AdminContactUsQueries";
 import VehicleDetails from "./components/UserSide/VehicleDetails";
+import UserBookings from "./components/UserSide/UserBookings";
 
 
 
@@ -136,6 +137,8 @@ const App = () => {
       <Route path="/browsevehicles" element={<BrowseVehicles />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/vehicleDetails/:vehicleId" element={<VehicleDetails />} />
+      <Route path="/myBookings" element={<UserBookings />} />
+
 
 
         

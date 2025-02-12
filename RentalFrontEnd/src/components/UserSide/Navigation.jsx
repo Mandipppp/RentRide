@@ -58,7 +58,14 @@ const Navigation = () => {
           </li>
           {isAuthenticated && (
             <li className="hover:text-black">
-              <a href="#">My Bookings</a>
+              <Link to="/myBookings"  
+            className={`${
+                location.pathname === "/myBookings"
+                  ? "text-blue-500 font-bold" // Active style
+                  : "text-gray-600 hover:text-blue-500"
+              } transition duration-200`}
+              >
+                My Bookings</Link>
             </li>
           )}
         </ul>

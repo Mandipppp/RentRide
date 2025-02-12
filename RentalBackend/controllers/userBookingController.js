@@ -224,6 +224,26 @@ exports.getAllBookings = async (req, res) => {
   }
 }
 
+exports.getRenterBookings = async (req, res) => {
+  try {
+    const renterId = req.user.id; // Extract renter ID from authenticated user
+
+    const bookings = await Booking.find({ renterId })
+      .populate('ownerId', 'name email') // Populate owner details
+      .populate('vehicleId', 'name type builtYear dailyPrice') // Populate vehicle details
+      .sort({ createdAt: -1 }); // Sort by latest bookings
+
+    if (!bookings.length) {
+      return res.status(404).json({ message: 'No bookings found for this renter.' });
+    }
+
+    res.status(200).json({ success: true, bookings });
+  } catch (error) {
+    console.error('Error fetching renter bookings:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Fetch a user's booking
 exports.getUserBooking = async (req, res) => {
   const renterId = req.user.id;
