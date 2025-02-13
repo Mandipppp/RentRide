@@ -247,10 +247,11 @@ export default function UserBookedVehicleDetails() {
     }
   };
 
-  const handlePayment = async () => {
+  const handlePayment = async (percentage) => {
     try {
+      const amountToPay = (booking.amountDue * (percentage / 100)) * 100;
       const response = await axios.post("http://localhost:3000/api/auth/payment/initiate", {
-        amount: booking.amountDue*100, // Amount in paisa
+        amount: amountToPay, // Amount in paisa
         purchase_order_id: bookingId,
         purchase_order_name: booking.vehicleId.name,
         return_url: `http://localhost:5173/bookingVehicleDetails/${bookingId}`, // Redirect URL after payment
@@ -273,6 +274,7 @@ export default function UserBookedVehicleDetails() {
         try {
           setStatus("verifying");
           const response = await axios.post("http://localhost:3000/api/auth/payment/verify", { pidx });
+          console.log("Payment data: ", response.data);
           if (response.data.status === "Completed") {
             setStatus("success");
             toast.success('Payment successful!');
@@ -516,12 +518,13 @@ export default function UserBookedVehicleDetails() {
                   <span>{addon.name} - {addon.pricePerDay} NPR/day</span>
                   <div>
                   <span className='pr-3'>Rs {calculateDaysDifference(booking.startDate, booking.endDate)*addon.pricePerDay}</span>
+                  {booking.bookingStatus === "Pending" && (
                   <button
                     onClick={() => handleDeleteAddOn(addon)}
                     className="text-red-500"
                   >
                     Delete
-                  </button>
+                  </button>)}
                   </div>
                 </div>
               ))
@@ -545,10 +548,15 @@ export default function UserBookedVehicleDetails() {
             </div>}
 
             {booking.bookingStatus === "Accepted" && <div>
-    
-            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handlePayment}>
-                Pay Now
+              <div className='flex flex-row space-x-4'>
+            <Button className="w-1/2 mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={()=>handlePayment(10)}>
+                Pay 10%
             </Button>
+            <Button className="w-1/2 mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={()=>handlePayment(100)}>
+                Pay Full
+            </Button>
+            </div>
+            <p className="text-red-500 text-sm">*You MUST pay atleast 10% to confirm your Booking.</p>
             <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
                 Cancel Booking
             </Button>
