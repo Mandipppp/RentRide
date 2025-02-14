@@ -57,7 +57,7 @@ export default function UserBookedVehicleDetails() {
             }
           );
           setBooking(response.data.booking);
-          
+          // console.log("booking", response.data.booking);
 
         //   console.log(response.data);
         } catch (err) {
@@ -256,7 +256,13 @@ export default function UserBookedVehicleDetails() {
         purchase_order_name: booking.vehicleId.name,
         return_url: `http://localhost:5173/bookingVehicleDetails/${bookingId}`, // Redirect URL after payment
         website_url: `http://localhost:5173/bookingVehicleDetails/${bookingId}`,
-      });
+        totalAmount: totalCost,
+        ownerId: booking.ownerId._id
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
       setPaymentUrl(response.data.payment_url);
       window.location.href = response.data.payment_url; // Redirect to Khalti

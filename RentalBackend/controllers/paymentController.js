@@ -12,7 +12,12 @@ const headers = {
 // Initiate Payment
 const initiatePayment = async (req, res) => {
   try {
-    const { amount, purchase_order_id, purchase_order_name, return_url, website_url } = req.body;
+    const { amount, purchase_order_id, purchase_order_name, return_url, website_url, totalAmount, ownerId } = req.body;
+    // Check if the amountPaid is at least 10% of totalAmount
+    // console.log(userid=req.user.id);
+    if (amount < totalAmount * 0.1) {
+      return res.status(400).json({ success: false, message: "At least 10% of the total amount is required to lock the booking." });
+    }
 
     const payload = {
       return_url,

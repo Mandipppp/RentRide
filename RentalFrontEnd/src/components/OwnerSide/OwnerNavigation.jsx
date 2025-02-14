@@ -103,7 +103,13 @@ function OwnerNavigation() {
               >My Vehicles</Link>
           </li>
           <li className="hover:text-black">
-            <a href="#">Bookings</a>
+          <Link to="/ownerbookings"  
+            className={`${
+                location.pathname === "/ownerbookings"
+                  ? "text-blue-500 font-bold" // Active style
+                  : "text-gray-600 hover:text-blue-500"
+              } transition duration-200`}
+              >Bookings</Link>
           </li>
         </ul>
 
