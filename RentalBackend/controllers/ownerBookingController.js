@@ -16,7 +16,7 @@ exports.getOwnerBookings = async (req, res) => {
 
       // Categorize bookings
     const categorizedBookings = {
-      upcoming: bookings.filter(b => ["Pending", "Accepted"].includes(b.bookingStatus)),
+      upcoming: bookings.filter(b => ["Pending", "Accepted", "RevisionRequired"].includes(b.bookingStatus)),
       active: bookings.filter(b => b.bookingStatus === "Confirmed"),
       completed: bookings.filter(b => b.bookingStatus === "Completed"),
       cancelled: bookings.filter(b => b.bookingStatus === "Cancelled"),
@@ -122,6 +122,164 @@ exports.acceptBooking = async (req, res) => {
     res.status(200).json({ success: true, message: 'Booking updated successfully', booking });
   } catch (error) {
     console.error('Error accepting booking:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.cancelBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+    // Find the booking
+    const booking = await Booking.findById(bookingId).populate('vehicleId');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    if (booking.ownerId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
+    }
+
+    if (booking.bookingStatus === 'Cancelled') {
+      return res.status(400).json({ message: 'Booking is already cancelled' });
+    }
+    const user = await User.findById(booking.renterId);
+
+
+    // Calculate cancellation fee (10% of amountDue if payment is already made)
+    let cancellationFee = 0;
+
+    booking.bookingStatus = 'Cancelled';
+    booking.cancellationFee = cancellationFee;
+    booking.updatedAt = Date.now();
+
+    // Update payment status if applicable
+    let refundAmount = booking.amountPaid;
+    if (booking.amountPaid > 0) {
+      refundAmount = booking.amountPaid - cancellationFee;
+      if (refundAmount <= 0) {
+        booking.paymentStatus = 'Refunded';
+      }
+    }
+
+    await booking.save();
+
+    // Send notification to the owner
+    const notification = new Notification({
+      recipientId: booking.renterId,
+      recipientModel: 'User',
+      message: `Your booking for ${booking.vehicleId.name} has been cancelled by the owner.`,
+      type: 'booking',
+      priority: 'high'
+    });
+
+    await notification.save();
+
+    
+    const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: user.email,
+          subject: `Booking Cancellation Notice for the Vehicle: ${booking.vehicleId.name}`,
+          html: `
+            <html>
+              <head>
+                <style>
+                  body {
+                    font-family: Arial, sans-serif;
+                    color: #333;
+                    background-color: #f4f4f4;
+                    padding: 20px;
+                  }
+                  .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                  }
+                  .header {
+                    text-align: center;
+                    margin-bottom: 20px;
+                  }
+                  .header h1 {
+                    color: #d9534f;
+                  }
+                  .content {
+                    font-size: 16px;
+                  }
+                  .footer {
+                    margin-top: 30px;
+                    font-size: 12px;
+                    color: #777;
+                    text-align: center;
+                  }
+                  .button {
+                    background-color: #d9534f;
+                    color: white;
+                    padding: 10px 20px;
+                    text-align: center;
+                    display: inline-block;
+                    font-size: 16px;
+                    border-radius: 5px;
+                    text-decoration: none;
+                  }
+                  .button:hover {
+                    background-color: #c9302c;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <div class="header">
+                    <h1>Booking Cancelled</h1>
+                  </div>
+                  <div class="content">
+                    <p>Dear <strong>${user.name}</strong>,</p>
+                    
+                    <p>We regret to inform you that your booking for vehicle, <strong>${booking.vehicleId.name}</strong>, has been cancelled by the owner.</p>
+        
+                    <p><strong>Booking Details:</strong></p>
+                    <ul>
+                      <li><strong>Pickup Date:</strong> ${booking.startDate}</li>
+                      <li><strong>Drop-off Date:</strong> ${booking.endDate}</li>
+                      <li><strong>Refund Amount (if applicable):</strong> Rs. ${refundAmount}</li>
+                    </ul>
+        
+                    <p>We apologize for any inconvenience this may have caused. You may check your bookings on your bookings page.</p>
+        
+                    <p><a href="${process.env.BASE_URL}/user/bookings" class="button">View Bookings</a></p>
+        
+                    <p>If you have any questions or need further assistance, please don't hesitate to contact us.</p>
+        
+                    <p>Best regards,<br/>The RentRide Team</p>
+                  </div>
+                  <div class="footer">
+                    <p>&copy; 2025 RentRide. All rights reserved.</p>
+                  </div>
+                </div>
+              </body>
+            </html>
+          `,
+        };
+        const transporter = nodemailer.createTransport({
+          service: "Gmail",
+          auth: {
+            user: process.env.EMAIL_USER, 
+            pass: process.env.EMAIL_PASS,
+          },
+        });
+    
+        await transporter.sendMail(mailOptions);
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking cancelled successfully',
+      cancellationFee,
+    });
+  } catch (error) {
+    console.error('Error cancelling booking:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

@@ -152,17 +152,34 @@ export default function OwnerBookedVehicleDetails() {
 
   const handleAcceptBooking = async () => {
     try {
-      const response = await axios.post('http://localhost:3000/api/owner/booking/acceptBooking', {
+      const response = await axios.put('http://localhost:3000/api/owner/booking/acceptBooking', {
         bookingId,
         approvedAddOns: selectedAddOns
       },
       {
         headers: { Authorization: `Bearer ${token}` },
       });
-  
+      toast.success("Booking accepted successfully");
       console.log('Booking updated successfully:', response.data);
     } catch (error) {
       console.error('Error accepting booking:', error.response?.data || error.message);
+      toast.error("Error accepting booking.");
+    }
+  };
+
+  const handleCancelBooking = async () => {
+    try {
+      const response = await axios.put('http://localhost:3000/api/owner/booking/cancelBooking', {
+        bookingId
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Booking cancelled successfully");
+      console.log('Booking updated successfully:', response.data);
+    } catch (error) {
+      console.error('Error cancelling booking:', error.response?.data || error.message);
+      toast.error("Error cancelling booking.");
     }
   };
   
@@ -325,13 +342,13 @@ export default function OwnerBookedVehicleDetails() {
               <li key={index} className="flex justify-between py-2">
                 <span>{addon.name} - {addon.pricePerDay} NPR/day</span>
                 <div className="flex items-center">
-                  
+                {booking.bookingStatus === "Pending" &&(
                   <button
                     onClick={() => handleAddOnToggle(addon)}
                     className={`ml-4 text-blue-500 ${selectedAddOns.some((item) => item.name === addon.name) ? 'text-red-500' : ''}`}
                   >
                     {selectedAddOns.some((item) => item.name === addon.name) ? 'Decline' : 'Undo'}
-                  </button>
+                  </button>)}
                 </div>
               </li>
             ))}
@@ -380,15 +397,17 @@ export default function OwnerBookedVehicleDetails() {
             </div>
 
            
-           <div>
-    
-            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleAcceptBooking()}>
-                Accept Booking
-            </Button>
-            <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg">
-                Decline Booking
-            </Button>
-            </div>
+          
+            {booking.bookingStatus==="Pending" && ( 
+              <div>
+                <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleAcceptBooking()}>
+                    Accept Booking
+                </Button>
+                <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleCancelBooking()}>
+                    Decline Booking
+                </Button>
+              </div>
+          )}
           </div>
         </div>
 
