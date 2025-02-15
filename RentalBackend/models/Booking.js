@@ -14,7 +14,7 @@ const BookingSchema = new mongoose.Schema({
 
   bookingStatus: { 
     type: String, 
-    enum: ['Pending', 'Accepted', 'Confirmed', 'Cancelled', 'Completed'], 
+    enum: ['Pending', 'Accepted', 'RevisionRequired', 'Confirmed', 'Cancelled', 'Completed'], 
     default: 'Pending' 
   }, // Status of booking
 
@@ -31,6 +31,14 @@ const BookingSchema = new mongoose.Schema({
       totalPrice: { type: Number, required: true } // Total price of the add-on for the entire booking
     }
   ], // Add-ons selected for this booking
+
+  approvedAddOns: [ // Store what the owner actually approved
+    {
+      name: { type: String, required: true },
+      pricePerDay: { type: Number, required: true },
+      totalPrice: { type: Number, required: true }
+    }
+  ],
   
   amountDue: { type: Number, required: true }, // Total rental cost
   amountPaid: { type: Number, default: 0 }, // Amount already paid
@@ -40,6 +48,7 @@ const BookingSchema = new mongoose.Schema({
   
   renterMessage: { type: String }, // Message from renter to owner (optional)
   ownerApproval: { type: Boolean, default: false }, // Whether owner has approved the booking
+  ownerReviewed: { type: Boolean, default: false },
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

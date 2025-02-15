@@ -22,7 +22,7 @@ function OwnerBookings() {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setBookings(response.data.bookings);
-                console.log(response.data.bookings);
+                // console.log(response.data.bookings);
             } catch (error) {
                 console.error("Error fetching bookings:", error);
                 toast.error("Failed to load bookings");
@@ -125,7 +125,7 @@ function OwnerBookings() {
                                     </div>
                                     <button
                                         className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-all mt-4"
-                                        onClick={() => navigate(`/booking/${booking._id}`)}
+                                        onClick={() => navigate(`/ownerVehicleDetails/${booking._id}`)}
                                     >
                                         View Details
                                     </button>
