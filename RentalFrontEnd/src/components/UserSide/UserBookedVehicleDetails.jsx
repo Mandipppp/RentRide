@@ -80,7 +80,13 @@ export default function UserBookedVehicleDetails() {
 
   useEffect(() => {
       if (booking) {
-        const initialAddOns = booking.addOns || [];
+        let initialAddOns = [];
+        if(booking.bookingStatus=="Pending"){
+          initialAddOns = booking.addOns || [];
+        }else{
+          initialAddOns = booking.approvedAddOns || [];
+
+        }
         setSelectedAddOns(initialAddOns);
   
         if (booking.startDate && booking.endDate) {
@@ -246,6 +252,22 @@ export default function UserBookedVehicleDetails() {
       toast.error("Failed to cancel booking. Please try again.");
     }
   };
+
+  const handleAcceptBooking = async () =>{
+    try {
+      const response = await axios.put(
+        `http://localhost:3000/api/user/booking/acceptRevision/${bookingId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Booking revised successfully!");
+    } catch (error) {
+      console.error("Cancellation failed:", error.response?.data || error.message);
+      toast.error("Failed to revise booking. Please try again.");
+    }
+  } 
 
   const handlePayment = async (percentage) => {
     try {
@@ -483,7 +505,8 @@ export default function UserBookedVehicleDetails() {
  <div className="bg-gray-50 p-6 rounded-lg mt-8 shadow-md">
           <h3 className="font-semibold text-lg text-gray-800">Available Add-Ons</h3>
           <ul className="mt-4 text-gray-700">
-            {booking.vehicleId.addOns?.map((addon, index) => (
+            {/* take addons from vehicle's addons only when a vehicle is in pendin stage/editable */}
+          {(booking.bookingStatus === "Pending" ? booking.vehicleId.addOns : booking.approvedAddOns)?.map((addon, index) => (
               <li key={index} className="flex justify-between py-2">
                 <span>{addon.name}</span>
                 <div className="flex items-center">
@@ -547,6 +570,16 @@ export default function UserBookedVehicleDetails() {
     
             <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handleEditBooking}>
                 Update Booking
+            </Button>
+            <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
+                Cancel Booking
+            </Button>
+            </div>}
+
+            {booking.bookingStatus === "RevisionRequired" && <div>
+    
+            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handleAcceptBooking}>
+                Accept Booking
             </Button>
             <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
                 Cancel Booking

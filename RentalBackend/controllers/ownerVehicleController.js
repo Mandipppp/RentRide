@@ -1,6 +1,9 @@
 const Vehicle = require('../models/vehicle');
 const Owner= require('../models/owner');
 const fs = require('fs');
+const Booking = require('../models/Booking');
+const nodemailer = require("nodemailer");
+
 
 
 // Function to delete files
@@ -218,6 +221,101 @@ const getOwnerVehicles = async (req, res) => {
           message: 'Vehicle not found or unauthorized.',
         });
       }
+
+      // Check if the vehicle has any active bookings with status "Confirmed"
+    const activeBookings = await Booking.findOne({
+      vehicleId: vehicleId,
+      bookingStatus: 'Confirmed',
+    });
+
+    if (activeBookings) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete vehicle. It has active bookings.',
+      });
+    }
+
+    // Find bookings that are still in progress but not confirmed
+    const pendingBookings = await Booking.find({
+      vehicleId: vehicleId,
+      bookingStatus: { $in: ['Pending', 'Accepted', 'RevisionRequired'] },
+    }).populate('renterId', 'name email');
+
+    // Notify users about the vehicle removal
+    for (const booking of pendingBookings) {
+      const user = booking.renterId;
+      // Update booking status to "Cancelled"
+      booking.bookingStatus = 'Cancelled';
+      booking.updatedAt = Date.now();
+      await booking.save();
+
+      // Create and save notification
+      const notification = new Notification({
+        recipientId: user._id,
+        recipientModel: 'User',
+        message: `Your booking for ${vehicle.name} has been canceled as the vehicle has been removed by the owner.`,
+        type: 'booking',
+        priority: 'high',
+      });
+
+      await notification.save();
+
+      // Send email to the user
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: `Booking Cancellation Notice for ${vehicle.name}`,
+        html: `
+          <html>
+            <head>
+              <style>
+                body { font-family: Arial, sans-serif; color: #333; background-color: #f4f4f4; padding: 20px; }
+                .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+                .header { text-align: center; margin-bottom: 20px; }
+                .header h1 { color: #d9534f; }
+                .content { font-size: 16px; }
+                .footer { margin-top: 30px; font-size: 12px; color: #777; text-align: center; }
+                .button { background-color: #d9534f; color: white; padding: 10px 20px; text-align: center; display: inline-block; font-size: 16px; border-radius: 5px; text-decoration: none; }
+                .button:hover { background-color: #c9302c; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>Booking Cancelled</h1>
+                </div>
+                <div class="content">
+                  <p>Dear <strong>${user.name}</strong>,</p>
+                  <p>We regret to inform you that your booking for vehicle <strong>${vehicle.name}</strong> has been cancelled because the vehicle has been removed by the owner.</p>
+                  <p><strong>Booking Details:</strong></p>
+                  <ul>
+                    <li><strong>Pickup Date:</strong> ${booking.startDate}</li>
+                    <li><strong>Drop-off Date:</strong> ${booking.endDate}</li>
+                  </ul>
+                  <p>We apologize for any inconvenience this may have caused. You may check other available vehicles on our platform.</p>
+                  <p><a href="${process.env.BASE_URL}/user/bookings" class="button">View Available Vehicles</a></p>
+                  <p>If you have any questions or need further assistance, please don't hesitate to contact us.</p>
+                  <p>Best regards,<br/>The RentRide Team</p>
+                </div>
+                <div class="footer">
+                  <p>&copy; 2025 RentRide. All rights reserved.</p>
+                </div>
+              </div>
+            </body>
+          </html>
+        `,
+      };
+
+      const transporter = nodemailer.createTransport({
+        service: "Gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      await transporter.sendMail(mailOptions);
+    }
   
       // Collect all files to be deleted
       const filesToDelete = [];
@@ -267,7 +365,89 @@ const getOwnerVehicles = async (req, res) => {
           message: 'Vehicle not found or unauthorized.',
         });
       }
-  
+      
+      // Find bookings that are still in progress but not confirmed
+    const affectedBookings = await Booking.find({
+      vehicleId: vehicleId,
+      bookingStatus: { $in: ['Pending', 'Accepted', 'RevisionRequired'] },
+    }).populate('renterId', 'name email');
+
+    // Cancel bookings and notify users
+    for (const booking of affectedBookings) {
+      const user = booking.renterId;
+
+      // Update booking status to "Cancelled"
+      booking.bookingStatus = 'Cancelled';
+      booking.updatedAt = Date.now();
+      await booking.save();
+
+      // Create and save notification
+      const notification = new Notification({
+        recipientId: user._id,
+        recipientModel: 'User',
+        message: `Your booking for ${vehicle.name} has been cancelled because the vehicle is now under maintenance.`,
+        type: 'booking',
+        priority: 'high',
+      });
+
+      await notification.save();
+
+      // Send email to the user
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: `Booking Cancellation Notice for ${vehicle.name}`,
+        html: `
+          <html>
+            <head>
+              <style>
+                body { font-family: Arial, sans-serif; color: #333; background-color: #f4f4f4; padding: 20px; }
+                .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+                .header { text-align: center; margin-bottom: 20px; }
+                .header h1 { color: #d9534f; }
+                .content { font-size: 16px; }
+                .footer { margin-top: 30px; font-size: 12px; color: #777; text-align: center; }
+                .button { background-color: #d9534f; color: white; padding: 10px 20px; text-align: center; display: inline-block; font-size: 16px; border-radius: 5px; text-decoration: none; }
+                .button:hover { background-color: #c9302c; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>Booking Cancelled</h1>
+                </div>
+                <div class="content">
+                  <p>Dear <strong>${user.name}</strong>,</p>
+                  <p>We regret to inform you that your booking for vehicle <strong>${vehicle.name}</strong> has been cancelled because the vehicle is now under maintenance.</p>
+                  <p><strong>Booking Details:</strong></p>
+                  <ul>
+                    <li><strong>Pickup Date:</strong> ${booking.startDate}</li>
+                    <li><strong>Drop-off Date:</strong> ${booking.endDate}</li>
+                  </ul>
+                  <p>We apologize for any inconvenience caused. You may check other available vehicles on our platform.</p>
+                  <p><a href="${process.env.BASE_URL}/user/bookings" class="button">View Available Vehicles</a></p>
+                  <p>If you have any questions, feel free to contact us.</p>
+                  <p>Best regards,<br/>The RentRide Team</p>
+                </div>
+                <div class="footer">
+                  <p>&copy; 2025 RentRide. All rights reserved.</p>
+                </div>
+              </div>
+            </body>
+          </html>
+        `,
+      };
+
+      const transporter = nodemailer.createTransport({
+        service: "Gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      await transporter.sendMail(mailOptions);
+    }
       // Update the status of the vehicle to 'Under Maintenance'
       vehicle.status = 'Under Maintenance';
       await vehicle.save();

@@ -349,7 +349,7 @@ exports.getRenterBookings = async (req, res) => {
 
       // Categorize bookings
     const categorizedBookings = {
-      upcoming: bookings.filter(b => ["Pending", "Accepted", "Confirmed"].includes(b.bookingStatus)),
+      upcoming: bookings.filter(b => ["Pending", "Accepted",'RevisionRequired', "Confirmed"].includes(b.bookingStatus)),
       completed: bookings.filter(b => b.bookingStatus === "Completed"),
       cancelled: bookings.filter(b => b.bookingStatus === "Cancelled"),
     };
@@ -550,6 +550,159 @@ exports.cancelUserBooking = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+
+// Accept a booking revision and change status to "Confirmed"
+exports.acceptRevisionBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    // Find the booking by ID
+    const booking = await Booking.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Check if the booking is in "RevisionRequired" status
+    if (booking.bookingStatus !== 'RevisionRequired') {
+      return res.status(400).json({ message: 'Booking is not in revision state' });
+    }
+
+    // Check for overlapping confirmed bookings for the same vehicle
+    const overlappingBookings = await Booking.find({
+      vehicleId: booking.vehicleId,
+      bookingStatus: 'Confirmed',
+      _id: { $ne: bookingId }, // Exclude the current booking
+      $or: [
+        { startDate: { $lte: booking.endDate }, endDate: { $gte: booking.startDate } },
+        { startDate: { $gte: booking.startDate }, startDate: { $lte: booking.endDate } }
+      ]
+    });
+
+    if (overlappingBookings.length > 0) {
+      booking.bookingStatus = 'Pending';
+      await booking.save();
+      return res.status(400).json({ message: 'Sorry, but there has been another booking confirmed with these dates.' });
+    }
+
+    // Change the status to "Confirmed"
+    booking.bookingStatus = 'Accepted';
+    await booking.save();
+
+    // Send email notification to the renter
+    const vehicle = await Vehicle.findById(booking.vehicleId);
+    const renter = await User.findById(booking.renterId);
+    // Send notification to the renter
+    await new Notification({
+      recipientId: booking.renterId,
+      recipientModel: 'User',
+      message: `Your booking for ${vehicle.name} has been accepted by the owner. You can now proceed with payment to confirm your booking.`,
+      type: 'booking',
+      priority: 'high'
+    }).save();
+
+    
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: renter.email,
+      subject: `Booking Accepted: ${vehicle.name}`,
+      html: `
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                color: #333;
+                background-color: #f4f4f4;
+                padding: 20px;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 20px;
+              }
+              .header h1 {
+                color: #4CAF50;
+              }
+              .content {
+                font-size: 16px;
+              }
+              .footer {
+                margin-top: 30px;
+                font-size: 12px;
+                color: #777;
+                text-align: center;
+              }
+              .button {
+                background-color: #4CAF50;
+                color: white;
+                padding: 10px 20px;
+                text-align: center;
+                display: inline-block;
+                font-size: 16px;
+                border-radius: 5px;
+                text-decoration: none;
+              }
+              .button:hover {
+                background-color: #45a049;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Booking Accepted</h1>
+              </div>
+              <div class="content">
+                <p>Dear <strong>${renter.name}</strong>,</p>
+                <p>Your booking for <strong>${vehicle.name}</strong> has been <strong>accepted</strong> by the owner.</p>
+                <p>Please proceed with payment to confirm your booking.</p>
+                <p><strong>Booking Details:</strong></p>
+                <ul>
+                  <li><strong>Pickup Date:</strong> ${booking.startDate}</li>
+                  <li><strong>Drop-off Date:</strong> ${booking.endDate}</li>
+                  <li><strong>Total Amount Due:</strong> Rs. ${booking.amountDue}</li>
+                </ul>
+                <p><a href="${process.env.BASE_URL}/myBookings" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Booking</a></p>
+                <p>Best regards,<br/>The RentRide Team</p>
+              </div>
+              <div class="footer">
+                <p>&copy; 2025 RentRide. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    };
+
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({
+      message: 'Booking revision accepted and status updated to accepted.',
+      booking,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
