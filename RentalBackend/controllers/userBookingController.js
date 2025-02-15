@@ -177,7 +177,7 @@ exports.createBooking = async (req, res) => {
 
             <p>Please review and respond to this request at your earliest convenience.</p>
 
-            <p><a href="${process.env.BASE_URL}/owner/bookings" class="button">View Booking</a></p>
+            <p><a href="${process.env.BASE_URL}/ownerbookings" class="button">View Booking</a></p>
 
             <p>Thank you for choosing RentRide!</p>
 
@@ -518,7 +518,7 @@ exports.cancelUserBooking = async (req, res) => {
     
                 <p>We apologize for any inconvenience this may have caused. You may check your bookings and availability on your dashboard.</p>
     
-                <p><a href="${process.env.BASE_URL}/owner/bookings" class="button">View Bookings</a></p>
+                <p><a href="${process.env.BASE_URL}/ownerbookings" class="button">View Bookings</a></p>
     
                 <p>If you have any questions or need further assistance, please don't hesitate to contact us.</p>
     

@@ -119,6 +119,131 @@ exports.acceptBooking = async (req, res) => {
     // Save updated booking
     await booking.save();
 
+    // Prepare notification message based on booking status
+    let notificationMessage = `Your booking for ${booking.vehicleId.name} has been accepted by the owner. You can now proceed with payment to confirm your booking.`;
+    let emailSubject = `Booking Accepted: ${booking.vehicleId.name}`;
+    let emailBody = `
+      <p>Dear <strong>${booking.renterId.name}</strong>,</p>
+      <p>Your booking for <strong>${booking.vehicleId.name}</strong> has been <strong>accepted</strong> by the owner.</p>
+      <p>Please proceed with payment to confirm your booking.</p>
+      <p><strong>Booking Details:</strong></p>
+      <ul>
+        <li><strong>Pickup Date:</strong> ${booking.startDate}</li>
+        <li><strong>Drop-off Date:</strong> ${booking.endDate}</li>
+        <li><strong>Total Amount Due:</strong> Rs. ${newTotalPrice}</li>
+      </ul>
+      <p><a href="${process.env.BASE_URL}/myBookings" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Booking</a></p>
+      <p>Best regards,<br/>The RentRide Team</p>
+    `;
+
+    if (booking.bookingStatus === 'RevisionRequired') {
+      notificationMessage = `Your booking for ${booking.vehicleId.name} has been accepted, but some add-ons were not approved. Please review the changes.`;
+      emailSubject = `Booking Accepted with Revisions: ${booking.vehicleId.name}`;
+      emailBody = `
+        <p>Dear <strong>${booking.renterId.name}</strong>,</p>
+        <p>Your booking for <strong>${booking.vehicleId.name}</strong> has been <strong>accepted</strong>, but some add-ons were not approved. Please review the changes.</p>
+        <p><strong>Booking Details:</strong></p>
+        <ul>
+          <li><strong>Pickup Date:</strong> ${booking.startDate}</li>
+          <li><strong>Drop-off Date:</strong> ${booking.endDate}</li>
+          <li><strong>Total Amount Due:</strong> Rs. ${newTotalPrice}</li>
+        </ul>
+        <p><a href="${process.env.BASE_URL}/myBookings" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Review Changes</a></p>
+        <p>Best regards,<br/>The RentRide Team</p>
+      `;
+    }
+    // Send notification to the renter
+    const notification = new Notification({
+      recipientId: booking.renterId,
+      recipientModel: 'User',
+      message: notificationMessage,
+      type: 'booking',
+      priority: 'high'
+    });
+
+    await notification.save();
+
+    // Send email to the renter
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: booking.renterId.email,
+      subject: emailSubject,
+      html: `
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                color: #333;
+                background-color: #f4f4f4;
+                padding: 20px;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 20px;
+              }
+              .header h1 {
+                color: #28a745;
+              }
+              .content {
+                font-size: 16px;
+              }
+              .footer {
+                margin-top: 30px;
+                font-size: 12px;
+                color: #777;
+                text-align: center;
+              }
+              .button {
+                background-color: #28a745;
+                color: white;
+                padding: 10px 20px;
+                text-align: center;
+                display: inline-block;
+                font-size: 16px;
+                border-radius: 5px;
+                text-decoration: none;
+              }
+              .button:hover {
+                background-color: #218838;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>${emailSubject}</h1>
+              </div>
+              <div class="content">
+                ${emailBody}
+              </div>
+              <div class="footer">
+                <p>&copy; 2025 RentRide. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    };
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail(mailOptions);
+
     res.status(200).json({ success: true, message: 'Booking updated successfully', booking });
   } catch (error) {
     console.error('Error accepting booking:', error);
@@ -165,7 +290,7 @@ exports.cancelBooking = async (req, res) => {
 
     await booking.save();
 
-    // Send notification to the owner
+    // Send notification to the renter
     const notification = new Notification({
       recipientId: booking.renterId,
       recipientModel: 'User',
@@ -249,7 +374,7 @@ exports.cancelBooking = async (req, res) => {
         
                     <p>We apologize for any inconvenience this may have caused. You may check your bookings on your bookings page.</p>
         
-                    <p><a href="${process.env.BASE_URL}/user/bookings" class="button">View Bookings</a></p>
+                    <p><a href="${process.env.BASE_URL}/myBookings" class="button">View Bookings</a></p>
         
                     <p>If you have any questions or need further assistance, please don't hesitate to contact us.</p>
         
