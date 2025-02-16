@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '../Ui/Button';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { reactLocalStorage } from 'reactjs-localstorage';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
+import io from "socket.io-client";
+
+const socket = io("http://localhost:3000");
 
 
 // Helper function to calculate the number of days between two dates
@@ -38,6 +41,14 @@ export default function UserBookedVehicleDetails() {
   const [status, setStatus] = useState(null); // 'null', 'verifying', 'success', 'failed'
   const [searchParams] = useSearchParams();
 
+  const [messageInput, setMessageInput] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [chatId, setChatId] = useState("");
+  const [userId, setUserId] = useState("");
+  const messageContainerRef = useRef(null);
+
+  
+  
   
   useEffect(() => {
     const access_token = reactLocalStorage.get("access_token");
@@ -131,6 +142,66 @@ export default function UserBookedVehicleDetails() {
     }
     }, [booking, token]);
 
+    useEffect(() => {
+      if (booking){
+      if (booking.bookingStatus=="Accepted" || booking.bookingStatus=="RevisionRequired" || booking.bookingStatus=="Confirmed") {
+          const fetchMessages = async () => {
+          try {
+              const response = await axios.get(
+              `http://localhost:3000/api/auth/chat/${booking._id}/messages`,
+              {
+                  headers: { Authorization: `Bearer ${token}` },
+              }
+              );
+              // console.log("messages: ", response.data);
+              setMessages(response.data.messages || []);
+              
+              setChatId(response.data.chatId);
+              setUserId(booking.renterId);
+              if (chatId && userId) {
+                socket.emit("joinChat", { chatId, userId });
+              }
+              scrollToBottom();
+              const timeoutId = setTimeout(() => scrollToBottom(), 100);
+              return () => clearTimeout(timeoutId);
+          } catch (err) {
+              console.error("Failed to fetch existing bookings.");
+          }
+          };
+  
+          fetchMessages();
+      }}
+      }, [booking, token, chatId, userId]);
+
+      const scrollToBottom = () => {
+        if (messageContainerRef.current) {
+          messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+        }
+      };
+
+      useEffect(() => {
+          // Listen for incoming messages from the server
+          socket.on("receiveMessage", (newMessage) => {
+            setMessages((prevMessages) => [...prevMessages, newMessage]);
+            scrollToBottom();
+            const timeoutId = setTimeout(() => scrollToBottom(), 100);
+            return () => clearTimeout(timeoutId);
+          });
+      
+          // Cleanup on component unmount
+          return () => {
+            socket.off("receiveMessage");
+          };
+        }, []);
+
+        const handleSendMessage = () => {
+          if (messageInput && chatId && userId) {
+            const newMessage = { chatId, senderId: userId, message: messageInput };
+            socket.emit("sendMessage", newMessage);
+            setMessageInput(""); // Clear input after sending
+          }
+        };
+      
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -407,9 +478,46 @@ export default function UserBookedVehicleDetails() {
           />
           <div className="ml-4">
             <p className="text-green-600 font-semibold">Owner</p>
-            <p className="text-gray-800 text-lg">{booking.vehicleId.ownerId.name}</p>
+            <p className="text-gray-800 text-lg">{booking.ownerId.name}</p>
           </div>
         </div>
+
+        {/* Conditional Rendering of Message Box */}
+        {(booking.bookingStatus === "Accepted" || booking.bookingStatus === "Confirmed" || booking.bookingStatus=="RevisionRequired") && (
+          <div className="mt-6 bg-gray-100 p-4 rounded-lg shadow-md">
+            <h3 className="font-semibold text-lg text-gray-800">Chat with Owner</h3>
+            <div className="mt-4">
+              <div ref={messageContainerRef} className="h-60 overflow-y-auto bg-white p-4 rounded-lg shadow-inner mb-4">
+
+                {messages.map((message, index) => (
+                  <div key={index} className={`mb-3 ${message.senderId == booking.renterId ? 'text-right' : 'text-left'}`}>
+                    <p className={`inline-block px-4 py-2 rounded-lg ${message.senderId == booking.renterId ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-800'}`}>
+
+                      {message.message}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Message Input Box */}
+              <div className="flex">
+                <textarea
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  placeholder="Type your message here..."
+                  className="w-full p-2 border border-gray-300 rounded-md resize-none"
+                  rows="3"
+                />
+                <button
+                  className="ml-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
+                  onClick={handleSendMessage}
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
          {/* Display Booking Criteria */}
          <div className="bg-gray-50 p-4 rounded-lg shadow-md mb-4 mt-6">

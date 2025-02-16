@@ -1,7 +1,8 @@
 const Booking = require('../models/Booking');
 const Notification = require('../models/notification');
 const Vehicle = require('../models/vehicle');
-const User = require('../models/user'); 
+const User = require('../models/user');
+const Chat = require('../models/Chat'); 
 const Owner = require('../models/owner');
 const nodemailer = require("nodemailer");
 
@@ -152,6 +153,23 @@ exports.acceptBooking = async (req, res) => {
         <p>Best regards,<br/>The RentRide Team</p>
       `;
     }
+
+   // Check if a chat already exists for the given bookingId
+   const existingChat = await Chat.findOne({ bookingId: booking._id });
+
+   if (!existingChat) {
+     // Create a chat for the booking if it doesn't exist
+     const newChat = new Chat({
+       bookingId: booking._id,
+       ownerId: booking.ownerId,
+       renterId: booking.renterId,
+       messages: [], // Initialize with an empty messages array
+       createdAt: Date.now(),
+     });
+
+     await newChat.save();
+   }
+    
     // Send notification to the renter
     const notification = new Notification({
       recipientId: booking.renterId,

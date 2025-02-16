@@ -1,4 +1,6 @@
 const express = require('express');
+const http = require('http'); // HTTP for Socket.IO
+const { Server } = require('socket.io');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const usersRoutes = require('./routes/userRoutes');
@@ -8,10 +10,19 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const userBookingRoutes = require('./routes/userBookingRoutes');
 const ownerBookingRoutes = require('./routes/ownerBookingRoutes');
 const paymentRoutes = require("./routes/paymentRoutes");
-
+const messageRoutes = require("./routes/messageRoutes");
+const Chat = require('./models/Chat');
+const Message = require('./models/Message');
 
 require('dotenv').config();
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
 const mongoose = require("mongoose");
 const cors = require('cors')
 /////////////
@@ -20,6 +31,7 @@ const path = require('path'); // Import for static file serving
 app.use(cors())
 
 const port = 3000;
+
 
 
 app.use(express.json());
@@ -42,7 +54,8 @@ app.use('/api/owner/booking', ownerBookingRoutes);
 app.use("/api/auth/payment", paymentRoutes);
 
 
-
+// message route
+app.use("/api/auth/chat", messageRoutes);
 
 // Connect to MongoDB
 mongoose
@@ -50,7 +63,47 @@ mongoose
   .then(() => console.log("Connected to MongoDB!"))
   .catch((err) => console.error("Failed to connect to MongoDB:", err));
 
+  // Real-Time Chat with Socket.IO
+const users = new Map(); // Store active users
+
+io.on('connection', (socket) => {
+  // console.log('A user connected:', socket.id);
+
+  // User joins a chat room
+  socket.on('joinChat', ({ chatId, userId }) => {
+    socket.join(chatId);
+    users.set(userId, socket.id);
+    // console.log(`User ${userId} joined chat ${chatId}`);
+  });
+
+  // Handle sending a message
+  socket.on('sendMessage', async ({ chatId, senderId, message }) => {
+    try {
+      const newMessage = new Message({ chatId, senderId, message });
+      await newMessage.save();
+
+      // Update chat with new message
+      await Chat.findByIdAndUpdate(chatId, { $push: { messages: newMessage._id } });
+
+      // Broadcast the message to all users in the chat
+      io.to(chatId).emit('receiveMessage', newMessage);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  });
+
+  // Handle user disconnect
+  socket.on('disconnect', () => {
+    // console.log('User disconnected:', socket.id);
+    users.forEach((value, key) => {
+      if (value === socket.id) {
+        users.delete(key);
+      }
+    });
+  });
+});
+
 // Start the server
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });

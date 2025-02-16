@@ -36,6 +36,7 @@ import UserBookedVehicleDetails from "./components/UserSide/UserBookedVehicleDet
 import PaymentButton from "./components/Payment/PaymentButton";
 import OwnerBookings from "./components/OwnerSide/OwnerBookings";
 import OwnerBookedVehicleDetails from "./components/OwnerSide/OwnerBookedVehicleDetails";
+import ChatComponent from "./components/ChatComponent";
 
 
 
@@ -151,6 +152,9 @@ const App = () => {
     {/* Payment */}
     <Route path="/payment-button" element={<PaymentButton />} />
         
+
+        {/* Chat */}
+        <Route path="/chat" element={<ChatComponent />} />
 
       </Routes>
     </Router>
