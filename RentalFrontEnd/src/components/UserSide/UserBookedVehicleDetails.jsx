@@ -518,11 +518,17 @@ export default function UserBookedVehicleDetails() {
                     const formattedTime = messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
                     const formattedDate = messageDate.toLocaleDateString([], { month: 'short', day: '2-digit' });
                     const displayTime = isToday ? `Today at ${formattedTime}` : `${formattedDate}, ${formattedTime}`;
+                    const isSender = message.senderId === booking.renterId;
+                    const isUnseen = !message.seen;
 
                     return (
                       <div key={index} className={`flex ${message.senderId === booking.renterId ? 'justify-end' : 'justify-start'} mb-3`}>
                         <div className="max-w-xs">
-                          <p className={`px-4 py-2 rounded-xl shadow-md text-sm ${message.senderId === booking.renterId ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-800'}`}>
+                        <p 
+                          className={`px-4 py-2 rounded-xl shadow-md text-sm 
+                            ${isSender ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-800'}
+                            ${!isSender && isUnseen ? 'font-bold border border-gray-500' : ''}`} // Highlight unseen messages
+                        >
                             {message.message}
                           </p>
                           <p className="text-xs text-gray-500 mt-1 text-right">{displayTime}</p>
