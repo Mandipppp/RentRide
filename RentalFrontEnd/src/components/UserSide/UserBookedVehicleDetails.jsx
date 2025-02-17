@@ -361,8 +361,37 @@ export default function UserBookedVehicleDetails() {
   } 
 
   const handlePayment = async (percentage) => {
+    if (!booking) return;
     try {
-      const amountToPay = (booking.amountDue * (percentage / 100)) * 100;
+      const amountToPay = parseFloat(((booking.amountDue * (percentage / 100)) * 100).toFixed(2));
+      console.log("pay:",amountToPay);
+      const response = await axios.post("http://localhost:3000/api/auth/payment/initiate", {
+        amount: amountToPay, // Amount in paisa
+        purchase_order_id: bookingId,
+        purchase_order_name: booking.vehicleId.name,
+        return_url: `http://localhost:5173/bookingVehicleDetails/${bookingId}`, // Redirect URL after payment
+        website_url: `http://localhost:5173/bookingVehicleDetails/${bookingId}`,
+        totalAmount: totalCost,
+        ownerId: booking.ownerId._id
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+      setPaymentUrl(response.data.payment_url);
+      window.location.href = response.data.payment_url; // Redirect to Khalti
+    } catch (error) {
+      console.error("Payment initiation failed:", error.response?.data);
+      setStatus("failed");
+    }
+  }
+
+  const handleRemainingPay = async () => {
+    if (!booking) return;
+    try {
+      const amountToPay = parseFloat((booking.amountDue * 100).toFixed(2));
+      console.log("pay:",amountToPay);
       const response = await axios.post("http://localhost:3000/api/auth/payment/initiate", {
         amount: amountToPay, // Amount in paisa
         purchase_order_id: bookingId,
@@ -389,14 +418,30 @@ export default function UserBookedVehicleDetails() {
   useEffect(() => {
     const verifyPayment = async () => {
       const pidx = searchParams.get("pidx");
+      if (!pidx) {
+        console.error("Missing pidx in URL parameters");
+        return;
+      }
+  
+      if (!token) {
+        console.error("Authorization token is missing!");
+        return;
+      }
+
       if (pidx) {
         try {
           setStatus("verifying");
-          const response = await axios.post("http://localhost:3000/api/auth/payment/verify", { pidx });
+          const response = await axios.post("http://localhost:3000/api/auth/payment/verify", { 
+            pidx
+           },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          });
           console.log("Payment data: ", response.data);
           if (response.data.status === "Completed") {
             setStatus("success");
             toast.success('Payment successful!');
+            navigate(`/bookingVehicleDetails/${bookingId}`, { replace: true });
           } else {
             setStatus("failed");
             toast.error('Payment verification failed. Please try again.');
@@ -409,7 +454,7 @@ export default function UserBookedVehicleDetails() {
     };
 
     verifyPayment();
-  }, [searchParams]);
+  }, [searchParams.toString(), token]);
   
   if (!booking) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -714,6 +759,13 @@ export default function UserBookedVehicleDetails() {
             }
 
               <p className="font-bold mt-4 flex justify-between"><span>Total</span> <span>Rs {totalCost}</span></p>
+
+              {(booking.paymentStatus === "Partial" || booking.paymentStatus === "Full") &&(<div>
+                <p className="font-bold mt-4 flex justify-between"><span>Paid</span> <span>-Rs {booking.amountPaid}</span></p>
+                <p className="font-bold mt-4 flex justify-between"><span>Remaining</span> <span>Rs {parseFloat(totalCost-booking.amountPaid).toFixed(2)}</span></p>
+              </div>
+              )}
+
             </div>
 
            
@@ -731,6 +783,16 @@ export default function UserBookedVehicleDetails() {
     
             <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handleAcceptBooking}>
                 Accept Booking
+            </Button>
+            <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
+                Cancel Booking
+            </Button>
+            </div>}
+
+            {(booking.bookingStatus === "Confirmed" && booking.paymentStatus === "Partial") && <div>
+    
+            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handleRemainingPay}>
+                Pay Remaining
             </Button>
             <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
                 Cancel Booking
