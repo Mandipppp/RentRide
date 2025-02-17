@@ -46,7 +46,7 @@ export default function UserBookedVehicleDetails() {
   const [chatId, setChatId] = useState("");
   const [userId, setUserId] = useState("");
   const messageContainerRef = useRef(null);
-
+  const [receiptUrl, setReceiptUrl] = useState(null);
   
   
   
@@ -441,6 +441,7 @@ export default function UserBookedVehicleDetails() {
           if (response.data.status === "Completed") {
             setStatus("success");
             toast.success('Payment successful!');
+            setReceiptUrl(`http://localhost:3000/api/auth/payment/receipt?pidx=${pidx}`);
             navigate(`/bookingVehicleDetails/${bookingId}`, { replace: true });
           } else {
             setStatus("failed");
@@ -789,6 +790,14 @@ export default function UserBookedVehicleDetails() {
             </Button>
             </div>}
 
+            {receiptUrl && (
+            <button 
+              onClick={() => window.open(receiptUrl, "_blank")} 
+              className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
+            >
+              Download Receipt
+            </button>
+          )}
             {(booking.bookingStatus === "Confirmed" && booking.paymentStatus === "Partial") && <div>
     
             <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handleRemainingPay}>
@@ -798,6 +807,7 @@ export default function UserBookedVehicleDetails() {
                 Cancel Booking
             </Button>
             </div>}
+            
 
             {booking.bookingStatus === "Accepted" && <div>
               <div className='flex flex-row space-x-4'>
