@@ -52,3 +52,19 @@ exports.sendMessage = async (req, res) => {
       res.status(500).json({ message: 'Error fetching messages', error });
     }
   };
+
+  exports.markMessagesAsSeen = async (req, res) => {
+    try {
+      const { chatId, userId } = req.body;
+  
+      const messages = await Message.updateMany(
+        { chatId, senderId: userId, seen: false },
+        { $set: { seen: true } }
+      );
+  
+      res.status(200).json({ message: 'Messages marked as seen', messages });
+    } catch (error) {
+      res.status(500).json({ message: 'Error marking messages as seen', error });
+    }
+  };
+  

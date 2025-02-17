@@ -92,6 +92,22 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Handle marking messages as seen
+  socket.on("markSeen", async ({ chatId, userId }) => {
+    try {
+      // Update messages where sender is NOT the current user and seen is false
+      await Message.updateMany(
+        { chatId, senderId: { $ne: userId }, seen: false },
+        { $set: { seen: true } }
+      );
+
+      // Notify all users in the chat that messages have been seen
+      io.to(chatId).emit("messagesSeen", { chatId, userId });
+    } catch (error) {
+      console.error("Error marking messages as seen:", error);
+    }
+  });
+
   // Handle user disconnect
   socket.on('disconnect', () => {
     // console.log('User disconnected:', socket.id);

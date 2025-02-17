@@ -194,11 +194,31 @@ export default function UserBookedVehicleDetails() {
           };
         }, []);
 
+        useEffect(() => {
+        socket.on("messagesSeen", ({ chatId, userId }) => {
+          setMessages((prevMessages) =>
+            prevMessages.map((msg) =>
+              msg.chatId === chatId && msg.senderId !== userId ? { ...msg, seen: true } : msg
+            )
+          );
+        });
+      
+        return () => {
+          socket.off("messagesSeen");
+        };
+      }, []);   
+
         const handleSendMessage = () => {
           if (messageInput && chatId && userId) {
             const newMessage = { chatId, senderId: userId, message: messageInput };
             socket.emit("sendMessage", newMessage);
             setMessageInput(""); // Clear input after sending
+          }
+        };
+
+        const markMessagesAsSeen = async () => {
+          if (chatId) {
+            socket.emit("markSeen", { chatId, userId }); // Send event to backend
           }
         };
       
@@ -483,33 +503,50 @@ export default function UserBookedVehicleDetails() {
         </div>
 
         {/* Conditional Rendering of Message Box */}
-        {(booking.bookingStatus === "Accepted" || booking.bookingStatus === "Confirmed" || booking.bookingStatus=="RevisionRequired") && (
-          <div className="mt-6 bg-gray-100 p-4 rounded-lg shadow-md">
-            <h3 className="font-semibold text-lg text-gray-800">Chat with Owner</h3>
-            <div className="mt-4">
-              <div ref={messageContainerRef} className="h-60 overflow-y-auto bg-white p-4 rounded-lg shadow-inner mb-4">
+        {(booking.bookingStatus === "Accepted" || booking.bookingStatus === "Confirmed" || booking.bookingStatus === "RevisionRequired") && (
+          <div className="mt-6 bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+            <h3 className="font-semibold text-lg text-gray-900 mb-3">Chat with Owner</h3>
+            
+            <div className="flex flex-col h-72">
+              {/* Messages Container */}
+              <div ref={messageContainerRef} className="flex-1 overflow-y-auto bg-gray-50 p-4 rounded-lg shadow-inner border border-gray-200">
+                {messages.length > 0 ? (
+                  messages.map((message, index) => {
+                    const messageDate = new Date(message.createdAt);
+                    const today = new Date();
+                    const isToday = messageDate.toDateString() === today.toDateString();
+                    const formattedTime = messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+                    const formattedDate = messageDate.toLocaleDateString([], { month: 'short', day: '2-digit' });
+                    const displayTime = isToday ? `Today at ${formattedTime}` : `${formattedDate}, ${formattedTime}`;
 
-                {messages.map((message, index) => (
-                  <div key={index} className={`mb-3 ${message.senderId == booking.renterId ? 'text-right' : 'text-left'}`}>
-                    <p className={`inline-block px-4 py-2 rounded-lg ${message.senderId == booking.renterId ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-800'}`}>
-
-                      {message.message}
-                    </p>
-                  </div>
-                ))}
+                    return (
+                      <div key={index} className={`flex ${message.senderId === booking.renterId ? 'justify-end' : 'justify-start'} mb-3`}>
+                        <div className="max-w-xs">
+                          <p className={`px-4 py-2 rounded-xl shadow-md text-sm ${message.senderId === booking.renterId ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-800'}`}>
+                            {message.message}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1 text-right">{displayTime}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-gray-500 text-center mt-4">No messages yet. Start the conversation!</p>
+                )}
               </div>
-
-              {/* Message Input Box */}
-              <div className="flex">
+              
+             {/* Message Input Box */}
+             <div className="flex items-center mt-3 border border-gray-300 rounded-md overflow-hidden bg-gray-100 p-2">
                 <textarea
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
-                  placeholder="Type your message here..."
-                  className="w-full p-2 border border-gray-300 rounded-md resize-none"
-                  rows="3"
+                  onFocus={markMessagesAsSeen}
+                  placeholder="Type your message..."
+                  className="w-full p-3 text-sm border-none focus:outline-none resize-none bg-white rounded-md shadow-sm"
+                  rows="2"
                 />
                 <button
-                  className="ml-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-5 flex items-center justify-center rounded-md shadow-md transition duration-300 ml-2"
                   onClick={handleSendMessage}
                 >
                   Send
