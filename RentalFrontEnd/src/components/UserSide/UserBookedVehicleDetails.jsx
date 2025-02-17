@@ -47,7 +47,16 @@ export default function UserBookedVehicleDetails() {
   const [userId, setUserId] = useState("");
   const messageContainerRef = useRef(null);
   const [receiptUrl, setReceiptUrl] = useState(null);
-  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [walletDetails, setWalletDetails] = useState({ name: "", id: "" });
+  const handleInputChange = (e) => {
+      setWalletDetails({ ...walletDetails, [e.target.name]: e.target.value });
+  };
+
+  const handleRefundRequest = () => {
+      console.log("Refund Requested with details:", walletDetails);
+      setIsModalOpen(false); // Close modal after submission
+  };
   
   
   useEffect(() => {
@@ -808,6 +817,81 @@ export default function UserBookedVehicleDetails() {
             </Button>
             </div>}
             
+            {/* For refund */}
+
+            {/* Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                    <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
+                        <h2 className="text-lg font-bold">Refund Form</h2>
+                        <p className="text-red-600 text-sm mt-2">
+                            *As per the refund policy, a 5% deduction has been applied as compensation for the vehicle owner's time and reservation. The remaining amount will be refunded to your provided Khalti Account.*
+                        </p>
+
+                        {/* Input Fields */}
+                        <div className="mt-4">
+                            <label className="block font-semibold">Name:</label>
+                            <input 
+                                type="text" 
+                                name="name" 
+                                value={walletDetails.name} 
+                                onChange={handleInputChange}
+                                className="w-full p-2 border rounded"
+                            />
+                        </div>
+
+                        <div className="mt-4">
+                            <label className="block font-semibold">Id:</label>
+                            <input 
+                                type="text" 
+                                name="id" 
+                                value={walletDetails.id} 
+                                onChange={handleInputChange}
+                                className="w-full p-2 border rounded"
+                            />
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="mt-6 flex justify-between">
+                            <button 
+                                className="bg-gray-500 text-white px-4 py-2 rounded-lg"
+                                onClick={() => setIsModalOpen(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                className="bg-black text-white px-4 py-2 rounded-lg"
+                                onClick={handleRefundRequest}
+                            >
+                                Request Refund
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {(booking.bookingStatus === "Cancelled" && (booking.paymentStatus === "Partial" || booking.paymentStatus === "Full")) && 
+            (<>
+            {!booking.refundRequest.requested ? (
+                <div>
+                    <Button 
+                        className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" 
+                        onClick={setIsModalOpen(true)}
+                    >
+                        Request Refund
+                    </Button>
+                </div>
+            ) : (
+                <p className="mt-4 text-green-600 font-semibold">Booking refund requested</p>
+              )}
+          </>)}
+
+          {(booking.bookingStatus === "Cancelled" && booking.paymentStatus === "Refunded") && (
+            <div>
+              <p className="mt-4 text-green-600 font-semibold">Booking Refunded</p>
+            </div>
+          )}
+
 
             {booking.bookingStatus === "Accepted" && <div>
               <div className='flex flex-row space-x-4'>

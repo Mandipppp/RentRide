@@ -416,8 +416,8 @@ exports.cancelUserBooking = async (req, res) => {
 
     // Determine if cancellation fee applies
     let cancellationFee = 0;
-    if (booking.bookingStatus === 'Accepted') {
-      cancellationFee = booking.amountDue * 0.1; // 10% fee only if accepted by owner
+    if (booking.bookingStatus === 'Confirmed') {
+      cancellationFee = (booking.amountDue + booking.amountPaid) * 0.05; // 5% fee only if booking was confirmed
     }
 
     // Update booking status and cancellation fee

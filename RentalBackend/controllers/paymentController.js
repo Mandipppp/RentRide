@@ -31,6 +31,23 @@ const initiatePayment = async (req, res) => {
       return res.status(404).json({ success: false, message: "Booking not found." });
     }
 
+    // Check for overlapping confirmed bookings for the same vehicle
+    const overlappingBookings = await Booking.find({
+      vehicleId: booking.vehicleId,
+      bookingStatus: 'Confirmed',
+      _id: { $ne: purchase_order_id }, // Exclude the current booking
+      $or: [
+        { startDate: { $lte: booking.endDate }, endDate: { $gte: booking.startDate } },
+        { startDate: { $gte: booking.startDate }, startDate: { $lte: booking.endDate } }
+      ]
+    });
+
+    if (overlappingBookings.length > 0) {
+      booking.bookingStatus = 'Pending';
+      await booking.save();
+      return res.status(400).json({ message: 'Sorry, but there has been another booking confirmed with these dates.' });
+    }
+
     const payload = {
       return_url,
       website_url,
@@ -105,6 +122,23 @@ const verifyPayment = async (req, res) => {
     const booking = await Booking.findById(payment.bookingId);
     if (!booking) {
       return res.status(404).json({ success: false, message: "Booking not found." });
+    }
+
+    // Check for overlapping confirmed bookings for the same vehicle
+    const overlappingBookings = await Booking.find({
+      vehicleId: booking.vehicleId,
+      bookingStatus: 'Confirmed',
+      _id: { $ne: payment.bookingId }, // Exclude the current booking
+      $or: [
+        { startDate: { $lte: booking.endDate }, endDate: { $gte: booking.startDate } },
+        { startDate: { $gte: booking.startDate }, startDate: { $lte: booking.endDate } }
+      ]
+    });
+
+    if (overlappingBookings.length > 0) {
+      booking.bookingStatus = 'Pending';
+      await booking.save();
+      return res.status(400).json({ message: 'Sorry, but there has been another booking confirmed with these dates.' });
     }
 
     booking.amountPaid += payment.amountPaid;

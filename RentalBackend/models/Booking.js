@@ -46,9 +46,15 @@ const BookingSchema = new mongoose.Schema({
   paymentMethod: { type: String, enum: ['Cash', 'Online', 'Bank Transfer'], default: 'Online' }, // Payment option
   cancellationFee: { type: Number, default: 0 }, // Cancellation charge (10% if applicable)
   
-  renterMessage: { type: String }, // Message from renter to owner (optional)
+  renterMessage: { type: String }, 
   ownerApproval: { type: Boolean, default: false }, // Whether owner has approved the booking
   ownerReviewed: { type: Boolean, default: false },
+
+  refundRequest: {
+    requested: { type: Boolean, default: false }, // Whether a refund has been requested
+    walletName: { type: String, default: null }, // walletId name
+    walletId: { type: String, default: null }, // Wallet ID for refund transfer
+  },
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
