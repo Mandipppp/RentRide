@@ -10,6 +10,8 @@ const AdminPayments = () => {
   const [accessToken, setAccessToken] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,12 +24,17 @@ const AdminPayments = () => {
     }
   }, [navigate]);
 
-  const getData = (token, query = "", status = "") => {
+  const getData = (token, query = "", status = "", type="") => {
     let url = "http://localhost:3000/api/admin/getPayments";
     let params = [];
 
-    if (query) params.push(`transactionId=${query}`);
+    if (query) {
+      params.push(`transactionId=${query}`);
+      params.push(`senderName=${query}`);
+      params.push(`receiverName=${query}`);
+    };
     if (status) params.push(`paymentStatus=${status}`);
+    if (type) params.push(`paymentType=${type}`);
 
     if (params.length > 0) {
       url += "?" + params.join("&");
@@ -41,6 +48,7 @@ const AdminPayments = () => {
       })
       .then((res) => {
         setPayments(res.data.data);
+        console.log(res.data.data);
       })
       .catch((error) => {
         console.error("Error fetching payment details:", error);
@@ -52,7 +60,7 @@ const AdminPayments = () => {
     const query = e.target.value;
     setSearchQuery(query);
     if (accessToken) {
-      getData(accessToken, query, selectedStatus);
+      getData(accessToken, query, selectedStatus, selectedType);
     }
   };
 
@@ -60,13 +68,23 @@ const AdminPayments = () => {
     const newStatus = selectedStatus === status ? "" : status;
     setSelectedStatus(newStatus);
     if (accessToken) {
-      getData(accessToken, searchQuery, newStatus);
+      getData(accessToken, searchQuery, newStatus, selectedType);
+    }
+  };
+
+  const handleTypeClick = (type) => {
+    const newType = selectedType === type ? "" : type;
+    setSelectedType(newType);
+    if (accessToken) {
+      getData(accessToken, searchQuery, selectedStatus, newType);
     }
   };
 
   const handleClearFilters = () => {
     setSearchQuery("");
     setSelectedStatus("");
+    setSelectedType("");
+
     if (accessToken) {
       getData(accessToken);
     }
@@ -92,6 +110,7 @@ const AdminPayments = () => {
       </div>
 
       {/* Filter Buttons */}
+      <div className="mb-4">
       <div className="flex flex-wrap gap-2 mb-4">
         {["Pending", "Completed", "Failed", "Refunded"].map((status) => (
           <button
@@ -104,6 +123,21 @@ const AdminPayments = () => {
             {status}
           </button>
         ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+         {["Payment", "Refund"].map((type) => (
+          <button
+            key={type}
+            className={`py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 ${
+              selectedType === type ? "bg-blue-500 text-white" : "bg-gray-200"
+            }`}
+            onClick={() => handleTypeClick(type)}
+          >
+            {type}
+          </button>
+        ))}
+        </div>
+        <div className="mt-4">
         <button
           onClick={handleClearFilters}
           className="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-200 ease-in-out"
@@ -111,17 +145,23 @@ const AdminPayments = () => {
           Clear Filters
         </button>
       </div>
+      </div>
 
       {/* Payments Table */}
       <table className="w-full text-left border-collapse">
         <thead className="bg-gray-100">
           <tr>
             <th className="py-3 px-4 text-gray-600 font-medium">Transaction ID</th>
+            <th className="py-3 px-4 text-gray-600 font-medium">Booking ID</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Sender</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Receiver</th>
+            <th className="py-3 px-4 text-gray-600 font-medium">Type</th>
+
             <th className="py-3 px-4 text-gray-600 font-medium">Amount</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Method</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Status</th>
+            <th className="py-3 px-4 text-gray-600 font-medium">Date</th>
+
           </tr>
         </thead>
         <tbody>
@@ -129,9 +169,12 @@ const AdminPayments = () => {
             payments.map((payment) => (
               <tr key={payment._id} className="border-b hover:bg-gray-50 transition duration-150">
                 <td className="py-3 px-4">{payment.transactionId}</td>
-                <td className="py-3 px-4">{payment.senderType} ({payment.senderId})</td>
-                <td className="py-3 px-4">{payment.receiverType} ({payment.receiverId})</td>
-                <td className="py-3 px-4">${payment.amountPaid}</td>
+                <td className="py-3 px-4">{payment.bookingId}</td>
+                <td className="py-3 px-4">{payment.senderId.name} ({payment.senderType})</td>
+                <td className="py-3 px-4">{payment.receiverId.name} ({payment.receiverType})</td>
+                <td className="py-3 px-4">{payment.paymentType}</td>
+
+                <td className="py-3 px-4">Rs. {payment.amountPaid}</td>
                 <td className="py-3 px-4">{payment.paymentMethod}</td>
                 <td
                   className={`py-3 px-4 font-medium ${
@@ -144,6 +187,7 @@ const AdminPayments = () => {
                 >
                   {payment.paymentStatus}
                 </td>
+                <td className="py-3 px-4">{new Date(payment.updatedAt).toLocaleDateString()}</td>
               </tr>
             ))
           ) : (
