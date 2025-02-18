@@ -9,6 +9,7 @@ const Navbar = () => {
     { name: "Owners", path: "/adminowners" },
     { name: "Vehicles", path: "/adminvehicles" },
     { name: "Booking", path: "/adminbooking" },
+    { name: "Payments", path: "/adminpayment" },
     { name: "Reviews", path: "/adminreviews" },
     { name: "Pages", path: "/adminpages" },
     { name: "Contact Us", path: "/admincontact" },

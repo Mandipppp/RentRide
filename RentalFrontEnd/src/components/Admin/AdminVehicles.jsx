@@ -244,7 +244,7 @@ const AdminVehicles = () => {
                 <td className="py-3 px-4">{index + 1}</td>
                 <td className="py-3 px-4 flex items-center">
                   <img
-                    src={vehicle.imageUrls[0] || "/placeholder.png"} // Use a placeholder if no image exists
+                    src={`http://localhost:3000/${vehicle.imageUrls[0]}`}
                     alt={vehicle.name}
                     className="w-8 h-8 rounded-full mr-3"
                   />

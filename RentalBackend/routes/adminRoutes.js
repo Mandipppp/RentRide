@@ -6,6 +6,7 @@ const { getAllUsers, getUserById } = require('../controllers/adminUserController
 const { addAdmin, setupPassword } = require('../controllers/adminAdminController');
 const { getAllVehicles, getVehicleById, verifyVehicle } = require('../controllers/adminVehicleController');
 const { getAllContacts, updateContactStatus } = require('../controllers/adminContactController');
+const { getAllBookings } = require('../controllers/adminBookingController');
 // Route to get all owners
 router.get('/getOwners',authenticate, checkAdmin, getAllOwners);
 
@@ -31,6 +32,9 @@ router.get('/vehicle/:vehicleId', authenticate, checkAdmin, getVehicleById);
 //contact-us-queries
 router.get('/getContactQueries', authenticate, checkAdmin, getAllContacts);
 router.put("/contact-query/:id/respond", authenticate, checkAdmin, updateContactStatus);
+
+// bookings
+router.get('/getBookings', authenticate, checkAdmin, getAllBookings);
 
 
 module.exports = router;

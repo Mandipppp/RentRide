@@ -37,6 +37,8 @@ import PaymentButton from "./components/Payment/PaymentButton";
 import OwnerBookings from "./components/OwnerSide/OwnerBookings";
 import OwnerBookedVehicleDetails from "./components/OwnerSide/OwnerBookedVehicleDetails";
 import ChatComponent from "./components/ChatComponent";
+import AdminBookings from "./components/Admin/AdminBookings";
+import AdminPayments from "./components/Admin/AdminPayments";
 
 
 
@@ -115,6 +117,11 @@ const App = () => {
 
         <Route path="/adminvehicles" element={<AdminVehicles />} />
         <Route path="/adminvehicles/:id" element={<AdminVehicleDetails />} />
+
+        <Route path="/adminbooking" element={<AdminBookings />} />
+        <Route path="/adminpayment" element={<AdminPayments />} />
+
+
 
 
 
