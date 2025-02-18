@@ -20,7 +20,8 @@ exports.getOwnerBookings = async (req, res) => {
       upcoming: bookings.filter(b => ["Pending", "Accepted", "RevisionRequired"].includes(b.bookingStatus)),
       active: bookings.filter(b => b.bookingStatus === "Confirmed"),
       completed: bookings.filter(b => b.bookingStatus === "Completed"),
-      cancelled: bookings.filter(b => b.bookingStatus === "Cancelled"),
+      cancelled: bookings.filter(b => (b.bookingStatus === "Cancelled" && (b.paymentStatus === "Pending" || b.paymentStatus === "Refunded"))),
+      refunds: bookings.filter(b => (b.bookingStatus === "Cancelled" && (b.paymentStatus === "Partial" || b.paymentStatus === "Full"))),
     };
 
     if (!bookings.length) {
@@ -289,8 +290,6 @@ exports.cancelBooking = async (req, res) => {
     }
     const user = await User.findById(booking.renterId);
 
-
-    // Calculate cancellation fee (10% of amountDue if payment is already made)
     let cancellationFee = 0;
 
     booking.bookingStatus = 'Cancelled';

@@ -47,15 +47,40 @@ export default function UserBookedVehicleDetails() {
   const [userId, setUserId] = useState("");
   const messageContainerRef = useRef(null);
   const [receiptUrl, setReceiptUrl] = useState(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [walletDetails, setWalletDetails] = useState({ name: "", id: "" });
+
   const handleInputChange = (e) => {
       setWalletDetails({ ...walletDetails, [e.target.name]: e.target.value });
   };
 
-  const handleRefundRequest = () => {
-      console.log("Refund Requested with details:", walletDetails);
-      setIsModalOpen(false); // Close modal after submission
+  const handleRefundRequest = async () => {
+    if (!walletDetails.name || !walletDetails.id) {
+      toast.error("Please enter wallet details.");
+      return;
+    }
+    if (token) {
+      try {
+        const response = await axios.put(`http://localhost:3000/api/user/booking/request-refund/${bookingId}`,
+        {
+            walletName: walletDetails.name,
+            walletId: walletDetails.id
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.data.success) {
+            toast.success("Refund request submitted successfully!");
+            setIsModalOpen(false);
+            window.location.reload(); // Refresh to reflect changes
+        }
+      } catch (err) {
+          console.error("Refund request failed:", err);
+          toast.error(err.response?.data?.message || "Something went wrong.");
+      } 
+    }
   };
   
   
@@ -876,7 +901,7 @@ export default function UserBookedVehicleDetails() {
                 <div>
                     <Button 
                         className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" 
-                        onClick={setIsModalOpen(true)}
+                        onClick={() => setIsModalOpen(true)}
                     >
                         Request Refund
                     </Button>

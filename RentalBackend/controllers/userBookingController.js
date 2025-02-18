@@ -725,6 +725,60 @@ exports.acceptRevisionBooking = async (req, res) => {
 };
 
 
+exports.requestRefund = async (req, res) => {
+  try {
+      const { bookingId } = req.params; // Get bookingId from request params
+      const { walletName, walletId } = req.body; // Wallet details from request body
+      const userId = req.user.id;
+
+      // Find booking by ID and ensure the user owns it
+      const booking = await Booking.findOne({ _id: bookingId, renterId: userId });
+
+      if (!booking) {
+          return res.status(404).json({ success: false, message: "Booking not found or unauthorized" });
+      }
+
+      // Check if the booking is canceled and payment was made (Partial or Full)
+      if (booking.bookingStatus !== "Cancelled") {
+          return res.status(400).json({ success: false, message: "Refund can only be requested for canceled bookings" });
+      }
+
+      if (!["Partial", "Full"].includes(booking.paymentStatus)) {
+          return res.status(400).json({ success: false, message: "Refund can only be requested if payment was made" });
+      }
+
+      // Ensure refund has not already been requested
+      if (booking.refundRequest.requested) {
+          return res.status(400).json({ success: false, message: "Refund has already been requested" });
+      }
+
+      // Validate wallet details
+      if (!walletName || !walletId) {
+          return res.status(400).json({ success: false, message: "Wallet details are required for refund" });
+      }
+
+      // Mark refund as requested with wallet details
+      booking.refundRequest = {
+          requested: true,
+          walletName,
+          walletId
+      };
+
+      await booking.save(); // Save the updated booking
+
+      return res.status(200).json({
+          success: true,
+          message: "Refund request submitted successfully",
+          booking
+      });
+
+  } catch (error) {
+      console.error("Error requesting refund:", error);
+      return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+
 // Owner approves/rejects the booking
 exports.updateBookingStatus = async (req, res) => {
     try {

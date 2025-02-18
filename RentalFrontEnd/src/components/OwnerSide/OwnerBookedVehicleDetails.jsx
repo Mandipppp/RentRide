@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '../Ui/Button';
-import { useLocation, useNavigate, useParams} from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import { reactLocalStorage } from 'reactjs-localstorage';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
@@ -25,6 +25,9 @@ export default function OwnerBookedVehicleDetails() {
   const navigate = useNavigate();
   const [baseCost, setBaseCost] = useState(0);
   const [addOnsCost, setAddOnsCost] = useState(0);
+  const [searchParams] = useSearchParams();
+  const [receiptUrl, setReceiptUrl] = useState(null);
+  
   
   const [totalCost, setTotalCost] = useState(0);
   const [selectedAddOns, setSelectedAddOns] = useState([]);
@@ -83,7 +86,13 @@ export default function OwnerBookedVehicleDetails() {
 
   useEffect(() => {
       if (booking) {
-        const initialAddOns = booking.addOns || [];
+        let initialAddOns = [];
+        if(booking.bookingStatus=="Pending"){
+          initialAddOns = booking.addOns || [];
+        }else{
+          initialAddOns = booking.approvedAddOns || [];
+
+        }
         setSelectedAddOns(initialAddOns);
   
         if (booking.startDate && booking.endDate) {
@@ -279,6 +288,67 @@ export default function OwnerBookedVehicleDetails() {
       toast.error("Error cancelling booking.");
     }
   };
+
+  const handleRefund = async () => {
+    if (!booking) return;
+    try {
+      const response = await axios.post("http://localhost:3000/api/auth/payment/initiaterefund", {
+        purchase_order_id: bookingId,
+        purchase_order_name: booking.vehicleId.name,
+        return_url: `http://localhost:5173/ownerVehicleDetails/${bookingId}`, // Redirect URL after payment
+        website_url: `http://localhost:5173/ownerVehicleDetails/${bookingId}`,
+        totalAmount: totalCost,
+        ownerId: booking.ownerId._id
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+      window.location.href = response.data.payment_url; // Redirect to Khalti
+    } catch (error) {
+      console.error("Payment initiation failed:", error.response?.data);
+    }
+  }
+
+  // Verify payment when payment is successful and pidx is available in the URL
+  useEffect(() => {
+    const verifyPayment = async () => {
+      const pidx = searchParams.get("pidx");
+      if (!pidx) {
+        console.error("Missing pidx in URL parameters");
+        return;
+      }
+  
+      if (!token) {
+        console.error("Authorization token is missing!");
+        return;
+      }
+
+      if (pidx) {
+        try {
+          const response = await axios.post("http://localhost:3000/api/auth/payment/verifyrefund", { 
+            pidx
+           },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          // console.log("Payment data: ", response.data);
+          if (response.data.status === "Completed") {
+            setStatus("success");
+            toast.success('Payment successful!');
+            setReceiptUrl(`http://localhost:3000/api/auth/payment/receipt?pidx=${pidx}`);
+            navigate(`/ownerVehicleDetails/${bookingId}`, { replace: true });
+          } else {
+            toast.error('Payment verification failed. Please try again.');
+          }
+        } catch (error) {
+          toast.error('Payment verification failed. Please try again.');
+        }
+      }
+    };
+
+    verifyPayment();
+  }, [searchParams.toString(), token]);
   
   if (!booking) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -552,6 +622,12 @@ export default function OwnerBookedVehicleDetails() {
             }
 
               <p className="font-bold mt-4 flex justify-between"><span>Total</span> <span>Rs {totalCost}</span></p>
+
+              {!(booking.paymentStatus === "Pending") &&(<div>
+                <p className="font-bold mt-4 flex justify-between"><span>Paid</span> <span>-Rs {booking.amountPaid}</span></p>
+                <p className="font-bold mt-4 flex justify-between"><span>Remaining</span> <span>Rs {parseFloat(totalCost-booking.amountPaid).toFixed(2)}</span></p>
+              </div>
+              )}
             </div>
 
            
@@ -566,6 +642,37 @@ export default function OwnerBookedVehicleDetails() {
                 </Button>
               </div>
           )}
+
+        {receiptUrl && (
+            <button 
+              onClick={() => window.open(receiptUrl, "_blank")} 
+              className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
+            >
+              Download Receipt
+            </button>
+          )}
+        {(booking.bookingStatus === "Cancelled" && (booking.paymentStatus === "Partial" || booking.paymentStatus === "Full")) && 
+            (<>
+            {booking.refundRequest.requested ? (
+                <div>
+                    <Button 
+                        className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg"
+                        onClick={handleRefund} 
+                    >
+                        Refund User
+                    </Button>
+                </div>
+            ) : (
+                <p className="mt-4 text-green-600 font-semibold">Refund Details Not provided</p>
+              )}
+          </>)}
+
+          {(booking.bookingStatus === "Cancelled" && booking.paymentStatus === "Refunded") && (
+            <div>
+              <p className="mt-4 text-green-600 font-semibold">Booking Refunded</p>
+            </div>
+          )}
+
           </div>
         </div>
 

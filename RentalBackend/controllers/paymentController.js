@@ -93,6 +93,78 @@ const initiatePayment = async (req, res) => {
   }
 };
 
+// Initiate Payment
+const initiateRefund = async (req, res) => {
+  try {
+    const { purchase_order_id, purchase_order_name, return_url, website_url, totalAmount, ownerId } = req.body;
+
+    // Find booking to ensure it exists
+    const booking = await Booking.findById(purchase_order_id);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found." });
+    }
+
+    if (!booking.bookingStatus === "Cancelled") {
+      return res.status(404).json({ success: false, message: "Booking not cancelled." });
+    }
+
+    if (booking.paymentStatus === "Refunded") {
+      return res.status(404).json({ success: false, message: "Booking already refunded." });
+    }
+
+    if (!booking.refundRequest.requested) {
+      return res.status(404).json({ success: false, message: "Refund not requested." });
+    }
+
+    // if (booking.cancellationFee <= 0) {
+    //   return res.status(404).json({ success: false, message: "No cancellation fee to refund." });
+    // }
+
+    const payload = {
+      return_url,
+      website_url,
+      amount: (booking.amountPaid-booking.cancellationFee)*100,
+      purchase_order_id,
+      purchase_order_name,
+    };
+
+    const response = await axios.post(
+      `${KHALTI_BASE_URL}epayment/initiate/`,
+      payload,
+      { headers }
+    );
+    // Save payment record
+    const newPayment = new Payment({
+      senderType: "Owner",
+      senderId: ownerId,
+      receiverType: "User",
+      receiverId: booking.renterId,
+      bookingId: booking._id,
+      amountPaid: booking.amountPaid-booking.cancellationFee,
+      totalAmount,
+      paymentMethod: "Khalti",
+      paymentType: "Refund",
+      paymentStatus: "Pending",
+      transactionId: response.data.pidx, // Store Khalti transaction ID
+      isFullPayment: false, // Check if full payment
+    });
+
+    await newPayment.save();
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Khalti Payment Error:", error);
+
+    if (error.response) {
+      res.status(error.response.status || 400).json(error.response.data);
+    } else if (error.request) {
+      res.status(500).json({ message: "No response from Khalti. Check your internet or API URL." });
+    } else {
+      res.status(500).json({ message: "Request failed before reaching Khalti.", error: error.message });
+    }
+  }
+};
+
 // Verify Payment
 const verifyPayment = async (req, res) => {
   try {
@@ -154,6 +226,50 @@ const verifyPayment = async (req, res) => {
 
     // Change the bookingStatus to "Confirmed" if payment is successful
     booking.bookingStatus = "Confirmed";
+    await booking.save();
+
+    res.json(response.data);
+  } catch (error) {
+    res.status(400).json(error.response.data);
+  }
+};
+
+// Verify Payment
+const verifyRefund = async (req, res) => {
+  try {
+    const { pidx } = req.body;
+
+    const response = await axios.post(
+      `${KHALTI_BASE_URL}epayment/lookup/`,
+      { pidx },
+      { headers }
+    );
+
+    if (response.data.status !== "Completed") {
+      return res.status(400).json({ success: false, message: "Payment not completed yet." });
+    }
+
+    // Find the payment entry
+    const payment = await Payment.findOne({ transactionId: pidx });
+    if (!payment) {
+      return res.status(404).json({ success: false, message: "Payment record not found." });
+    }
+
+    // Update payment status
+    payment.paymentStatus = "Completed";
+    await payment.save();
+
+    // Update booking details
+    const booking = await Booking.findById(payment.bookingId);
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found." });
+    }
+
+    if(!((booking.amountPaid-booking.cancellationFee) === payment.amountPaid)){
+      return res.status(404).json({ success: false, message: "Refund amount not valid." });
+    }
+
+    booking.paymentStatus = "Refunded";
     await booking.save();
 
     res.json(response.data);
@@ -275,4 +391,4 @@ const showReciept = async (req, res) => {
 };
 
 
-module.exports = { initiatePayment, verifyPayment, showReciept };
+module.exports = { initiatePayment, verifyPayment, showReciept, initiateRefund, verifyRefund };
