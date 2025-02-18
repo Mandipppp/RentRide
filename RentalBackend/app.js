@@ -11,6 +11,8 @@ const userBookingRoutes = require('./routes/userBookingRoutes');
 const ownerBookingRoutes = require('./routes/ownerBookingRoutes');
 const paymentRoutes = require("./routes/paymentRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+const reviewRoutes = require("./routes/userReviewRoutes");
+
 const Chat = require('./models/Chat');
 const Message = require('./models/Message');
 
@@ -47,6 +49,8 @@ app.use('/api/users', usersRoutes);
 app.use('/api/owner', ownerRoutes);
 app.use('/api/notification', notificationRoutes);
 app.use('/api/user/booking', userBookingRoutes);
+app.use('/api/user/review', reviewRoutes);
+
 app.use('/api/owner/booking', ownerBookingRoutes);
 
 

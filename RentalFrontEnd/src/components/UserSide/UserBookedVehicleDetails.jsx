@@ -50,6 +50,32 @@ export default function UserBookedVehicleDetails() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [walletDetails, setWalletDetails] = useState({ name: "", id: "" });
+  const [rating, setRating] = useState(0); // Store rating (1-5 stars)
+const [comment, setComment] = useState(""); // Store comment
+
+const handleSubmitReview = async () => {
+  // Here, you can handle the submission of the review.
+  // For example, send it to the backend or store it in the state.
+  // console.log("Review submitted:", { rating, comment });
+  if(token && booking){
+    try {
+      const response = await axios.post('http://localhost:3000/api/user/review/post-review', 
+        {
+          bookingId,
+          rating,
+          comment,
+        }, 
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Review Posted Successfully!!");
+    }catch (err) {
+      console.error("Review post Failed", err);
+      toast.error(err.response?.data?.message || "Something went wrong.");
+    } 
+  }
+};
 
   const handleInputChange = (e) => {
       setWalletDetails({ ...walletDetails, [e.target.name]: e.target.value });
@@ -511,6 +537,54 @@ export default function UserBookedVehicleDetails() {
         </button>
         <h2 className="font-bold text-xl text-gray-800 ml-6">Booking Details</h2>
       </div>
+
+      {booking.bookingStatus === "Completed" &&
+      <div className="flex flex-col mt-8 mb-8 bg-white p-8 rounded-lg shadow-lg border border-gray-200">
+      <h3 className="font-semibold text-xl text-gray-900 mb-4">Leave a Review</h3>
+
+      {/* Star Rating */}
+      <div className="flex items-center mt-4">
+        <span className="text-yellow-500 text-3xl">
+          {/* Render 5 stars */}
+          {[...Array(5)].map((_, index) => (
+            <i
+              key={index}
+              className={`fa-solid fa-star fa-beat cursor-pointer transition-colors duration-300 mr-4 ${
+                rating >= index + 1 ? 'text-yellow-500' : 'text-gray-300'
+              }`}
+              onClick={() => setRating(index + 1)} // Update rating when star is clicked
+            ></i>
+          ))}
+        </span>
+      </div>
+
+      {/* Comment Section */}
+      <div className="mt-6">
+        <label htmlFor="comment" className="block text-gray-700 font-medium mb-2">
+          Your Comment
+        </label>
+        <textarea
+          id="comment"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Write your comment..."
+          className="w-full p-4 border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:outline-none transition-all duration-300 resize-none"
+          rows="4"
+        />
+      </div>
+
+        {/* Submit Button */}
+        <div className="mt-6 flex justify-end">
+          <button
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-md shadow-md transform transition duration-300 hover:scale-105"
+            onClick={handleSubmitReview}
+          >
+            Submit Review
+          </button>
+        </div>
+      </div>}
+
+
      
         {/* Car Image and Info */}
         <div className="flex flex-col items-left">

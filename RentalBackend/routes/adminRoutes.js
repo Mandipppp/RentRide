@@ -8,6 +8,7 @@ const { getAllVehicles, getVehicleById, verifyVehicle } = require('../controller
 const { getAllContacts, updateContactStatus } = require('../controllers/adminContactController');
 const { getAllBookings } = require('../controllers/adminBookingController');
 const { getAllPayments } = require('../controllers/adminPaymentController');
+const { getAllReviews, updateReviewStatus } = require('../controllers/adminReviewController');
 // Route to get all owners
 router.get('/getOwners',authenticate, checkAdmin, getAllOwners);
 
@@ -39,6 +40,11 @@ router.get('/getBookings', authenticate, checkAdmin, getAllBookings);
 
 // payments
 router.get('/getPayments', authenticate, checkAdmin, getAllPayments);
+
+// reviews
+router.get('/reviews', authenticate, checkAdmin, getAllReviews);
+router.put('/updatereview/:reviewId', authenticate, checkAdmin, updateReviewStatus);
+
 
 
 

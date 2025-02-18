@@ -39,6 +39,7 @@ import OwnerBookedVehicleDetails from "./components/OwnerSide/OwnerBookedVehicle
 import ChatComponent from "./components/ChatComponent";
 import AdminBookings from "./components/Admin/AdminBookings";
 import AdminPayments from "./components/Admin/AdminPayments";
+import AdminReviews from "./components/Admin/AdminReviews";
 
 
 
@@ -120,6 +121,8 @@ const App = () => {
 
         <Route path="/adminbooking" element={<AdminBookings />} />
         <Route path="/adminpayment" element={<AdminPayments />} />
+        <Route path="/adminreviews" element={<AdminReviews />} />
+
 
 
 
