@@ -3,6 +3,10 @@ import Navbar from "./Navbar";
 import { useNavigate } from "react-router-dom";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { toast, ToastContainer } from "react-toastify";
+import { reactLocalStorage } from "reactjs-localstorage";
+import axios from "axios";
+
 
 const AdminAddPage = () => {
   const [title, setTitle] = useState("");
@@ -22,14 +26,41 @@ const AdminAddPage = () => {
     setContent(value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Page Data:", { title, slug, content });
+    try {
+        const token = reactLocalStorage.get("access_token");
+  
+        const response = await axios.post("http://localhost:3000/api/admin/page/addpage",
+        {
+            title,
+            slug,
+            content
+        }, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        toast.success("Page added successfully!");
+
+      // Navigate after the delay
+    setTimeout(() => {
+        navigate("/adminpages");
+      }, 2000);
+      } catch (error) {
+        console.error("Error adding page:", error.response.data.message);
+        toast.error(error.response.data.message || "Error adding page. Please try again.");
+      }
   };
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mt-6 pt-16">
       <Navbar />
+      <ToastContainer />
+
       <div className="flex items-center mb-4">
         <button
           onClick={() => navigate("/adminpages")}

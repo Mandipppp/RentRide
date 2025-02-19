@@ -42,6 +42,8 @@ import AdminPayments from "./components/Admin/AdminPayments";
 import AdminReviews from "./components/Admin/AdminReviews";
 import AdminPages from "./components/Admin/AdminPages";
 import AdminAddPage from "./components/Admin/AdminAddPage";
+import AdminPageDetail from "./components/Admin/AdminPageDetail";
+import PageView from "./components/UserSide/PageView";
 
 
 
@@ -125,6 +127,7 @@ const App = () => {
         <Route path="/adminpayment" element={<AdminPayments />} />
         <Route path="/adminreviews" element={<AdminReviews />} />
         <Route path="/adminpages" element={<AdminPages />} />
+        <Route path="/adminpage/:id" element={<AdminPageDetail />} />
         <Route path="/adminaddpage" element={<AdminAddPage />} />
 
 
@@ -161,6 +164,7 @@ const App = () => {
       <Route path="/bookingVehicleDetails/:bookingId" element={<UserBookedVehicleDetails />} />
 
       <Route path="/myBookings" element={<UserBookings />} />
+      <Route path="/:slug" element={<PageView />} /> 
 
 
     {/* Payment */}

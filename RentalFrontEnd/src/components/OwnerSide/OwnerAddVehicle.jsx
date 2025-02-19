@@ -156,7 +156,7 @@ const AddVehicleForm = () => {
     setAddOnsList([{ name: "", pricePerDay: "" }]); // Reset add-ons list
 
     // Navigate to ownersvehicle page
-    navigate("/ownervehicle"); // Assuming this is the desired page
+    navigate("/ownervehicle");
     } catch (error) {
       console.error("Error adding vehicle:", error);
       toast.error("Error adding vehicle. Please try again.");
