@@ -20,6 +20,7 @@ const calculateDaysDifference = (startDate, endDate) => {
 export default function VehicleDetails() {
   const { vehicleId } = useParams();
   const [vehicle, setVehicle] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [currentImage, setCurrentImage] = useState(0);
   const [token, setToken] = useState("");
   const navigate = useNavigate();
@@ -63,6 +64,26 @@ export default function VehicleDetails() {
         }
       };
       fetchVehicle();
+    }
+  }, [vehicleId, token]);
+
+  // Fetch reviews for the vehicle
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:3000/api/user/review/vehicle/${vehicleId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setReviews(response.data.reviews); // Store the fetched reviews
+      } catch (err) {
+        console.log("Failed to fetch reviews.");
+      }
+    };
+    if (vehicleId) {
+      fetchReviews();
     }
   }, [vehicleId, token]);
 
@@ -452,7 +473,7 @@ export default function VehicleDetails() {
 
        
       </div>
-      {/* Reviews */}
+      {/* Reviews
       <div className="max-w-6xl mx-auto bg-white shadow-md rounded-lg p-6 mt-8">
           <h3 className="font-bold text-xl text-gray-800">Reviews</h3>
           <Card className="p-6 mt-4 bg-green-50 rounded-lg shadow-md">
@@ -469,6 +490,35 @@ export default function VehicleDetails() {
               <p className="ml-3 text-gray-800">Raju Narayan</p>
             </div>
           </Card>
+        </div> */}
+        {/* Reviews */}
+        <div className="max-w-6xl mx-auto bg-white shadow-md rounded-lg p-6 mt-8">
+          <h3 className="font-bold text-xl text-gray-800">Reviews</h3>
+          {reviews.length > 0 ? (
+            reviews.map((review) => (
+              <Card key={review._id} className="p-6 mt-4 bg-green-50 rounded-lg shadow-md">
+                <div className="flex items-center">
+                  {[...Array(review.rating)].map((_, index) => (
+                    <i key={index} className="fa-solid fa-star text-yellow-500" />
+                  ))}
+                  {[...Array(5 - review.rating)].map((_, index) => (
+                    <i key={index} className="fa-solid fa-star text-gray-300" />
+                  ))}
+                </div>
+                <p className="mt-4 text-gray-700">"{review.comment}"</p>
+                <div className="flex items-center mt-4">
+                  <img
+                    src={car}
+                    alt="Reviewer"
+                    className="w-8 h-8 rounded-full border-gray-300 object-cover"
+                  />
+                  <p className="ml-3 text-gray-800">{review.userId.name}</p>
+                </div>
+              </Card>
+            ))
+          ) : (
+            <p className="text-gray-500 mt-2">No reviews yet</p>
+          )}
         </div>
     </div>
   );

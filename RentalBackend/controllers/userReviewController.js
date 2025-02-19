@@ -61,3 +61,21 @@ exports.postReview = async (req, res) => {
     return res.status(500).json({ message: 'Internal server error.' });
   }
 };
+
+
+exports.getReviews = async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+    const reviews = await Review.find({ 
+      vehicleId, 
+      status: 'Approved' // Filter reviews with "Approved" status
+    })
+      .populate('userId', 'name')
+      .populate('bookingId', 'startDate endDate')
+      .sort({ createdAt: -1 });
+    res.json({ reviews });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching reviews' });
+  }
+}
