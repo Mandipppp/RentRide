@@ -40,6 +40,8 @@ import ChatComponent from "./components/ChatComponent";
 import AdminBookings from "./components/Admin/AdminBookings";
 import AdminPayments from "./components/Admin/AdminPayments";
 import AdminReviews from "./components/Admin/AdminReviews";
+import AdminPages from "./components/Admin/AdminPages";
+import AdminAddPage from "./components/Admin/AdminAddPage";
 
 
 
@@ -122,6 +124,8 @@ const App = () => {
         <Route path="/adminbooking" element={<AdminBookings />} />
         <Route path="/adminpayment" element={<AdminPayments />} />
         <Route path="/adminreviews" element={<AdminReviews />} />
+        <Route path="/adminpages" element={<AdminPages />} />
+        <Route path="/adminaddpage" element={<AdminAddPage />} />
 
 
 

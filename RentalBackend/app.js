@@ -12,6 +12,8 @@ const ownerBookingRoutes = require('./routes/ownerBookingRoutes');
 const paymentRoutes = require("./routes/paymentRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const reviewRoutes = require("./routes/userReviewRoutes");
+const adminPageRoutes = require("./routes/adminPageRoutes");
+
 
 const Chat = require('./models/Chat');
 const Message = require('./models/Message');
@@ -45,6 +47,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', resetPassRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin/page', adminPageRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/owner', ownerRoutes);
 app.use('/api/notification', notificationRoutes);
