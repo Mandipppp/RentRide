@@ -6,11 +6,11 @@ import { reactLocalStorage } from "reactjs-localstorage";
 import axios from "axios";
 import { ClipLoader } from "react-spinners";
 
-const TABS = ["Pending", "Active", "Completed", "Cancelled","Refund"];
+const TABS = ["Pending","Confirmed", "Active", "Completed", "Cancelled","Refund"];
 
 function OwnerBookings() {
     const [activeTab, setActiveTab] = useState("Pending");
-    const [bookings, setBookings] = useState({ upcoming: [], active : [], completed: [], cancelled: [], refunds: [] });
+    const [bookings, setBookings] = useState({ upcoming: [], confirmed: [], active : [], completed: [], cancelled: [], refunds: [] });
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -36,6 +36,7 @@ function OwnerBookings() {
     const getBookingsForTab = () => {
         switch (activeTab) {
             case "Pending": return bookings.upcoming;
+            case "Confirmed": return bookings.confirmed;
             case "Active": return bookings.active;
             case "Completed": return bookings.completed;
             case "Cancelled": return bookings.cancelled;

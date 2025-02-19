@@ -14,7 +14,7 @@ const BookingSchema = new mongoose.Schema({
 
   bookingStatus: { 
     type: String, 
-    enum: ['Pending', 'Accepted', 'RevisionRequired', 'Confirmed', 'Cancelled', 'Completed'], 
+    enum: ['Pending', 'Accepted', 'RevisionRequired', 'Confirmed', 'Active', 'Cancelled', 'Completed'], 
     default: 'Pending' 
   }, // Status of booking
 
@@ -55,6 +55,13 @@ const BookingSchema = new mongoose.Schema({
     walletName: { type: String, default: null }, // walletId name
     walletId: { type: String, default: null }, // Wallet ID for refund transfer
   },
+
+  /** Rental Tracking Fields **/
+  rentalStartConfirmed: { type: Boolean, default: false }, // When owner clicks "Start Rental"
+  rentalStartTime: { type: Date, default: null }, // Actual rental start time
+  
+  rentalEndConfirmed: { type: Boolean, default: false }, // When owner clicks "Vehicle Returned"
+  rentalEndTime: { type: Date, default: null }, // Actual rental return time
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

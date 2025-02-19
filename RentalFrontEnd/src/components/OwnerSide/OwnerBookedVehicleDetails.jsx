@@ -43,7 +43,56 @@ export default function OwnerBookedVehicleDetails() {
   const [chatId, setChatId] = useState("");
   const [userId, setUserId] = useState("");
   const messageContainerRef = useRef(null);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [isCloseRental, setIsCloseRental] = useState(false);
 
+
+
+  // Function to check if rental can be started
+  const checkIfButtonDisabled = () => {
+    if(booking)
+      {
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Reset time to midnight
+
+    const startDate = new Date(booking.startDate);
+    startDate.setHours(0, 0, 0, 0); // Reset time to midnight
+
+    const oneDayAfterStart = new Date(startDate);
+    oneDayAfterStart.setDate(oneDayAfterStart.getDate() + 1);
+
+    // Disable button if the current date is before the start date or more than one day after start date
+    if (currentDate < startDate || currentDate > oneDayAfterStart) {
+      setIsButtonDisabled(true);
+    } else {
+      setIsButtonDisabled(false);
+    }
+  }
+  };
+
+  // Function to check if rental can be closed
+  const checkIfRentalClose = () => {
+    if(booking)
+      {
+    const currentDate = new Date();
+    // currentDate.setHours(0, 0, 0, 0); // Reset time to midnight
+
+    const endDate = new Date(booking.endDate);
+    // endDate.setHours(0, 0, 0, 0); // Reset time to midnight
+
+    if (currentDate < endDate) {
+      setIsCloseRental(true);
+    }else{
+      setIsCloseRental(false);
+    }
+  }
+  };
+
+  useEffect(() => {
+    checkIfButtonDisabled();
+    checkIfRentalClose();
+
+  }, [booking]);
   
   useEffect(() => {
     const access_token = reactLocalStorage.get("access_token");
@@ -270,6 +319,38 @@ export default function OwnerBookedVehicleDetails() {
     } catch (error) {
       console.error('Error accepting booking:', error.response?.data || error.message);
       toast.error("Error accepting booking.");
+    }
+  };
+
+  const handleStartRental = async () => {
+    try {
+      const response = await axios.put('http://localhost:3000/api/owner/booking/startRental', {
+        bookingId
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Rental has started.");
+      console.log('Starting rental:', response.data);
+    } catch (error) {
+      console.error('Error starting rental:', error.response?.data || error.message);
+      toast.error(error.response?.data?.message || "Error starting rental.");
+    }
+  };
+
+  const handleCloseRental = async () => {
+    try {
+      const response = await axios.put('http://localhost:3000/api/owner/booking/closeRental', {
+        bookingId
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Rental has closed.");
+      console.log('Closed rental:', response.data);
+    } catch (error) {
+      console.error('Error closing rental:', error.response?.data || error.message);
+      toast.error(error.response?.data?.message || "Error closing rental.");
     }
   };
 
@@ -642,6 +723,49 @@ export default function OwnerBookedVehicleDetails() {
                 </Button>
               </div>
           )}
+
+        {booking.bookingStatus==="Confirmed" && ( 
+              <div>
+                <button 
+               className={`w-full mt-4 py-2 rounded-lg text-white font-bold ${
+                isButtonDisabled
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
+                onClick={()=>handleStartRental()}
+                disabled={isButtonDisabled}>
+                    Start Rental
+                </button>
+                {/* Show message when the button is disabled */}
+                {isButtonDisabled && (
+                  <p className="mt-2 text-sm text-red-500">
+                    *You can only start the rental within one day after the start date.
+                  </p>
+                )}
+              </div>
+          )}
+
+        {(booking.bookingStatus==="Active" && booking.rentalStartConfirmed) && ( 
+              <div>
+                <button 
+                className={`w-full mt-4 py-2 rounded-lg text-white font-bold ${
+                  isCloseRental
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700"
+                }`}
+                onClick={()=>handleCloseRental()}
+                disabled={isCloseRental}>
+                    Close Rental
+                </button>
+                {/* Show message when the button is disabled */}
+                {isCloseRental && (
+                  <p className="mt-2 text-sm text-red-500">
+                    *You can only close the rental at the end date.
+                  </p>
+                )}
+              </div>
+          )}
+
 
         {receiptUrl && (
             <button 

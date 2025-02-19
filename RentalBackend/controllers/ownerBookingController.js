@@ -18,7 +18,8 @@ exports.getOwnerBookings = async (req, res) => {
       // Categorize bookings
     const categorizedBookings = {
       upcoming: bookings.filter(b => ["Pending", "Accepted", "RevisionRequired"].includes(b.bookingStatus)),
-      active: bookings.filter(b => b.bookingStatus === "Confirmed"),
+      confirmed: bookings.filter(b => b.bookingStatus === "Confirmed"),
+      active: bookings.filter(b => b.bookingStatus === "Active"),
       completed: bookings.filter(b => b.bookingStatus === "Completed"),
       cancelled: bookings.filter(b => (b.bookingStatus === "Cancelled" && (b.paymentStatus === "Pending" || b.paymentStatus === "Refunded"))),
       refunds: bookings.filter(b => (b.bookingStatus === "Cancelled" && (b.paymentStatus === "Partial" || b.paymentStatus === "Full"))),
@@ -422,6 +423,194 @@ exports.cancelBooking = async (req, res) => {
     });
   } catch (error) {
     console.error('Error cancelling booking:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+exports.startRental = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+    // Find the booking
+    const booking = await Booking.findById(bookingId).populate('vehicleId');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Ensure the requesting user is the owner of the vehicle
+    if (booking.ownerId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
+    }
+
+    // Check if the booking status is "Confirmed"
+    if (booking.bookingStatus !== 'Confirmed') {
+      return res.status(400).json({ message: 'Rental can only be started if the booking is Confirmed.' });
+    }
+
+    // Check if the current date is on or after the startDate
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Reset time to midnight
+
+    const startDate = new Date(booking.startDate);
+    startDate.setHours(0, 0, 0, 0); // Reset time to midnight
+
+    const oneDayAfterStart = new Date(startDate);
+    oneDayAfterStart.setDate(oneDayAfterStart.getDate() + 1);
+
+    if (currentDate < startDate) {
+      return res.status(400).json({ message: 'Rental cannot be started before the booking start date.' });
+    }
+
+    if (currentDate > oneDayAfterStart) {
+      return res.status(400).json({ message: 'Rental can only be started within one day after the start date.' });
+    }
+
+    // Update booking status to "Active"
+    booking.bookingStatus = 'Active';
+    booking.updatedAt = Date.now();
+
+    // Set rental start confirmation fields
+    booking.rentalStartConfirmed = true;
+    booking.rentalStartTime = Date.now(); // Set the actual rental start time
+
+    await booking.save();
+
+    // Send notification to renter
+    const notification = new Notification({
+      recipientId: booking.renterId,
+      recipientModel: 'User',
+      message: `Your rental for ${booking.vehicleId.name} has started.`,
+      type: 'booking',
+      priority: 'high'
+    });
+
+    await notification.save();
+
+    // Send email to renter
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: booking.renterId.email,
+      subject: `Rental Started: ${booking.vehicleId.name}`,
+      html: `
+        <html>
+          <body>
+            <p>Dear <strong>${booking.renterId.name}</strong>,</p>
+            <p>Your rental for <strong>${booking.vehicleId.name}</strong> has officially started.</p>
+            <p>Please ensure all agreed terms are followed during the rental period.</p>
+            <p><strong>Rental Period:</strong></p>
+            <ul>
+              <li><strong>Start Date:</strong> ${booking.startDate}</li>
+              <li><strong>End Date:</strong> ${booking.endDate}</li>
+            </ul>
+            <p>Best regards,<br/>The RentRide Team</p>
+          </body>
+        </html>
+      `,
+    };
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ success: true, message: 'Rental started successfully', booking });
+
+  } catch (error) {
+    console.error('Error starting rental:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+exports.endRental = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+    const booking = await Booking.findById(bookingId).populate('vehicleId');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    if (booking.ownerId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
+    }
+
+    if (booking.bookingStatus !== 'Active') {
+      return res.status(400).json({ message: 'Rental can only be ended if the booking is Active.' });
+    }
+
+    const currentDate = new Date();
+    const endDate = new Date(booking.endDate);
+
+    if (currentDate < endDate) {
+      return res.status(400).json({ message: 'Rental cannot be ended before the rental end date.' });
+    }
+
+    // Update booking status to "Completed"
+    booking.bookingStatus = 'Completed';
+    booking.updatedAt = Date.now();
+
+    // Set rental end confirmation fields
+    booking.rentalEndConfirmed = true;
+    booking.rentalEndTime = Date.now();
+
+    await booking.save();
+
+    // Send notification to renter
+    const notification = new Notification({
+      recipientId: booking.renterId,
+      recipientModel: 'User',
+      message: `Your rental for ${booking.vehicleId.name} has ended.`,
+      type: 'booking',
+      priority: 'high'
+    });
+
+    await notification.save();
+
+    // Send email to renter
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: booking.renterId.email,
+      subject: `Rental Ended: ${booking.vehicleId.name}`,
+      html: `
+        <html>
+          <body>
+            <p>Dear <strong>${booking.renterId.name}</strong>,</p>
+            <p>Your rental for <strong>${booking.vehicleId.name}</strong> has officially ended.</p>
+            <p>We hope you enjoyed your rental experience.</p>
+            <p><strong>Rental Period:</strong></p>
+            <ul>
+              <li><strong>Start Date:</strong> ${booking.startDate}</li>
+              <li><strong>End Date:</strong> ${booking.endDate}</li>
+            </ul>
+            <p>Best regards,<br/>The RentRide Team</p>
+          </body>
+        </html>
+      `,
+    };
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ success: true, message: 'Rental ended successfully', booking });
+
+  } catch (error) {
+    console.error('Error ending rental:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
