@@ -27,6 +27,7 @@ export default function OwnerBookedVehicleDetails() {
   const [addOnsCost, setAddOnsCost] = useState(0);
   const [searchParams] = useSearchParams();
   const [receiptUrl, setReceiptUrl] = useState(null);
+  const [contractUrl, setContractUrl] = useState(null);
   
   
   const [totalCost, setTotalCost] = useState(0);
@@ -112,6 +113,9 @@ export default function OwnerBookedVehicleDetails() {
             }
           );
           setBooking(response.data.booking);
+          if(response.data.booking.bookingStatus === "Confirmed" || response.data.booking.bookingStatus === "Active"){
+            setContractUrl(`http://localhost:3000/api/owner/booking/contract/${bookingId}`);
+          }
           // console.log("booking", response.data.booking);
 
         //   console.log(response.data);
@@ -775,6 +779,16 @@ export default function OwnerBookedVehicleDetails() {
               Download Receipt
             </button>
           )}
+
+        {contractUrl && (
+            <button 
+              onClick={() => window.open(contractUrl, "_blank")} 
+              className="w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg"
+            >
+              Download Contract
+            </button>
+          )}
+
         {(booking.bookingStatus === "Cancelled" && (booking.paymentStatus === "Partial" || booking.paymentStatus === "Full")) && 
             (<>
             {booking.refundRequest.requested ? (

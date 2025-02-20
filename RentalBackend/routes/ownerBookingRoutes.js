@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticate } = require('../middlewares/authMiddleware');
-const { getOwnerBookings, getBookingById, acceptBooking, cancelBooking, startRental, endRental } = require('../controllers/ownerBookingController');
+const { getOwnerBookings, getBookingById, acceptBooking, cancelBooking, startRental, endRental, downloadContract } = require('../controllers/ownerBookingController');
 const router = express.Router();
 
 router.get('/getOwnerBookings', authenticate, getOwnerBookings);
@@ -10,7 +10,7 @@ router.put('/cancelBooking', authenticate, cancelBooking);
 router.put('/startRental', authenticate, startRental);
 router.put('/closeRental', authenticate, endRental);
 
-
+router.get("/contract/:bookingId", downloadContract);
 
 
 

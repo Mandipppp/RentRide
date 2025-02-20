@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { reactLocalStorage } from "reactjs-localstorage";
+import Navigation from "./Navigation";
+import Footer from "./Footer";
 
 const PageView = () => {
   const { slug } = useParams(); // Get the page slug from the URL
@@ -31,9 +33,14 @@ const PageView = () => {
   if (!page) return <p>Page not found.....</p>;
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-4">{page.title}</h1>
-      <div dangerouslySetInnerHTML={{ __html: page.content }} />
+    <div className="bg-pink-50 min-h-screen flex flex-col">
+        <Navigation />
+        <div className="flex-grow mx-auto p-6 w-full max-w-4xl">
+            <h1 className="text-4xl font-bold text-gray-800 mb-6 text-center">{page.title}</h1>
+            <div className="prose prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: page.content }} />
+        </div>
+    
+        <Footer />
     </div>
   );
 };

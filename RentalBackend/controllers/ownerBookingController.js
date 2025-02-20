@@ -5,6 +5,12 @@ const User = require('../models/user');
 const Chat = require('../models/Chat'); 
 const Owner = require('../models/owner');
 const nodemailer = require("nodemailer");
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
+const path = require('path');
+const Page = require('../models/page');
+const { JSDOM } = require('jsdom');
+const { convert } = require('html-to-text');
 
 exports.getOwnerBookings = async (req, res) => {
   try {
@@ -611,6 +617,272 @@ exports.endRental = async (req, res) => {
 
   } catch (error) {
     console.error('Error ending rental:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+// exports.downloadContract = async (req, res) => {
+//   try {
+//     const { bookingId } = req.params;
+
+//     // Fetch booking details
+//     const booking = await Booking.findById(bookingId)
+//       .populate('vehicleId')
+//       .populate('renterId')
+//       .populate('ownerId');
+
+//     if (!booking) {
+//       return res.status(404).json({ message: 'Booking not found' });
+//     }
+
+//     // if (booking.ownerId._id.toString() !== req.user.id) {
+//     //   return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
+//     // }
+
+//     // Create a PDF Document
+//     const doc = new PDFDocument();
+//     const filePath = path.join(__dirname, `../contracts/contract_${bookingId}.pdf`);
+//     const writeStream = fs.createWriteStream(filePath);
+//     doc.pipe(writeStream);
+//     // Header
+//     doc.font('Helvetica-Bold').fontSize(22).text('VEHICLE RENTAL AGREEMENT', { align: 'center', underline: true });
+//     doc.moveDown(2);
+
+//     doc.font('Helvetica').fontSize(12).text(`Date: ${new Date().toLocaleDateString()}`);
+//     doc.moveDown(2);
+
+//     // Section 1: Parties Involved
+//     doc.font('Helvetica-Bold').fontSize(14).text('1. PARTIES:', { underline: true });
+//     doc.moveDown(0.5);
+
+//     doc.font('Helvetica').fontSize(12).text(`**Owner:** ${booking.ownerId.name} (Email: ${booking.ownerId.email})`);
+//     doc.text(`**Renter:** ${booking.renterId.name} (Email: ${booking.renterId.email})`);
+//     doc.moveDown(2);
+
+//     // Section 2: Vehicle Information
+//     doc.font('Helvetica-Bold').fontSize(14).text('2. VEHICLE INFORMATION:', { underline: true });
+//     doc.moveDown(0.5);
+
+//     doc.font('Helvetica').text(`**Vehicle:** ${booking.vehicleId.name}`);
+//     doc.text(`**Type:** ${booking.vehicleId.type}`);
+//     doc.text(`**Year:** ${booking.vehicleId.builtYear}`);
+//     doc.text(`**Daily Rental Price:** Rs. ${booking.vehicleId.dailyPrice}`);
+//     doc.moveDown(2);
+
+//     // Section 3: Rental Terms
+//     doc.font('Helvetica-Bold').fontSize(14).text('3. RENTAL TERMS:', { underline: true });
+//     doc.moveDown(0.5);
+
+//     doc.font('Helvetica').text(`**Pickup Date:** ${new Date(booking.startDate).toLocaleDateString()}`);
+//     doc.text(`**Drop-off Date:** ${new Date(booking.endDate).toLocaleDateString()}`);
+//     doc.text(`**Total Amount Due:** Rs. ${booking.amountDue}`);
+//     doc.moveDown(2);
+
+//     // Section 4: Renter Responsibilities
+//     doc.font('Helvetica-Bold').fontSize(14).text('4. RENTER RESPONSIBILITIES:', { underline: true });
+//     doc.moveDown(0.5);
+
+//     doc.font('Helvetica').text('- The renter must use the vehicle responsibly and comply with all traffic laws.');
+//     doc.text('- The renter must return the vehicle in the same condition as received.');
+//     doc.text('- Any damages caused during the rental period will be the responsibility of the renter.');
+//     doc.moveDown(1);
+
+//     doc.font('Helvetica-Bold').text('**Required Documents for Vehicle Pickup:**');
+//     doc.font('Helvetica').text('- **A valid photocopy of their driver’s license.**');
+//     doc.text('- **A photocopy of their citizenship card (or equivalent government-issued ID).**');
+//     doc.text('- Failure to provide these documents may result in cancellation of the booking **without a refund.**');
+//     doc.moveDown(2);
+
+//     // Section 5: Owner Responsibilities
+//     doc.font('Helvetica-Bold').fontSize(14).text('5. OWNER RESPONSIBILITIES:', { underline: true });
+//     doc.moveDown(0.5);
+
+//     doc.font('Helvetica').text('- The owner must ensure the vehicle listing is accurate and up-to-date.');
+//     doc.text('- The owner is responsible for ensuring the vehicle meets all legal and safety requirements.');
+//     doc.text('- Refunds must be processed promptly according to the agreed policies.');
+//     doc.moveDown(2);
+
+//     // Section 6: Booking and Payment
+//     doc.font('Helvetica-Bold').fontSize(14).text('6. BOOKING AND PAYMENT:', { underline: true });
+//     doc.moveDown(0.5);
+
+//     doc.font('Helvetica').text('- Bookings are confirmed when the owner accepts the renter’s request.');
+//     doc.text('- The renter must pay at least **10% of the total rental fee** to secure the booking.');
+//     doc.text('- Additional charges for add-ons (e.g., helmets, child seats) must be communicated before confirmation.');
+//     doc.moveDown(2);
+
+//     // Section 7: Cancellation and Refunds
+//     doc.font('Helvetica-Bold').fontSize(14).text('7. CANCELLATION AND REFUNDS:', { underline: true });
+//     doc.moveDown(0.5);
+
+//     doc.font('Helvetica-Bold').text('**For Renters:**');
+//     doc.font('Helvetica').text('- If a renter cancels a confirmed booking, **10% of the total amount** will be deducted as a non-refundable cancellation fee.');
+//     doc.text('- The remaining refund will be processed by the owner.');
+//     doc.moveDown(1);
+
+//     doc.font('Helvetica-Bold').text('**For Owners:**');
+//     doc.font('Helvetica').text('- Owners may cancel a booking before receiving payment without penalty.');
+//     doc.text('- If an owner cancels after payment, the full amount must be refunded to the renter.');
+//     doc.moveDown(2);
+
+//     // Section 8: Liability and Vehicle Use
+//     doc.font('Helvetica-Bold').fontSize(14).text('8. LIABILITY AND VEHICLE USE:', { underline: true });
+//     doc.moveDown(0.5);
+
+//     doc.font('Helvetica').text('- Renters must inspect the vehicle during pickup and report any damages.');
+//     doc.text('- The owner must ensure the vehicle is roadworthy and complies with local laws.');
+//     doc.text('- **RentRide is not liable** for accidents, damages, or injuries during the rental period.');
+//     doc.moveDown(2);
+
+//     // Section 9: Privacy and Data Security
+//     doc.font('Helvetica-Bold').fontSize(14).text('9. PRIVACY AND DATA SECURITY:', { underline: true });
+//     doc.moveDown(0.5);
+
+//     doc.font('Helvetica').text('- RentRide collects and processes user data in accordance with its Privacy Policy.');
+//     doc.text('- Personal information shared between renters and owners must be handled responsibly.');
+//     doc.moveDown(2);
+
+//     // Section 10: Amendments to Terms
+//     doc.font('Helvetica-Bold').fontSize(14).text('10. AMENDMENTS TO TERMS:', { underline: true });
+//     doc.moveDown(0.5);
+
+//     doc.font('Helvetica').text('- RentRide reserves the right to update these terms at any time.');
+//     doc.text('- Users will be notified of significant changes via email or platform notifications.');
+//     doc.text('- Continued use of RentRide constitutes acceptance of updated terms.');
+//     doc.moveDown(2);
+
+//     // Section 11: Signatures
+//     doc.font('Helvetica-Bold').fontSize(14).text('11. SIGNATURES:', { underline: true });
+//     doc.moveDown(2);
+
+//     doc.font('Helvetica').text('**Owner Signature:** ___________________________');
+//     doc.moveDown(2);
+//     doc.text('**Renter Signature:** ___________________________');
+//     doc.moveDown(3);
+
+//     doc.font('Helvetica').fontSize(10).text('For inquiries, contact RentRide at rentride@gmail.com.', { align: 'center' });
+
+//     doc.end();
+
+//     writeStream.on('finish', () => {
+//       res.download(filePath, `contract_${bookingId}.pdf`, (err) => {
+//         if (err) {
+//           console.error('Download error:', err);
+//           res.status(500).json({ message: 'Error downloading the contract' });
+//         }
+//       });
+//     });
+
+//   } catch (error) {
+//     console.error('Error generating contract:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// };
+
+
+
+exports.downloadContract = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    // Fetch booking details
+    const booking = await Booking.findById(bookingId)
+      .populate('vehicleId')
+      .populate('renterId')
+      .populate('ownerId');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Fetch contract content from the Page model (slug: "terms-and-conditions")
+    const page = await Page.findOne({ slug: 'terms-and-conditions' });
+
+    if (!page) {
+      return res.status(404).json({ message: 'Contract terms not found' });
+    }
+
+    // Convert HTML to well-structured text
+    const contractText = convert(page.content, {
+      wordwrap: 130, // Wrap text at 130 characters per line
+      selectors: [
+        { selector: 'h3', options: { uppercase: true } }, // Convert h3 to uppercase
+        { selector: 'ul', options: { itemPrefix: '• ' } }, // Use bullet points
+      ],
+    });
+
+    // Create a PDF Document
+    const doc = new PDFDocument({ margin: 50 });
+    const filePath = path.join(__dirname, `../contracts/contract_${bookingId}.pdf`);
+    const writeStream = fs.createWriteStream(filePath);
+    doc.pipe(writeStream);
+
+    // Header
+    doc.font('Helvetica-Bold').fontSize(22).text('VEHICLE RENTAL AGREEMENT', { align: 'center', underline: true });
+    doc.moveDown(2);
+
+    doc.font('Helvetica').fontSize(12).text(`Date: ${new Date().toLocaleDateString()}`);
+    doc.moveDown(2);
+
+    // Section 1: Parties Involved
+    doc.font('Helvetica-Bold').fontSize(14).text('1. PARTIES:', { underline: true });
+    doc.moveDown(0.5);
+
+    doc.font('Helvetica').fontSize(12).text(`**Owner:** ${booking.ownerId.name} (Email: ${booking.ownerId.email})`);
+    doc.text(`**Renter:** ${booking.renterId.name} (Email: ${booking.renterId.email})`);
+    doc.moveDown(2);
+
+    // Section 2: Vehicle Information
+    doc.font('Helvetica-Bold').fontSize(14).text('2. VEHICLE INFORMATION:', { underline: true });
+    doc.moveDown(0.5);
+
+    doc.font('Helvetica').text(`**Vehicle:** ${booking.vehicleId.name}`);
+    doc.text(`**Type:** ${booking.vehicleId.type}`);
+    doc.text(`**Year:** ${booking.vehicleId.builtYear}`);
+    doc.text(`**Daily Rental Price:** Rs. ${booking.vehicleId.dailyPrice}`);
+    doc.moveDown(2);
+
+    // Section 3: Rental Terms
+    doc.font('Helvetica-Bold').fontSize(14).text('3. RENTAL TERMS:', { underline: true });
+    doc.moveDown(0.5);
+
+    doc.font('Helvetica').text(`**Pickup Date:** ${new Date(booking.startDate).toLocaleDateString()}`);
+    doc.text(`**Drop-off Date:** ${new Date(booking.endDate).toLocaleDateString()}`);
+    doc.text(`**Total Amount Due:** Rs. ${booking.amountDue}`);
+    doc.moveDown(2);
+
+    // Section 4: Terms and Conditions (Formatted)
+    doc.font('Helvetica-Bold').fontSize(14).text('4. TERMS AND CONDITIONS:', { underline: true });
+    doc.moveDown(0.5);
+
+    doc.font('Helvetica').fontSize(10).text(contractText, { align: 'justify' });
+    doc.moveDown(2);
+
+    // Section 5: Signatures
+    doc.font('Helvetica-Bold').fontSize(14).text('5. SIGNATURES:', { underline: true });
+    doc.moveDown(2);
+
+    doc.font('Helvetica').text('**Owner Signature:** ___________________________');
+    doc.moveDown(2);
+    doc.text('**Renter Signature:** ___________________________');
+    doc.moveDown(3);
+
+    doc.font('Helvetica').fontSize(10).text('For inquiries, contact RentRide at rentride@gmail.com.', { align: 'center' });
+
+    doc.end();
+
+    writeStream.on('finish', () => {
+      res.download(filePath, `contract_${bookingId}.pdf`, (err) => {
+        if (err) {
+          console.error('Download error:', err);
+          res.status(500).json({ message: 'Error downloading the contract' });
+        }
+      });
+    });
+
+  } catch (error) {
+    console.error('Error generating contract:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
