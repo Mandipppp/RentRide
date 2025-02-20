@@ -12,7 +12,7 @@ const Navbar = () => {
     { name: "Payments", path: "/adminpayment" },
     { name: "Reviews", path: "/adminreviews" },
     { name: "Pages", path: "/adminpages" },
-    { name: "Contact Us", path: "/admincontact" },
+    { name: "Contact Us", path: "/admincontactpage" },
     { name: "Queries", path: "/admincontactqueries" },
   ];
 

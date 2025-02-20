@@ -15,6 +15,7 @@ const AdminPageDetail = () => {
   const [content, setContent] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   // Fetch the page details by ID when the component mounts
   useEffect(() => {
@@ -65,6 +66,35 @@ const AdminPageDetail = () => {
     }
   };
 
+  // Handle editing the page
+  const handleEditAndNotify = async () => {
+    setLoading(true);
+    try {
+      const token = reactLocalStorage.get("access_token");
+      const response = await axios.put(
+        `http://localhost:3000/api/admin/page/editpageandnotify/${id}`,
+        {
+          title,
+          slug,
+          content,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success("Page updated successfully!");
+      toast.success("Notified Users!");
+    } catch (error) {
+      console.error("Error updating page:", error);
+      toast.error(error.response.data.message || "Error updating page. Please try again.");
+    }finally {
+      setLoading(false);
+    }
+  };
+
   // Handle deleting the page
   const handleDelete = async () => {
     try {
@@ -99,6 +129,11 @@ const AdminPageDetail = () => {
     <div className="bg-white rounded-lg shadow-md p-6 mt-6 pt-16">
       <Navbar />
       <ToastContainer />
+      {loading && (
+      <div className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex justify-center items-center">
+        <div className="text-white">Processing... Please wait</div>
+      </div>
+    )}
 
       <div className="flex items-center mb-4">
         <button
@@ -135,7 +170,7 @@ const AdminPageDetail = () => {
 
         <div>
           <label className="block text-gray-700 font-medium">Content</label>
-          <ReactQuill value={content} onChange={(value) => setContent(value)} className="bg-white h-64 mb-12" />
+          <ReactQuill value={content} onChange={(value) => setContent(value)} className="bg-white h-64 mb-14" />
         </div>
 
         <div className="flex space-x-4">
@@ -146,6 +181,12 @@ const AdminPageDetail = () => {
             Edit Page
           </button>
 
+          <button
+            onClick={handleEditAndNotify}
+            className="bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600 transition duration-150"
+          >
+            Edit & Notify Users
+          </button>
           <button
             onClick={showDeleteConfirmation}
             className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-150"

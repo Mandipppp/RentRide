@@ -805,13 +805,10 @@ exports.downloadContract = async (req, res) => {
 
     // Convert HTML to well-structured text
     const contractText = convert(page.content, {
-      wordwrap: 130, // Wrap text at 130 characters per line
-      selectors: [
-        { selector: 'h3', options: { uppercase: true } }, // Convert h3 to uppercase
-        { selector: 'ul', options: { itemPrefix: '• ' } }, // Use bullet points
-      ],
+      wordwrap: 230,
     });
 
+    // console.log(contractText);
     // Create a PDF Document
     const doc = new PDFDocument({ margin: 50 });
     const filePath = path.join(__dirname, `../contracts/contract_${bookingId}.pdf`);

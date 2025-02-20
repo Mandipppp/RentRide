@@ -44,6 +44,7 @@ import AdminPages from "./components/Admin/AdminPages";
 import AdminAddPage from "./components/Admin/AdminAddPage";
 import AdminPageDetail from "./components/Admin/AdminPageDetail";
 import PageView from "./components/UserSide/PageView";
+import AdminContactPage from "./components/Admin/AdminContactPage";
 
 
 
@@ -117,6 +118,7 @@ const App = () => {
 
         <Route path="/adminusers" element={<AdminUsers />} />
         <Route path="/admincontactqueries" element={<AdminContactUsQueries />} />
+        <Route path="/admincontactpage" element={<AdminContactPage />} />
 
         {/* <Route path="/users/:id" element={<AdminOwnerProfile />} /> */}
 
