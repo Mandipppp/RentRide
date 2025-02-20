@@ -1,7 +1,31 @@
-import React from "react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { reactLocalStorage } from "reactjs-localstorage";
 
 const Footer = () => {
+  const [contact, setContact] = useState({
+    email: '',
+    address: '',
+    phone: '',
+    socials: { instagram: '', facebook: '', youtube: '', twitter: '' }
+  });
+
+  useEffect(() => {
+  const fetchContactDetails = async () => {
+    try {
+      const token = reactLocalStorage.get("access_token");
+      const response = await axios.get(`http://localhost:3000/api/admin/page/contact`);
+      // console.log(response.data);
+      setContact(response.data);
+      
+    } catch (error) {
+      console.error("Error fetching contact details:", error);
+    }
+  };
+
+  fetchContactDetails();
+  }, []);
   return (
     <footer className="bg-gray-800 text-white py-10">
       <div className="grid grid-cols-3 px-10">
@@ -9,9 +33,9 @@ const Footer = () => {
         <div>
           <h3 className="text-lg font-bold">RentRide</h3>
           <div className="pt-5 space-y-2">
-            <p>Kapan, Kathmandu</p>
-            <p>+977 4784 273 12</p>
-            <p>rentrides@gmail.com</p>
+            <p>{contact.address || 'N/A'}</p>
+            <p>{contact.phone || 'N/A'}</p>
+            <p>{contact.email|| 'N/A'}</p>
           </div>
         </div>
 
@@ -41,13 +65,13 @@ const Footer = () => {
         <div>
           <h3 className="text-lg font-bold">Follow Us</h3>
           <div className="flex space-x-4 pt-5">
-            <a href="#" className="hover:text-gray-400 text-2xl">
+            <a href={contact.socials.facebook} className="hover:text-gray-400 text-2xl">
               <i className="fab fa-facebook"></i>
             </a>
-            <a href="#" className="hover:text-gray-400 text-2xl">
+            <a href={contact.socials.instagram} className="hover:text-gray-400 text-2xl">
               <i className="fab fa-instagram"></i>
             </a>
-            <a href="#" className="hover:text-gray-400 text-2xl">
+            <a href={contact.socials.youtube} className="hover:text-gray-400 text-2xl">
               <i className="fab fa-youtube"></i>
             </a>
           </div>

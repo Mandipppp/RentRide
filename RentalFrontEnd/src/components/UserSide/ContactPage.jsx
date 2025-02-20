@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
 import Navigation from './Navigation';
@@ -8,6 +8,29 @@ import { useNavigate } from 'react-router-dom';
 
 
 export default function ContactPage() {
+  const [contact, setContact] = useState({
+    email: '',
+    address: '',
+    phone: '',
+    socials: { instagram: '', facebook: '', youtube: '', twitter: '' }
+  });
+
+  useEffect(() => {
+  const fetchContactDetails = async () => {
+    try {
+      const token = reactLocalStorage.get("access_token");
+      const response = await axios.get(`http://localhost:3000/api/admin/page/contact`);
+      // console.log(response.data);
+      setContact(response.data);
+      
+    } catch (error) {
+      console.error("Error fetching contact details:", error);
+    }
+  };
+
+  fetchContactDetails();
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -73,21 +96,21 @@ export default function ContactPage() {
             <h2 className="text-2xl font-bold mb-4">Contact Us</h2>
             <div className="flex items-center space-x-4 mb-4">
               <i className="fa-solid fa-location-dot"></i>
-              <p>Kapan, Kathmandu</p>
+              <p>{contact.address}</p>
             </div>
             <div className="flex items-center space-x-4 mb-4">
               <i className="fa-solid fa-envelope"></i>
-              <p>rentride@gmail.com</p>
+              <p>{contact.email}</p>
             </div>
             <div className="flex items-center space-x-4 mb-4">
               <i className="fa-solid fa-phone"></i>
-              <p>+977 23456789</p>
+              <p>{contact.phone}</p>
             </div>
           </div>
           <div className="mt-4 flex space-x-4 justify-start">
-            <span><i className="fa-brands fa-facebook text-xl"></i></span>
-            <span><i className="fa-brands fa-instagram text-xl"></i></span>
-            <span><i className="fa-brands fa-square-x-twitter text-xl"></i></span>
+            <span><a href={contact.socials.facebook}><i className="fa-brands fa-facebook text-xl"></i></a></span>
+            <span><a href={contact.socials.instagram}><i className="fa-brands fa-instagram text-xl"></i></a></span>
+            <span><a href={contact.socials.twitter}><i className="fa-brands fa-square-x-twitter text-xl"></i></a></span>
           </div>
         </div>
       </div>
