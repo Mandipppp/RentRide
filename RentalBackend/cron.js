@@ -36,11 +36,11 @@ const createNotification = async (recipientId, recipientModel, message, type, pr
     });
     
     await notification.save();
-    console.log('Notification created:', message);
+    // console.log('Notification created:', message);
   };
 
 const scheduleCronJobs = () => {
-  cron.schedule('* * * * *', async () => {
+  cron.schedule('0 * * * *', async () => {
     // console.log('Cron Job Running at', new Date().toLocaleString());
 
     try {
@@ -52,6 +52,11 @@ const scheduleCronJobs = () => {
       const endBookings = await Booking.find({
         endDate: { $gt: new Date() },
         bookingStatus: 'Active',
+      });
+
+      const expiredBookings = await Booking.find({
+        startDate: { $lt: new Date(new Date().setDate(new Date().getDate() - 1)) },
+        bookingStatus: { $in: ['Pending', 'Accepted', 'RevisionRequired'] },
       });
 
       const oneDayFromNow = new Date();
@@ -118,9 +123,28 @@ const scheduleCronJobs = () => {
           booking.emailSentForEnd = true;
           await booking.save();
 
-          console.log(`Booking ID ${booking._id}: End Date is approaching, emails sent.`);
+        //   console.log(`Booking ID ${booking._id}: End Date is approaching, emails sent.`);
         }
       }
+
+      // Cancel expired bookings
+      for (let booking of expiredBookings) {
+        const renter = await User.findById(booking.renterId);
+        const owner = await Owner.findById(booking.ownerId);
+        const vehicle = await Vehicle.findById(booking.vehicleId);
+
+        booking.bookingStatus = 'Cancelled';
+        await booking.save();
+
+        // Send cancellation emails
+        await sendEmail(renter.email, 'Your Booking has been Cancelled', `Hello ${renter.name},\n\nYour booking for vehicle ${vehicle.name} has been cancelled because it was not confirmed in time.`);
+        await sendEmail(owner.email, 'A Booking has been Cancelled', `Hello ${owner.name},\n\nThe booking for your vehicle ${vehicle.name} has been cancelled due to inactivity.`);
+
+        // Create notifications
+        await createNotification(renter._id, 'User', `Your booking for vehicle ${vehicle.name} has been cancelled due to inactivity.`, 'booking', 'high');
+        await createNotification(owner._id, 'Owner', `A booking for your vehicle ${vehicle.name} has been cancelled due to inactivity.`, 'booking', 'high');
+      }
+      
 
     } catch (error) {
       console.error('Error running cron job:', error);

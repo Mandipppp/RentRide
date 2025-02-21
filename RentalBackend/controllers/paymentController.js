@@ -5,6 +5,8 @@ const fs = require("fs");
 const path = require("path");
 const PDFDocument = require("pdfkit");
 require('dotenv').config();
+const nodemailer = require("nodemailer");
+
 
 
 const KHALTI_SECRET_KEY = process.env.KHALTI_SECRET_KEY;
@@ -191,7 +193,7 @@ const verifyPayment = async (req, res) => {
     await payment.save();
 
     // Update booking details
-    const booking = await Booking.findById(payment.bookingId);
+    const booking = await Booking.findById(payment.bookingId).populate('renterId');
     if (!booking) {
       return res.status(404).json({ success: false, message: "Booking not found." });
     }
@@ -228,7 +230,76 @@ const verifyPayment = async (req, res) => {
     booking.bookingStatus = "Confirmed";
     await booking.save();
 
-    res.json(response.data);
+    // Generate Receipt PDF
+    const receiptsDir = path.join(__dirname, "../receipts");
+    if (!fs.existsSync(receiptsDir)) {
+      fs.mkdirSync(receiptsDir, { recursive: true });
+    }
+    const filePath = path.join(receiptsDir, `receipt-${pidx}.pdf`);
+
+    const doc = new PDFDocument({ margin: 50 });
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
+
+    doc.fontSize(20).text("Payment Receipt", { align: "center" });
+    doc.moveDown(0.5);
+    doc.fontSize(10).text(`Transaction ID: ${pidx}`, { align: "center" });
+    doc.moveDown();
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown();
+    doc.fontSize(12).text(`Amount Paid: NPR ${payment.amountPaid}`);
+    doc.text(`Total Amount: NPR ${payment.totalAmount}`);
+    doc.text(`Payment Status: ${payment.paymentStatus}`);
+    doc.text(`Payment Method: ${payment.paymentMethod}`);
+    doc.text(`Date: ${new Date(payment.createdAt).toLocaleString()}`);
+    doc.moveDown();
+    doc.fontSize(14).text("Booking Details", { underline: true });
+    doc.fontSize(12).text(`Renter ID: ${booking.renterId}`);
+    doc.text(`Vehicle ID: ${booking.vehicleId}`);
+    doc.text(`Rental Start: ${new Date(booking.startDate).toLocaleDateString()}`);
+    doc.text(`Rental End: ${new Date(booking.endDate).toLocaleDateString()}`);
+    doc.text(`Pickup Location: ${booking.pickAndDropLocation || "N/A"}`);
+    doc.moveDown();
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown();
+    doc.fontSize(10).text("Thank you for your payment!", { align: "center" });
+    doc.fontSize(8).text("This is a system-generated receipt.", { align: "center" });
+
+    doc.end();
+
+    stream.on("finish", async () => {
+      try {
+        // Send Email
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.EMAIL_USER, 
+            pass: process.env.EMAIL_PASS, 
+          },
+        });
+
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: booking.renterId.email, // Assuming you have the renter's email in the booking
+          subject: "Payment Successful - Receipt Attached",
+          text: `Dear Customer,\n\nYour payment of NPR ${payment.amountPaid} has been successfully processed.\n\nPlease find the attached invoice for your reference.\n\nThank you for choosing us!`,
+          attachments: [
+            {
+              filename: `Receipt-${pidx}.pdf`,
+              path: filePath,
+            },
+          ],
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.json(response.data);
+
+      } catch (emailError) {
+        console.error("Email sending failed:", emailError);
+        res.status(500).json({ success: false, message: "Payment verified but failed to send email." });
+      }
+    });
   } catch (error) {
     res.status(400).json(error.response.data);
   }
@@ -260,7 +331,7 @@ const verifyRefund = async (req, res) => {
     await payment.save();
 
     // Update booking details
-    const booking = await Booking.findById(payment.bookingId);
+    const booking = await Booking.findById(payment.bookingId).populate("ownerId");
     if (!booking) {
       return res.status(404).json({ success: false, message: "Booking not found." });
     }
@@ -272,7 +343,76 @@ const verifyRefund = async (req, res) => {
     booking.paymentStatus = "Refunded";
     await booking.save();
 
-    res.json(response.data);
+    // Generate Receipt PDF
+    const receiptsDir = path.join(__dirname, "../receipts");
+    if (!fs.existsSync(receiptsDir)) {
+      fs.mkdirSync(receiptsDir, { recursive: true });
+    }
+    const filePath = path.join(receiptsDir, `receipt-${pidx}.pdf`);
+
+    const doc = new PDFDocument({ margin: 50 });
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
+
+    doc.fontSize(20).text("Payment Receipt", { align: "center" });
+    doc.moveDown(0.5);
+    doc.fontSize(10).text(`Transaction ID: ${pidx}`, { align: "center" });
+    doc.moveDown();
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown();
+    doc.fontSize(12).text(`Amount Paid: NPR ${payment.amountPaid}`);
+    doc.text(`Total Amount: NPR ${payment.totalAmount}`);
+    doc.text(`Payment Status: ${payment.paymentStatus}`);
+    doc.text(`Payment Method: ${payment.paymentMethod}`);
+    doc.text(`Date: ${new Date(payment.createdAt).toLocaleString()}`);
+    doc.moveDown();
+    doc.fontSize(14).text("Booking Details", { underline: true });
+    doc.fontSize(12).text(`Renter ID: ${booking.renterId}`);
+    doc.text(`Vehicle ID: ${booking.vehicleId}`);
+    doc.text(`Rental Start: ${new Date(booking.startDate).toLocaleDateString()}`);
+    doc.text(`Rental End: ${new Date(booking.endDate).toLocaleDateString()}`);
+    doc.text(`Pickup Location: ${booking.pickAndDropLocation || "N/A"}`);
+    doc.moveDown();
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown();
+    doc.fontSize(10).text("Thank you for your payment!", { align: "center" });
+    doc.fontSize(8).text("This is a system-generated receipt.", { align: "center" });
+
+    doc.end();
+
+    stream.on("finish", async () => {
+      try {
+        // Send Email
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.EMAIL_USER, 
+            pass: process.env.EMAIL_PASS, 
+          },
+        });
+
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: booking.ownerId.email,
+          subject: "Payment Successful - Receipt Attached",
+          text: `Dear Customer,\n\nYour payment of NPR ${payment.amountPaid} has been successfully processed.\n\nPlease find the attached invoice for your reference.\n\nThank you for choosing us!`,
+          attachments: [
+            {
+              filename: `Receipt-${pidx}.pdf`,
+              path: filePath,
+            },
+          ],
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.json(response.data);
+
+      } catch (emailError) {
+        console.error("Email sending failed:", emailError);
+        res.status(500).json({ success: false, message: "Payment verified but failed to send email." });
+      }
+    });
   } catch (error) {
     res.status(400).json(error.response.data);
   }

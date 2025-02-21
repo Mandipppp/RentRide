@@ -531,7 +531,6 @@ const handleSubmitReview = async () => {
             setStatus("success");
             toast.success('Payment successful!');
             setReceiptUrl(`http://localhost:3000/api/auth/payment/receipt?pidx=${pidx}`);
-            navigate(`/bookingVehicleDetails/${bookingId}`, { replace: true });
           } else {
             setStatus("failed");
             toast.error('Payment verification failed. Please try again.');
@@ -539,6 +538,9 @@ const handleSubmitReview = async () => {
         } catch (error) {
           setStatus("failed");
           toast.error('Payment verification failed. Please try again.');
+        } finally {
+          navigate(`/bookingVehicleDetails/${bookingId}`, { replace: true });
+
         }
       }
     };

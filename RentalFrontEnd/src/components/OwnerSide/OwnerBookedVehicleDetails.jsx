@@ -417,17 +417,17 @@ export default function OwnerBookedVehicleDetails() {
           {
             headers: { Authorization: `Bearer ${token}` },
           });
-          // console.log("Payment data: ", response.data);
+          console.log("Payment data: ", response.data.status);
           if (response.data.status === "Completed") {
-            setStatus("success");
             toast.success('Payment successful!');
             setReceiptUrl(`http://localhost:3000/api/auth/payment/receipt?pidx=${pidx}`);
-            navigate(`/ownerVehicleDetails/${bookingId}`, { replace: true });
           } else {
             toast.error('Payment verification failed. Please try again.');
           }
         } catch (error) {
           toast.error('Payment verification failed. Please try again.');
+        } finally {
+          navigate(`/ownerVehicleDetails/${bookingId}`, { replace: true });
         }
       }
     };

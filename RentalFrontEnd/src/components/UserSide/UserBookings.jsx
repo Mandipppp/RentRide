@@ -113,7 +113,7 @@ const UserBookings = () => {
                   </div>
                   <div className="flex justify-between items-start border-t">
                   <div className="text-xl font-bold text-gray-900 pt-4">
-                    Total: <span className="text-orange-600">Rs {booking.amountDue}</span>
+                    Total: <span className="text-orange-600">Rs {booking.amountDue+booking.amountPaid}</span>
                   </div>
                   {/* Show Edit and Cancel buttons only if status is Pending */}
                   {booking.bookingStatus === "Pending" && (
