@@ -40,7 +40,7 @@ const Login = () => {
         // reactLocalStorage.set("role", user.role);
         if (user) {
           if (user.role === "admin") {
-            navigate("/adminowners");
+            navigate("/admindashboard");
           } else if (user.role === "renter") {
             setIsAuthenticated(true);
             navigate("/home");

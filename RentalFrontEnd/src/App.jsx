@@ -45,6 +45,7 @@ import AdminAddPage from "./components/Admin/AdminAddPage";
 import AdminPageDetail from "./components/Admin/AdminPageDetail";
 import PageView from "./components/UserSide/PageView";
 import AdminContactPage from "./components/Admin/AdminContactPage";
+import AdminDashboard from "./components/Admin/AdminDashboard";
 
 
 
@@ -111,6 +112,7 @@ const App = () => {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/*ADMIN PART*/}
+        <Route path="/admindashboard" element={<AdminDashboard />} />
         <Route path="/adminowners" element={<AdminOwners />} />
         <Route path="/owners/:id" element={<AdminOwnerProfile />} />
         <Route path="/unauthorized" element={<Unauthorized />} />

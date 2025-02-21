@@ -3,7 +3,7 @@ const router = express.Router();
 const { getAllOwners, getOwnerById, updateKyc} = require('../controllers/adminOwnerController');
 const { authenticate, checkAdmin } = require('../middlewares/authMiddleware');
 const { getAllUsers, getUserById } = require('../controllers/adminUserController');
-const { addAdmin, setupPassword } = require('../controllers/adminAdminController');
+const { addAdmin, setupPassword, getDashboardStats, sendAdminNotification } = require('../controllers/adminAdminController');
 const { getAllVehicles, getVehicleById, verifyVehicle } = require('../controllers/adminVehicleController');
 const { getAllContacts, updateContactStatus } = require('../controllers/adminContactController');
 const { getAllBookings } = require('../controllers/adminBookingController');
@@ -44,6 +44,9 @@ router.get('/getPayments', authenticate, checkAdmin, getAllPayments);
 // reviews
 router.get('/reviews', authenticate, checkAdmin, getAllReviews);
 router.put('/updatereview/:reviewId', authenticate, checkAdmin, updateReviewStatus);
+
+router.get('/dashboardStats', authenticate, checkAdmin, getDashboardStats);
+router.post('/makeannouncemnet', authenticate, checkAdmin, sendAdminNotification);
 
 
 

@@ -1,6 +1,13 @@
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');  // For sending emails
-const User = require('../models/user'); // Import the User model
+const User = require('../models/user');
+const Owner = require('../models/owner');
+const Booking = require('../models/Booking');
+const Contact = require('../models/contact');
+const Vehicle = require('../models/vehicle');
+const Notification = require('../models/notification');
+
+
 const bcrypt = require('bcrypt');
 
 // Temporary password generation function
@@ -126,3 +133,118 @@ exports.setupPassword = async (req, res) => {
       res.status(500).json({ message: 'Error setting password', error: error.message });
     }
   };
+
+  exports.getDashboardStats = async (req, res) => {
+
+    try {
+      const adminsCount = await User.countDocuments({ role: "admin" });
+      const rentersCount = await User.countDocuments({ role: "renter" });
+      const ownersCount = await Owner.countDocuments();
+      const vehiclesCount = await Vehicle.countDocuments();
+      const bookingsCount = await Booking.countDocuments({ bookingStatus: "Active" });
+      const queriesCount = await Contact.countDocuments();
+  
+      res.json({
+        admins: adminsCount,
+        renters: rentersCount,
+        owners: ownersCount,
+        vehicles: vehiclesCount,
+        bookings: bookingsCount,
+        queries: queriesCount,
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ message: "Server error while fetching stats" });
+    }
+  }
+
+  exports.sendAdminNotification = async (req, res) => {
+    try {
+      const { message, recipientGroup, type, priority } = req.body;
+  
+      if (!message || !recipientGroup || !type || !priority) {
+        return res.status(400).json({
+          success: false,
+          message: 'Message and recipient group are required.',
+        });
+      }
+  
+      let recipients = [];
+      let recipientModel = 'User';
+  
+      switch (recipientGroup) {
+        case 'all':
+            const owners = await Owner.find();
+            const users = await User.find();
+            recipients = [...owners.map(o => ({ ...o.toObject(), model: 'Owner' })), ...users.map(u => ({ ...u.toObject(), model: 'User' }))];
+            break;
+        case 'users':
+            recipients = (await User.find()).map(u => ({ ...u.toObject(), model: 'User' }));
+            break;
+        case 'owners':
+            recipients = (await Owner.find()).map(o => ({ ...o.toObject(), model: 'Owner' }));
+            break;
+        case 'renters':
+            recipients = (await User.find({ role: 'renter' })).map(u => ({ ...u.toObject(), model: 'User' }));
+            break;
+        case 'admins':
+            recipients = (await User.find({ role: 'admin' })).map(u => ({ ...u.toObject(), model: 'User' }));
+            break;
+        default:
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid recipient group.',
+            });
+      }
+  
+      if (recipients.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'No recipients found.',
+        });
+      }
+  
+      const notifications = recipients.map(user => ({
+        recipientId: user._id,
+        recipientModel: user.model,
+        message,
+        type,
+        priority,
+      }));
+  
+      await Notification.insertMany(notifications);
+  
+      const transporter = nodemailer.createTransport({
+        service: 'Gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+  
+      const emailMessage = {
+        from: process.env.EMAIL_USER,
+        subject: 'Admin Notification',
+        text: message,
+      };
+  
+      for (const recipient of recipients) {
+        if (recipient.email) {
+          emailMessage.to = recipient.email;
+          await transporter.sendMail(emailMessage);
+        }
+      }
+  
+      res.status(200).json({
+        success: true,
+        message: `Notification sent to ${recipientGroup}.`,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        success: false,
+        message: 'Server error, unable to send notifications.',
+      });
+    }
+  };
+  

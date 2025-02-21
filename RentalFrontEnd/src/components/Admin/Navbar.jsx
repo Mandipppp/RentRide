@@ -5,6 +5,7 @@ const Navbar = () => {
   const location = useLocation(); // Hook to get the current path
 
   const menuItems = [
+    { name: "Dashboard", path: "/admindashboard" },
     { name: "Users", path: "/adminusers" },
     { name: "Owners", path: "/adminowners" },
     { name: "Vehicles", path: "/adminvehicles" },
