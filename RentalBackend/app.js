@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http'); // HTTP for Socket.IO
+const cron = require('node-cron');
 const { Server } = require('socket.io');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -17,6 +18,8 @@ const adminPageRoutes = require("./routes/adminPageRoutes");
 
 const Chat = require('./models/Chat');
 const Message = require('./models/Message');
+
+const scheduleCronJobs = require('./cron'); 
 
 require('dotenv').config();
 const app = express();
@@ -125,6 +128,9 @@ io.on('connection', (socket) => {
     });
   });
 });
+
+scheduleCronJobs();
+
 
 // Start the server
 server.listen(port, () => {

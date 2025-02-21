@@ -75,7 +75,7 @@ exports.acceptBooking = async (req, res) => {
     const { bookingId, approvedAddOns } = req.body;
     
     // Find the booking
-    const booking = await Booking.findById(bookingId).populate('vehicleId');
+    const booking = await Booking.findById(bookingId).populate('vehicleId').populate('renterId');
     
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });

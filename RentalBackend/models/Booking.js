@@ -63,6 +63,9 @@ const BookingSchema = new mongoose.Schema({
   rentalEndConfirmed: { type: Boolean, default: false }, // When owner clicks "Vehicle Returned"
   rentalEndTime: { type: Date, default: null }, // Actual rental return time
 
+  emailSentForStart: { type: Boolean, default: false }, //check if user has been notified for this booking or not
+  emailSentForEnd: { type: Boolean, default: false }, 
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
