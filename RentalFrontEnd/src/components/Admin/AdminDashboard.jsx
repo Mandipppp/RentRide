@@ -87,7 +87,10 @@ const AdminDashboard = () => {
 
           {/* Announcement Section */}
           <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="flex justify-between">
             <h3 className="text-2xl font-semibold text-gray-700 mb-4">Make an Announcement</h3>
+            <i className="fa-solid fa-bullhorn text-2xl"></i>
+            </div>
             <textarea
               className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               rows="4"

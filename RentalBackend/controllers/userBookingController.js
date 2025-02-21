@@ -246,6 +246,14 @@ exports.editPendingBooking = async (req, res) => {
     const totalDays = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
     if (totalDays <= 0) return res.status(400).json({ message: 'Invalid booking duration' });
 
+    // Check against vehicle's min and max rental period
+    if (vehicle.minRentalPeriod && totalDays < vehicle.minRentalPeriod) {
+      return res.status(400).json({ message: `Minimum rental period is ${vehicle.minRentalPeriod} days` });
+    }
+    if (vehicle.maxRentalPeriod && totalDays > vehicle.maxRentalPeriod) {
+      return res.status(400).json({ message: `Maximum rental period is ${vehicle.maxRentalPeriod} days` });
+    }
+
     // Validate optional pickup and drop times (if provided)
     const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
     if (pickupTime && !timeRegex.test(pickupTime)) {
