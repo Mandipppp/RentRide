@@ -21,6 +21,8 @@ export default function VehicleDetails() {
   const { vehicleId } = useParams();
   const [vehicle, setVehicle] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(null);
+  
   const [currentImage, setCurrentImage] = useState(0);
   const [token, setToken] = useState("");
   const navigate = useNavigate();
@@ -78,6 +80,7 @@ export default function VehicleDetails() {
           }
         );
         setReviews(response.data.reviews); // Store the fetched reviews
+        setAverageRating(response.data.averageRating);
       } catch (err) {
         console.log("Failed to fetch reviews.");
       }
@@ -327,7 +330,7 @@ export default function VehicleDetails() {
                 <div className="flex flex-col">
                     <div className="flex items-center mt-2">
                         <i className="fa-solid fa-star text-yellow-500"></i>
-                        <span className="ml-1 text-gray-600">4.5</span>
+                        <span className="ml-1 text-gray-600">{averageRating || "No reviews yet"}</span>
                     </div>
                     <p className="text-lg font-bold mt-2">{vehicle.dailyPrice} NPR/day</p>
                 </div>

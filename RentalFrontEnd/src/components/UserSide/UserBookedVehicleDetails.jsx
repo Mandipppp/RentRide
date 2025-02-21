@@ -56,6 +56,7 @@ export default function UserBookedVehicleDetails() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [walletDetails, setWalletDetails] = useState({ name: "", id: "" });
   const [rating, setRating] = useState(0); // Store rating (1-5 stars)
+  const [averageRating, setAverageRating] = useState(null);
 const [comment, setComment] = useState(""); // Store comment
 
 const handleSubmitReview = async () => {
@@ -155,7 +156,8 @@ const handleSubmitReview = async () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        setReviews(response.data.reviews); // Store the fetched reviews
+        setReviews(response.data.reviews);
+        setAverageRating(response.data.averageRating);
       } catch (err) {
         console.log("Failed to fetch reviews.");
       }
@@ -663,7 +665,7 @@ const handleSubmitReview = async () => {
                 <div className="flex flex-col">
                     <div className="flex items-center mt-2">
                         <i className="fa-solid fa-star text-yellow-500"></i>
-                        <span className="ml-1 text-gray-600">4.5</span>
+                        <span className="ml-1 text-gray-600">{averageRating || "No reviews yet"}</span>
                     </div>
                     <p className="text-lg font-bold mt-2">{booking.vehicleId.dailyPrice} NPR/day</p>
                 </div>
