@@ -914,9 +914,9 @@ const handleSubmitReview = async () => {
             <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handleEditBooking}>
                 Update Booking
             </Button>
-            <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
+            {/* <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
                 Cancel Booking
-            </Button>
+            </Button> */}
             </div>}
 
             {booking.bookingStatus === "RevisionRequired" && <div>
@@ -924,9 +924,9 @@ const handleSubmitReview = async () => {
             <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handleAcceptBooking}>
                 Accept Booking
             </Button>
-            <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
+            {/* <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
                 Cancel Booking
-            </Button>
+            </Button> */}
             </div>}
 
             {receiptUrl && (
@@ -942,9 +942,9 @@ const handleSubmitReview = async () => {
             <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handleRemainingPay}>
                 Pay Remaining
             </Button>
-            <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
+            {/* <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
                 Cancel Booking
-            </Button>
+            </Button> */}
             </div>}
             
             {/* For refund */}
@@ -1033,10 +1033,16 @@ const handleSubmitReview = async () => {
             </Button>
             </div>
             <p className="text-red-500 text-sm">*You MUST pay atleast 10% to confirm your Booking.</p>
-            <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
+            {/* <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
+                Cancel Booking
+            </Button> */}
+            </div>}
+
+            {(booking.bookingStatus != "Active" && booking.bookingStatus != "Completed" && booking.bookingStatus != "Cancelled") && <div>
+              <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
                 Cancel Booking
             </Button>
-            </div>}
+              </div>}
           </div>
         </div>
 

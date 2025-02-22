@@ -76,7 +76,7 @@ BookingSchema.post("save", function (doc) {
     const io = require("../socket").getIo();
     io.to(doc.renterId.toString()).emit("bookingUpdated", doc);
     io.to(doc.ownerId.toString()).emit("bookingUpdated", doc);
-    console.log(`Booking ${doc._id} status changed to ${doc.bookingStatus}`);
+    // console.log(`Booking ${doc._id} status changed to ${doc.bookingStatus}`);
   }
 });
 
