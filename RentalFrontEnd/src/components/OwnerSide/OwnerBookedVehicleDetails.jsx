@@ -326,6 +326,23 @@ export default function OwnerBookedVehicleDetails() {
     }
   };
 
+  const handleConfirmBooking = async () => {
+    try {
+      const response = await axios.put('http://localhost:3000/api/owner/booking/confirmBooking', {
+        bookingId,
+        approvedAddOns: selectedAddOns
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Booking confirmed successfully");
+      console.log('Booking updated successfully:', response.data);
+    } catch (error) {
+      console.error('Error accepting booking:', error.response?.data || error.message);
+      toast.error("Error confirming booking.");
+    }
+  };
+
   const handleStartRental = async () => {
     try {
       const response = await axios.put('http://localhost:3000/api/owner/booking/startRental', {
@@ -721,6 +738,17 @@ export default function OwnerBookedVehicleDetails() {
               <div>
                 <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleAcceptBooking()}>
                     Accept Booking
+                </Button>
+                <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleCancelBooking()}>
+                    Decline Booking
+                </Button>
+              </div>
+          )}
+
+{booking.bookingStatus==="Accepted" && ( 
+              <div>
+                <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleConfirmBooking()}>
+                    Direct Confirm Booking
                 </Button>
                 <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleCancelBooking()}>
                     Decline Booking

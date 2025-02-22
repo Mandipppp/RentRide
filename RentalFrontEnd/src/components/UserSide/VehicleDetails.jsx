@@ -237,7 +237,7 @@ export default function VehicleDetails() {
       // navigate("/bookings"); // Redirect to bookings page
     } catch (error) {
       console.error("Booking failed:", error.response?.data || error.message);
-      toast.error("Failed to create booking. Please try again.");
+      toast.error(error.response?.data.message || "Failed to create booking. Please try again.");
     }
   };
   

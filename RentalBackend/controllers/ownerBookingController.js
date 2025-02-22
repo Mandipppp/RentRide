@@ -433,6 +433,153 @@ exports.cancelBooking = async (req, res) => {
   }
 };
 
+exports.confirmBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+    // Find the booking
+    const booking = await Booking.findById(bookingId).populate('vehicleId');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    if (booking.ownerId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
+    }
+
+    if (booking.bookingStatus === 'Confirmed') {
+      return res.status(400).json({ message: 'Booking has already been accepted' });
+    }
+
+    if (booking.bookingStatus !== 'Accepted') {
+      return res.status(400).json({ message: 'Booking cannot be confirmed unless the status is Pending' });
+    }
+
+    booking.bookingStatus = 'Confirmed';
+    booking.updatedAt = Date.now();
+
+    // Save the updated booking
+    await booking.save();
+
+    // Send a notification to the renter about the confirmation
+    const notification = new Notification({
+      recipientId: booking.renterId,
+      recipientModel: 'User',
+      message: `Your booking for ${booking.vehicleId.name} has been confirmed by the owner.`,
+      type: 'booking',
+      priority: 'high',
+    });
+
+    await notification.save();
+
+    // Send confirmation email to the renter
+    const user = await User.findById(booking.renterId);
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: `Booking Confirmed for Vehicle: ${booking.vehicleId.name}`,
+      html: `
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                color: #333;
+                background-color: #f4f4f4;
+                padding: 20px;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 20px;
+              }
+              .header h1 {
+                color: #5bc0de;
+              }
+              .content {
+                font-size: 16px;
+              }
+              .footer {
+                margin-top: 30px;
+                font-size: 12px;
+                color: #777;
+                text-align: center;
+              }
+              .button {
+                background-color: #5bc0de;
+                color: white;
+                padding: 10px 20px;
+                text-align: center;
+                display: inline-block;
+                font-size: 16px;
+                border-radius: 5px;
+                text-decoration: none;
+              }
+              .button:hover {
+                background-color: #31b0d5;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Booking Confirmed</h1>
+              </div>
+              <div class="content">
+                <p>Dear <strong>${user.name}</strong>,</p>
+                <p>We are pleased to inform you that your booking for the vehicle <strong>${booking.vehicleId.name}</strong> has been confirmed by the owner.</p>
+                
+                <p><strong>Booking Details:</strong></p>
+                <ul>
+                  <li><strong>Pickup Date:</strong> ${booking.startDate}</li>
+                  <li><strong>Drop-off Date:</strong> ${booking.endDate}</li>
+                </ul>
+                
+                <p>We look forward to having you enjoy your ride! For any further queries, feel free to reach out to us.</p>
+                
+                <p><a href="${process.env.BASE_URL}/myBookings" class="button">View Your Bookings</a></p>
+                
+                <p>Best regards,<br/>The RentRide Team</p>
+              </div>
+              <div class="footer">
+                <p>&copy; 2025 RentRide. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    };
+    
+    const transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking confirmed successfully',
+    });
+  } catch (error) {
+    console.error('Error confirming booking:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
 
 exports.startRental = async (req, res) => {
   try {
