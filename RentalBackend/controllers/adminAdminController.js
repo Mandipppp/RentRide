@@ -25,31 +25,22 @@ exports.addAdmin = async (req, res) => {
   const { name, email } = req.body;
 
   try {
-    // Check if user already exists in the database by email
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      // If the user exists, return a response indicating an error
-      return res.status(400).json({ message: 'User already exists' });
+    // Check if an admin with the given email already exists
+    const existingAdmin = await User.findOne({ email, role: 'admin' });
+    if (existingAdmin) {
+      return res.status(400).json({ message: 'Admin already exists' });
     }
-
-    // Generate a random reset token and set an expiry time of 1 hour
-    const resetToken = crypto.randomBytes(20).toString('hex');
-    const resetExpiry = Date.now() + 3600000;  // 1 hour expiry for the token
 
     // Generate a temporary password for the new admin
     const temporaryPassword = generateTemporaryPassword();
 
-    // Hash the temporary password using bcrypt (same as your registerUser function)
     const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 
-    // Create a new admin user with the reset token, expiry, and the hashed temporary password
     const newAdmin = new User({
       name,
       email,
       password: hashedPassword,  // Store the hashed temporary password
       role: 'admin',
-      resetPasswordToken: resetToken,
-      resetPasswordExpiry: resetExpiry,
     });
 
     // Save the new admin to the database
@@ -57,28 +48,23 @@ exports.addAdmin = async (req, res) => {
 
     // Set up the email transporter (make sure you have a working email service)
     const transporter = nodemailer.createTransport({
-      service: 'Gmail',  // You can use other services like SendGrid, Mailgun, etc.
+      service: 'Gmail',
       auth: {
-        user: process.env.EMAIL_USER,  // Your Gmail account email
-        pass: process.env.EMAIL_PASS,  // Your Gmail account password (or app password)
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
-    // Create the reset link that will be sent to the new admin
-    const resetLink = `http://localhost:5173/admin/setup-password/${resetToken}`;
-
-    // Create the email content with the temporary password
     const mailOptions = {
       from: process.env.EMAIL_USER,  // Sender's email address
       to: email,                    // Recipient's email address
       subject: 'Admin Account Setup', // Email subject
       html: `
-        <h1>Welcome to Vehicle Rental</h1>
+        <h1>Welcome to RentRide!!</h1>
         <p>You have been added as an admin. Please use the following temporary password to log in:</p>
         <p><strong>Temporary Password: ${temporaryPassword}</strong></p>
-        <p>Once logged in, you can click the link below to set up your permanent password:</p>
-        <a href="${resetLink}">Set Up Your Password</a>
-      `, // HTML content for the email
+        <p>For security reasons, please change your password after logging in.</p>
+      `,
     };
 
     // Send the email to the new admin
@@ -248,3 +234,45 @@ exports.setupPassword = async (req, res) => {
     }
   };
   
+  exports.getAllAdmins= async (req, res) => {
+    try {
+      // Extract query parameters
+      const { name, email } = req.query;
+  
+      // Build the filter object dynamically
+      const filter = {role: 'admin'};
+      if (name || email) {
+        filter.$or = [];
+        if (name) {
+          filter.$or.push({ name: { $regex: name, $options: 'i' } });
+        }
+        if (email) {
+          filter.$or.push({ email: { $regex: email, $options: 'i' } });
+        }
+      }
+  
+      // Fetch users from the database based on the filter
+      const users = await User.find(filter, '-password'); // Exclude the password field for security
+  
+      // Check if users exist
+      if (!users || users.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'No admins found.',
+        });
+      }
+  
+      // Respond with the owners data
+      return res.status(200).json({
+        success: true,
+        data: users,
+      });
+    } catch (error) {
+      // Handle any errors
+      console.error('Error fetching admins:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Server error. Please try again later.',
+      });
+    }
+  };

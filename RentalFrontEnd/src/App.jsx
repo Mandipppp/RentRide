@@ -46,6 +46,7 @@ import AdminPageDetail from "./components/Admin/AdminPageDetail";
 import PageView from "./components/UserSide/PageView";
 import AdminContactPage from "./components/Admin/AdminContactPage";
 import AdminDashboard from "./components/Admin/AdminDashboard";
+import AdminAdmins from "./components/Admin/AdminAdmins";
 
 
 
@@ -133,6 +134,8 @@ const App = () => {
         <Route path="/adminpages" element={<AdminPages />} />
         <Route path="/adminpage/:id" element={<AdminPageDetail />} />
         <Route path="/adminaddpage" element={<AdminAddPage />} />
+        <Route path="/adminadmins" element={<AdminAdmins />} />
+
 
 
 

@@ -15,6 +15,7 @@ const Navbar = () => {
     { name: "Pages", path: "/adminpages" },
     { name: "Contact Us", path: "/admincontactpage" },
     { name: "Queries", path: "/admincontactqueries" },
+    { name: "Admins", path: "/adminadmins" },
   ];
 
   return (
