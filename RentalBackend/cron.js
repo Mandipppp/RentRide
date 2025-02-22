@@ -5,6 +5,10 @@ const User = require('./models/user');
 const Owner = require('./models/owner');
 const Vehicle = require('./models/vehicle');
 const Notification = require('./models/notification');
+const Chat = require('./models/chat');
+const Message = require('./models/message');
+
+
 
     
 const sendEmail = (to, subject, text) => {
@@ -44,6 +48,16 @@ const scheduleCronJobs = () => {
     // console.log('Cron Job Running at', new Date().toLocaleString());
 
     try {
+      const oneDayAgo = new Date();
+      oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+      // Find bookings with refund requests older than 1 day and where paymentStatus is not "Refunded"
+      const pendingRefunds = await Booking.find({
+        'refundRequest.requested': true,
+        paymentStatus: { $ne: 'Refunded' }, // Ensure payment status is not "Refunded"
+        updatedAt: { $lt: oneDayAgo } // Refund requested more than 1 day ago
+      });
+
       const startBookings = await Booking.find({
         startDate: { $gt: new Date() },
         bookingStatus: 'Confirmed',
@@ -61,6 +75,93 @@ const scheduleCronJobs = () => {
 
       const oneDayFromNow = new Date();
       oneDayFromNow.setDate(oneDayFromNow.getDate() + 1);
+
+      const usersWithUnreadMessages = await User.find(); // Get all users
+      const ownersWithUnreadMessages = await Owner.find(); // Get all owners
+
+       // Check unread messages for users
+       for (let user of usersWithUnreadMessages) {
+        const chats = await Chat.find({
+          renterId: user._id,
+        }).populate('messages'); // Populate messages
+
+        let unreadMessagesFound = false;
+        for (let chat of chats) {
+          // Check for unread messages
+          for (let message of chat.messages) {
+            if (!message.seen && message.senderId.toString() !== user._id.toString()) {
+              unreadMessagesFound = true;
+              break;
+            }
+          }
+
+          if (unreadMessagesFound) {
+            break;
+          }
+        }
+
+        if (unreadMessagesFound) {
+          // Create notification for unread messages
+          const message = `You have unread messages. Please check your chats for more details.`;
+          await createNotification(user._id, 'User', message, 'booking', 'high');
+
+          // Optionally, send an email to the user
+          const subject = 'You Have Unread Messages';
+          const text = `Hello ${user.name},\n\nYou have unread messages. Please check your chats to review them.`;
+          await sendEmail(user.email, subject, text);
+        }
+      }
+
+      // Check unread messages for owners
+      for (let owner of ownersWithUnreadMessages) {
+        const chats = await Chat.find({
+          ownerId: owner._id,
+        }).populate('messages'); // Populate messages
+
+        let unreadMessagesFound = false;
+        for (let chat of chats) {
+          // Check for unread messages
+          for (let message of chat.messages) {
+            if (!message.seen && message.senderId.toString() !== owner._id.toString()) {
+              unreadMessagesFound = true;
+              break;
+            }
+          }
+
+          if (unreadMessagesFound) {
+            break;
+          }
+        }
+
+        if (unreadMessagesFound) {
+          // Create notification for unread messages
+          const message = `You have unread messages. Please check your chats for more details.`;
+          await createNotification(owner._id, 'Owner', message, 'booking', 'high');
+
+          // Optionally, send an email to the owner
+          const subject = 'You Have Unread Messages';
+          const text = `Hello ${owner.name},\n\nYou have unread messages. Please check your chats to review them.`;
+          await sendEmail(owner.email, subject, text);
+        }
+      }
+
+      for (let booking of pendingRefunds) {
+        const owner = await Owner.findById(booking.ownerId);
+        const renter = await User.findById(booking.renterId);
+        const vehicle = await Vehicle.findById(booking.vehicleId);
+
+        if (!owner) continue;
+
+        // Email owner about pending refund
+        const subject = 'Pending Refund Request';
+        const text = `Hello ${owner.name},\n\nThe renter ${renter.name} has requested a refund for the booking of your vehicle "${vehicle.name}". Please process the refund promptly.\n\nWallet Name: ${booking.refundRequest.walletName}\nWallet ID: ${booking.refundRequest.walletId}\n\nThank you.`;
+
+        await sendEmail(owner.email, subject, text);
+
+        // Create notification for the owner
+        const ownerMessage = `A refund request for the vehicle "${vehicle.name}" is pending for over a day. Please process it soon.`;
+        await createNotification(owner._id, 'Owner', ownerMessage, 'booking', 'high');
+      }
 
       // Check start bookings
       for (let booking of startBookings) {

@@ -772,6 +772,7 @@ exports.requestRefund = async (req, res) => {
           walletId
       };
 
+      booking.updatedAt = new Date();
       await booking.save(); // Save the updated booking
 
       return res.status(200).json({
