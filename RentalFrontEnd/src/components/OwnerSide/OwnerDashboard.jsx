@@ -1,8 +1,40 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import OwnerNavigation from './OwnerNavigation'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { reactLocalStorage } from 'reactjs-localstorage';
+import axios from 'axios';
 
 function OwnerDashboard() {
+    const [myVehilces, setMyVehicles] = useState(null);
+    const [myPendings, setMyPendings] = useState(null);
+    const [myEarnings, setMyEarnings] = useState(null);
+
+    
+  const navigate = useNavigate();
+
+    useEffect(() => {
+        const token = reactLocalStorage.get("access_token");
+        if (!token) {
+          navigate("/login");
+        } else {
+          axios
+            .get("http://localhost:3000/api/owner/getmystats", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            })
+            .then((response) => {
+            //   console.log(response.data)
+              setMyVehicles(response.data.totalVehicles);
+              setMyPendings(response.data.totalPendingBookings);
+              setMyEarnings(response.data.totalEarnings);
+            })
+            .catch((err) => {
+              console.log("Error: ", err);
+            });
+        }
+      }, [navigate]);
+
   return (
     <div className="min-h-screen bg-pink-50 flex flex-col">
         <OwnerNavigation />
@@ -23,7 +55,7 @@ function OwnerDashboard() {
                         <i className="fa-solid fa-car text-6xl"></i>
                         <div>
                             <p className="text-gray-700 text-2xl">Vehicles Listed</p>
-                            <p className="text-4xl font-bold mt-4">5</p>
+                            <p className="text-4xl font-bold mt-4">{myVehilces || '0'}</p>
                         </div>
                     </div>
                 </div>
@@ -32,7 +64,7 @@ function OwnerDashboard() {
                         <i className="fa-solid fa-book text-6xl"></i>
                         <div>
                             <p className="text-gray-700 text-2xl">Pending Bookings</p>
-                            <p className="text-4xl font-bold mt-4">2</p>
+                            <p className="text-4xl font-bold mt-4">{myPendings || '0'}</p>
                         </div>
                     </div>
                 </div>
@@ -41,7 +73,7 @@ function OwnerDashboard() {
                         <i className="fa-solid fa-piggy-bank text-6xl"></i>
                         <div>
                             <p className="text-gray-700 text-2xl">Total Earnings</p>
-                            <p className="text-4xl font-bold mt-4">$500</p>
+                            <p className="text-4xl font-bold mt-4">Rs. {myEarnings || '0'}</p>
                         </div>
                     </div>
                 </div>
@@ -57,7 +89,7 @@ function OwnerDashboard() {
                     <Link to="/owneraddvehicle" className="text-lg font-semibold text-blue-600">Add New Vehicle</Link>
                 </div>
                 <div className="bg-white p-6 rounded-md shadow-md hover:bg-gray-100 transition">
-                    <button className="text-lg font-semibold text-yellow-600">View Pending Bookings</button>
+                    <Link to="/ownerbookings" className="text-lg font-semibold text-blue-600">View Pending Bookings</Link>
                 </div>
             </div>
         </div>

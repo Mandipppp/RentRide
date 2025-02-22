@@ -774,6 +774,9 @@ export default function OwnerBookedVehicleDetails() {
                     *You can only start the rental within one day after the start date.
                   </p>
                 )}
+                <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleCancelBooking()}>
+                    Decline Booking
+                </Button>
               </div>
           )}
 

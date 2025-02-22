@@ -1,5 +1,7 @@
 const Owner = require('../models/owner');
 const KYC = require('../models/kyc');
+const Vehicle = require('../models/vehicle');
+const Booking = require('../models/Booking');
 
 const bcrypt = require('bcrypt');
 
@@ -149,5 +151,34 @@ const changePassword = async (req, res) => {
       res.status(500).json({ message: "Internal server error. Please try again later." });
     }
   };
+
+  const getOwnerStats = async (req, res) => {
+    try {
+      const ownerId = req.user.id;
   
-module.exports = { getOwnerProfile, updateOwner, changePassword };
+      // Fetch total number of vehicles owned
+      const totalVehicles = await Vehicle.countDocuments({ ownerId });
+  
+      // Fetch total number of pending bookings
+      const totalPendingBookings = await Booking.countDocuments({ ownerId, bookingStatus: 'Pending' });
+  
+      // Fetch total earnings (sum of amountPaid from completed bookings)
+      const totalEarningsData = await Booking.aggregate([
+        { $match: { ownerId: ownerId, bookingStatus: 'Completed' } },
+        { $group: { _id: null, totalEarnings: { $sum: "$amountPaid" } } }
+      ]);
+      
+      const totalEarnings = totalEarningsData.length > 0 ? totalEarningsData[0].totalEarnings : 0;
+  
+      res.status(200).json({
+        totalVehicles,
+        totalPendingBookings,
+        totalEarnings
+      });
+    } catch (error) {
+      console.error("Error fetching owner stats:", error);
+      res.status(500).json({ message: "Internal server error." });
+    }
+  };
+  
+module.exports = { getOwnerProfile, updateOwner, changePassword, getOwnerStats };

@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticate } = require('../middlewares/authMiddleware');
-const { getOwnerProfile, updateOwner, changePassword } = require('../controllers/ownerSelfController');
+const { getOwnerProfile, updateOwner, changePassword, getOwnerStats } = require('../controllers/ownerSelfController');
 const { getOwnerVehicles, updateVehicle, addVehicle, deleteVehicle, disableVehicle, enableVehicle } = require('../controllers/ownerVehicleController');
 const { getVehicleById } = require('../controllers/adminVehicleController');
 const uploadOwner = require('../middlewares/uploadMiddleware');
@@ -8,6 +8,7 @@ const multer = require('multer');
 const router = express.Router();
 
 router.get("/me", authenticate, getOwnerProfile);
+router.get("/getmystats", authenticate, getOwnerStats);
 router.put(
     '/me',
     authenticate,
