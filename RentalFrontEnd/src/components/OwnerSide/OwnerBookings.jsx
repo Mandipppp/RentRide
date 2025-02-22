@@ -5,6 +5,9 @@ import { toast, ToastContainer } from "react-toastify";
 import { reactLocalStorage } from "reactjs-localstorage";
 import axios from "axios";
 import { ClipLoader } from "react-spinners";
+////////////////
+import io from "socket.io-client";
+const socket = io("http://localhost:3000");
 
 const TABS = ["Pending","Confirmed", "Active", "Completed", "Cancelled","Refund"];
 
@@ -12,6 +15,7 @@ function OwnerBookings() {
     const [activeTab, setActiveTab] = useState("Pending");
     const [bookings, setBookings] = useState({ upcoming: [], confirmed: [], active : [], completed: [], cancelled: [], refunds: [] });
     const [loading, setLoading] = useState(true);
+      const [userId, setUserId] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -23,6 +27,12 @@ function OwnerBookings() {
                 });
                 setBookings(response.data.bookings);
                 // console.log(response.data.bookings);
+
+                ////////////////
+                setUserId(response.data.ownerId);
+                if(userId){
+                    socket.emit('register', userId);
+                }
             } catch (error) {
                 console.error("Error fetching bookings:", error);
                 toast.error("Failed to load bookings");
@@ -31,6 +41,26 @@ function OwnerBookings() {
             }
         };
         fetchBookings();
+    }, []);
+
+////////////////
+    useEffect(()=>{
+        if(bookings){
+        socket.on("bookingUpdated", (updatedBooking) => {
+            console.log("📢 Booking update received:", updatedBooking);
+
+            setBookings((prevBookings) =>
+                prevBookings.map((b) => (b._id === updatedBooking._id ? updatedBooking : b))
+            );
+
+            toast.info(`Booking status updated to: ${updatedBooking.bookingStatus}`);
+        });
+
+        // Cleanup WebSocket listener when component unmounts
+        return () => {
+            socket.off("bookingUpdated");
+        };
+    }
     }, []);
 
     const getBookingsForTab = () => {
@@ -123,7 +153,7 @@ function OwnerBookings() {
 
                                 <div className="mt-4">
                                     <div className="text-xl font-bold text-gray-900">
-                                    <span className="text-gray-700 text-sm">Total:</span> <span className="text-orange-600">Rs {booking.amountDue}</span>
+                                    <span className="text-gray-700 text-sm">Total:</span> <span className="text-orange-600">Rs {booking.amountDue + booking.amountPaid}</span>
                                     </div>
                                     <button
                                         className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-all mt-4"

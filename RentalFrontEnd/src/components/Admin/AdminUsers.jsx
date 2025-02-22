@@ -3,6 +3,8 @@ import axios from "axios";
 import Navbar from "./Navbar";
 import { reactLocalStorage } from "reactjs-localstorage";
 import { useNavigate } from "react-router-dom"; // For navigation
+import { toast, ToastContainer } from "react-toastify";
+
 
 const AdminUsers = () => {
   const [Users, setUsers] = useState([]);
@@ -99,9 +101,19 @@ const AdminUsers = () => {
     console.log(`Sending reset password link to user with ID: ${userId}`);
   };
 
+  const handleCopyId = (userId) => {
+    navigator.clipboard.writeText(userId).then(() => {
+      toast.success("User ID copied to clipboard!");
+    }).catch((err) => {
+      console.error("Failed to copy text: ", err);
+    });
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mt-6 pt-16">
       <Navbar />
+      <ToastContainer />
+      
       <h2 className="text-4xl font-bold mb-4">Users</h2>
       <div className="relative mb-4">
         <input
@@ -175,10 +187,16 @@ const AdminUsers = () => {
                           Block User
                         </li>
                         <li
-                          className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+                          className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
                           onClick={() => handleSendResetPassword(user._id)}
                         >
                           Send Reset Password Link
+                        </li>
+                        <li
+                          className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => handleCopyId(user._id)} // Copy User ID
+                        >
+                          Copy ID
                         </li>
                       </ul>
                     </div>

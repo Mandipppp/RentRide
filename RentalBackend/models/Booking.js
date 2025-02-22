@@ -70,4 +70,14 @@ const BookingSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
+////////////////
+BookingSchema.post("save", function (doc) {
+  if (doc.bookingStatus) {
+    const io = require("../socket").getIo();
+    io.to(doc.renterId.toString()).emit("bookingUpdated", doc);
+    io.to(doc.ownerId.toString()).emit("bookingUpdated", doc);
+    console.log(`Booking ${doc._id} status changed to ${doc.bookingStatus}`);
+  }
+});
+
 module.exports = mongoose.model('Booking', BookingSchema);

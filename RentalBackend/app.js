@@ -2,6 +2,8 @@ const express = require('express');
 const http = require('http'); // HTTP for Socket.IO
 const cron = require('node-cron');
 const { Server } = require('socket.io');
+////////////////
+const socketManager = require("./socket");
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const usersRoutes = require('./routes/userRoutes');
@@ -24,12 +26,15 @@ const scheduleCronJobs = require('./cron');
 require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
-});
+// const io = new Server(server, {
+//   cors: {
+//     origin: '*',
+//     methods: ['GET', 'POST']
+//   }
+// });
+////////////////
+
+const io = socketManager.init(server);
 const mongoose = require("mongoose");
 const cors = require('cors')
 /////////////
@@ -79,6 +84,14 @@ const users = new Map(); // Store active users
 io.on('connection', (socket) => {
   // console.log('A user connected:', socket.id);
 
+
+////////////////
+
+    socket.on('register', (userId) => {
+      users.set(userId, socket.id);
+      console.log("Connected");
+  });
+
   // User joins a chat room
   socket.on('joinChat', ({ chatId, userId }) => {
     socket.join(chatId);
@@ -117,6 +130,17 @@ io.on('connection', (socket) => {
       console.error("Error marking messages as seen:", error);
     }
   });
+
+////////////////
+  // Listen for 'bookingUpdated' event
+  socket.on("bookingUpdated", (updatedBooking) => {
+    const ownerSocketId = users.get(updatedBooking.ownerId.toString());
+    const renterSocketId = users.get(updatedBooking.renterId.toString());
+    console.log("Booo");
+    
+    if (ownerSocketId) io.to(ownerSocketId).emit("bookingUpdated", updatedBooking);
+    if (renterSocketId) io.to(renterSocketId).emit("bookingUpdated", updatedBooking);
+});
 
   // Handle user disconnect
   socket.on('disconnect', () => {
