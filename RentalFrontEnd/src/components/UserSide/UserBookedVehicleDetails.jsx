@@ -1000,7 +1000,7 @@ const handleSubmitReview = async () => {
                 </div>
             )}
             
-            {(booking.bookingStatus === "Cancelled" && (booking.paymentStatus === "Partial" || booking.paymentStatus === "Full")) && 
+            {(booking.bookingStatus === "Cancelled" && (booking.paymentStatus === "Partial" || booking.paymentStatus === "Full") && booking.paymentMethod === "Online") && 
             (<>
             {!booking.refundRequest.requested ? (
                 <div>

@@ -359,6 +359,22 @@ export default function OwnerBookedVehicleDetails() {
     }
   };
 
+  const handleCashPayment = async () => {
+    try {
+      const response = await axios.put('http://localhost:3000/api/owner/booking/settocash', {
+        bookingId
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Selected Cash as mode of payment.");
+      console.log('Starting rental:', response.data);
+    } catch (error) {
+      console.error('Error starting rental:', error.response?.data || error.message);
+      toast.error(error.response?.data?.message || "Error setting mode of payment to cash.");
+    }
+  };
+
   const handleCloseRental = async () => {
     try {
       const response = await axios.put('http://localhost:3000/api/owner/booking/closeRental', {
@@ -779,6 +795,12 @@ export default function OwnerBookedVehicleDetails() {
                 </Button>
               </div>
           )}
+
+        {((booking.bookingStatus==="Confirmed" || booking.bookingStatus==="Active") && (booking.paymentStatus==="Pending")) && (
+          <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleCashPayment()}>
+            Set Payment to CASH
+          </Button>
+        )} 
 
         {(booking.bookingStatus==="Active" && booking.rentalStartConfirmed) && ( 
               <div>
