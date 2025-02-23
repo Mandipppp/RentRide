@@ -21,6 +21,7 @@ const AdminDashboard = () => {
   const [announcement, setAnnouncement] = useState("");
   const [announcementType, setAnnouncementType] = useState("system");
   const [priority, setPriority] = useState("medium");
+  const [isSending, setIsSending] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,6 +52,7 @@ const AdminDashboard = () => {
       toast.error("Please enter an announcement message.");
       return;
     }
+    setIsSending(true); // Start loading
 
     axios
       .post(
@@ -72,6 +74,8 @@ const AdminDashboard = () => {
       .catch((err) => {
         console.error("Error sending announcement:", err);
         toast.error("Failed to send announcement.");
+      }).finally(() => {
+        setIsSending(false); // Stop loading
       });
   };
 
@@ -131,6 +135,35 @@ const AdminDashboard = () => {
             
             <h4 className="text-lg font-medium mt-4">Announce to:</h4>
             <div className="flex space-x-2 mt-2">
+            {isSending ? (
+              <button
+                className="bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center justify-center"
+                disabled
+              >
+                <svg
+                  className="animate-spin h-5 w-5 mr-2 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  ></path>
+                </svg>
+                Sending...
+              </button>
+            ) : (
+              <>
               <button
                 className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-green-600 hover:text-white"
                 onClick={() => handleAnnounce("all", announcement, announcementType, priority)}
@@ -161,6 +194,8 @@ const AdminDashboard = () => {
               >
                 Admins
               </button>
+              </>
+              )}
             </div>
           </div>
 
