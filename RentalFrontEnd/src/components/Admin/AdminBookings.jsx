@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "./Navbar";
 import { reactLocalStorage } from "reactjs-localstorage";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
 
 const AdminBookings = () => {
@@ -11,6 +11,9 @@ const AdminBookings = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const highlightBookingId = params.get("highlight");
 
   useEffect(() => {
     const token = reactLocalStorage.get("access_token");
@@ -21,6 +24,20 @@ const AdminBookings = () => {
       navigate("/login");
     }
   }, [navigate]);
+
+  useEffect(() => {
+      if (highlightBookingId) {
+        setTimeout(() => {
+          const bookingRow = document.getElementById(`booking-${highlightBookingId}`);
+          if (bookingRow) {
+            bookingRow.scrollIntoView({ behavior: "smooth", block: "center" });
+            bookingRow.classList.add("bg-yellow-200");
+  
+            setTimeout(() => bookingRow.classList.remove("bg-yellow-200"), 2000);
+          }
+        }, 500); // Delay to ensure the table loads first
+      }
+    }, [bookings, highlightBookingId]);
 
   const getData = (token, query = "", status = "") => {
     let url = "http://localhost:3000/api/admin/getBookings";
@@ -139,13 +156,32 @@ const AdminBookings = () => {
             bookings.map((booking, index) => (
               <tr
                 key={booking._id}
+                id={`booking-${booking._id}`}
                 className="border-b hover:bg-gray-50 transition duration-150 cursor-pointer"
                 onClick={() => handleBookingClick(booking._id)}
               >
                 <td className="py-3 px-4">{index + 1}</td>
-                <td className="py-3 px-4">{booking.renterId.name}</td>
-                <td className="py-3 px-4">{booking.vehicleId.name}</td>
-                <td className="py-3 px-4">{booking.ownerId.name}</td>
+                <td 
+                className="py-3 px-4 text-blue-500 hover:underline cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering row click
+                  navigate(`/adminusers?highlight=${booking.renterId._id}`);
+                }}
+                >{booking.renterId.name}</td>
+                <td 
+                className="py-3 px-4 text-blue-500 hover:underline cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering row click
+                  navigate(`/adminvehicles?highlight=${booking.vehicleId._id}`);
+                }}
+                >{booking.vehicleId.name}</td>
+                <td 
+                className="py-3 px-4 text-blue-500 hover:underline cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering row click
+                  navigate(`/adminowners?highlight=${booking.ownerId._id}`);
+                }}
+                >{booking.ownerId.name}</td>
                 <td className="py-3 px-4">{new Date(booking.startDate).toLocaleDateString()}</td>
                 <td className="py-3 px-4">{new Date(booking.endDate).toLocaleDateString()}</td>
                 <td className={`py-3 px-4 font-medium text-${

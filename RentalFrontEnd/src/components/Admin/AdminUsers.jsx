@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Navbar from "./Navbar";
 import { reactLocalStorage } from "reactjs-localstorage";
-import { useNavigate } from "react-router-dom"; // For navigation
+import { useLocation, useNavigate } from "react-router-dom"; // For navigation
 import { toast, ToastContainer } from "react-toastify";
 
 
@@ -15,6 +15,9 @@ const AdminUsers = () => {
   const [dropdownPosition, setDropdownPosition] = useState({ left: 0, top: 0 }); // State for dropdown position
   const dropdownRef = useRef(null); // Reference for dropdown
   const navigate = useNavigate(); // Initialize navigate hook
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const highlightUserId = params.get("highlight");
 
   useEffect(() => {
     const token = reactLocalStorage.get("access_token");
@@ -37,6 +40,20 @@ const AdminUsers = () => {
       document.removeEventListener("click", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+        if (highlightUserId) {
+          setTimeout(() => {
+            const userRow = document.getElementById(`user-${highlightUserId}`);
+            if (userRow) {
+              userRow.scrollIntoView({ behavior: "smooth", block: "center" });
+              userRow.classList.add("bg-yellow-200");
+    
+              setTimeout(() => userRow.classList.remove("bg-yellow-200"), 2000);
+            }
+          }, 500); // Delay to ensure the table loads first
+        }
+      }, [Users, highlightUserId]);
 
   const getDetails = (token, query = "") => {
     const url = query
@@ -144,6 +161,7 @@ const AdminUsers = () => {
             Users.map((user, index) => (
               <tr
                 key={user._id}
+                id={`user-${user._id}`}
                 className="border-b hover:bg-gray-50 transition duration-150 cursor-pointer"
                 onClick={() => handleUserClick(user._id)}
               >

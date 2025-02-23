@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "./Navbar";
 import { reactLocalStorage } from "reactjs-localstorage";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FaCar, FaMotorcycle, FaTruck, FaSearch } from "react-icons/fa"; // Import icons
 
 const AdminVehicles = () => {
@@ -13,6 +13,9 @@ const AdminVehicles = () => {
   const [selectedCategory, setSelectedCategory] = useState(""); // Selected category filter
   const [selectedStatus, setSelectedStatus] = useState(""); // Selected status filter
   const navigate = useNavigate(); // Initialize navigate hook
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const highlightVehicleId = params.get("highlight");
 
   useEffect(() => {
     const token = reactLocalStorage.get("access_token");
@@ -23,6 +26,20 @@ const AdminVehicles = () => {
       navigate("/login");
     }
   }, [navigate]);
+
+   useEffect(() => {
+      if (highlightVehicleId) {
+        setTimeout(() => {
+          const vehicleRow = document.getElementById(`vehicle-${highlightVehicleId}`);
+          if (vehicleRow) {
+            vehicleRow.scrollIntoView({ behavior: "smooth", block: "center" });
+            vehicleRow.classList.add("bg-yellow-200");
+  
+            setTimeout(() => vehicleRow.classList.remove("bg-yellow-200"), 2000);
+          }
+        }, 500); // Delay to ensure the table loads first
+      }
+    }, [vehicles, highlightVehicleId]);
 
   const getData = (token, query = "", type = "", category = "", status = "") => {
     let url = "http://localhost:3000/api/admin/getVehicles";
@@ -227,7 +244,8 @@ const AdminVehicles = () => {
             <th className="py-3 px-4 text-gray-600 font-medium">Type</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Category</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Registration</th>
-            <th className="py-3 px-4 text-gray-600 font-medium">Avaibality Status</th>
+            <th className="py-3 px-4 text-gray-600 font-medium">Owner</th>
+            <th className="py-3 px-4 text-gray-600 font-medium">Availability Status</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Verification Status</th>
 
             <th className="py-3 px-4"></th>
@@ -238,6 +256,7 @@ const AdminVehicles = () => {
             vehicles.map((vehicle, index) => (
               <tr
                 key={vehicle._id}
+                id={`vehicle-${vehicle._id}`}
                 className="border-b hover:bg-gray-50 transition duration-150 cursor-pointer"
                 onClick={() => handleUserClick(vehicle._id)}
               >
@@ -253,6 +272,12 @@ const AdminVehicles = () => {
                 <td className="py-3 px-4">{vehicle.type}</td>
                 <td className="py-3 px-4">{vehicle.category}</td>
                 <td className="py-3 px-4">{vehicle.registrationNumber}</td>
+                <td className="py-3 px-4 text-blue-500 hover:underline cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering row click
+                  navigate(`/adminowners?highlight=${vehicle.ownerId._id}`);
+                }}
+                >{vehicle.ownerId.name}</td>
                 <td
                   className={`py-3 px-4 font-medium ${
                     vehicle.status === "Available"

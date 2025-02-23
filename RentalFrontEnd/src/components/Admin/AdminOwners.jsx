@@ -2,13 +2,16 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "./Navbar";
 import { reactLocalStorage } from "reactjs-localstorage";
-import { useNavigate } from "react-router-dom"; // For navigation
+import { useLocation, useNavigate } from "react-router-dom"; // For navigation
 
 const AdminOwners = () => {
   const [owners, setOwners] = useState([]);
   const [accessToken, setAccessToken] = useState("");
   const [searchQuery, setSearchQuery] = useState(""); // State to hold the search query
   const navigate = useNavigate(); // Initialize navigate hook
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const highlightOwnerId = params.get("highlight");
 
   useEffect(() => {
     const token = reactLocalStorage.get("access_token");
@@ -17,6 +20,20 @@ const AdminOwners = () => {
       getDetails(token); // Fetch all owner details initially
     }
   }, []);
+
+  useEffect(() => {
+    if (highlightOwnerId) {
+      setTimeout(() => {
+        const ownerRow = document.getElementById(`owner-${highlightOwnerId}`);
+        if (ownerRow) {
+          ownerRow.scrollIntoView({ behavior: "smooth", block: "center" });
+          ownerRow.classList.add("bg-yellow-200");
+
+          setTimeout(() => ownerRow.classList.remove("bg-yellow-200"), 2000);
+        }
+      }, 500); // Delay to ensure the table loads first
+    }
+  }, [owners, highlightOwnerId]);
 
   const getDetails = (token, query = "") => {
     // Construct the API URL with the search query if present
@@ -99,6 +116,7 @@ const AdminOwners = () => {
             owners.map((owner, index) => (
               <tr
                 key={owner._id}
+                id={`owner-${owner._id}`}
                 className="border-b hover:bg-gray-50 transition duration-150 cursor-pointer"
                 onClick={() => handleUserClick(owner._id)} // Navigate on click
               >

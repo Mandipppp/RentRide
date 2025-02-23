@@ -169,9 +169,35 @@ const AdminPayments = () => {
             payments.map((payment) => (
               <tr key={payment._id} className="border-b hover:bg-gray-50 transition duration-150">
                 <td className="py-3 px-4">{payment.transactionId}</td>
-                <td className="py-3 px-4">{payment.bookingId}</td>
-                <td className="py-3 px-4">{payment.senderId.name} ({payment.senderType})</td>
-                <td className="py-3 px-4">{payment.receiverId.name} ({payment.receiverType})</td>
+                <td 
+                className="py-3 px-4 text-blue-500 hover:underline cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering row click
+                  navigate(`/adminbooking?highlight=${payment.bookingId}`);
+                }}
+                >{payment.bookingId}</td>
+                <td 
+                className="py-3 px-4 text-blue-500 hover:underline cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering row click
+                  if(payment.senderType === "User"){
+                    navigate(`/adminusers?highlight=${payment.senderId._id}`);
+                  }else{
+                    navigate(`/adminowners?highlight=${payment.senderId._id}`);
+                  }
+                }}
+                >{payment.senderId.name} ({payment.senderType})</td>
+                <td 
+                className="py-3 px-4 text-blue-500 hover:underline cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent triggering row click
+                  if(payment.receiverType === "User"){
+                    navigate(`/adminusers?highlight=${payment.receiverId._id}`);
+                  }else{
+                    navigate(`/adminowners?highlight=${payment.receiverId._id}`);
+                  }
+                }}
+                >{payment.receiverId.name} ({payment.receiverType})</td>
                 <td className="py-3 px-4">{payment.paymentType}</td>
 
                 <td className="py-3 px-4">Rs. {payment.amountPaid}</td>
