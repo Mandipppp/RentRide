@@ -51,6 +51,23 @@ const scheduleCronJobs = () => {
       const oneDayAgo = new Date();
       oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
+      const now = new Date();
+      const bufferTime = new Date(now.getTime() - 1 * 60 * 60 * 1000); // Wait for 1 hours before warning
+
+      // Find confirmed bookings where the start date has passed but the rental hasn't started
+      const unstartedBookings = await Booking.find({
+        startDate: { $lt: bufferTime },
+        bookingStatus: 'Confirmed',
+        rentalStartConfirmed: false,
+      });
+
+      // Check for rentals that should have ended but are not marked as ended
+      const overdueBookings = await Booking.find({
+        endDate: { $lt: bufferTime }, // End date has passed
+        bookingStatus: { $in: ['Active', 'Confirmed'] },
+        rentalEndConfirmed: false, // Ensure rental hasn't been marked as ended
+      });
+
       // Find bookings with refund requests older than 1 day and where paymentStatus is not "Refunded"
       const pendingRefunds = await Booking.find({
         'refundRequest.requested': true,
@@ -246,6 +263,58 @@ const scheduleCronJobs = () => {
         await createNotification(owner._id, 'Owner', `A booking for your vehicle ${vehicle.name} has been cancelled due to inactivity.`, 'booking', 'high');
       }
       
+      for (let booking of unstartedBookings) {
+        const owner = await Owner.findById(booking.ownerId);
+        const renter = await User.findById(booking.renterId);
+        const vehicle = await Vehicle.findById(booking.vehicleId);
+
+        //double check
+        const latestBooking = await Booking.findById(booking._id);
+        if (latestBooking.rentalStartConfirmed) continue;
+
+        if (!owner || !renter || !vehicle) continue;
+
+        // Send email to owner
+        const ownerSubject = 'Action Required: Start the Rental';
+        const ownerText = `Hello ${owner.name},\n\nThe rental for your vehicle ${vehicle.name} was supposed to start, but it has not been marked as started yet. Please take the necessary action.`;
+        await sendEmail(owner.email, ownerSubject, ownerText);
+
+        // Create notification for owner
+        const ownerMessage = `The rental for your vehicle ${vehicle.name} was supposed to start but hasn't been marked as started yet. Please take action.`;
+        await createNotification(owner._id, 'Owner', ownerMessage, 'booking', 'high');
+
+        // notify the renter
+        const renterSubject = 'Your Rental Hasn’t Started Yet';
+        const renterText = `Hello ${renter.name},\n\nYour booking for ${vehicle.name} was scheduled to start, but it has not been started yet. Please contact the owner if needed.`;
+        await sendEmail(renter.email, renterSubject, renterText);
+
+        const renterMessage = `Your booking for ${vehicle.name} was supposed to start but hasn't started yet. Please contact the owner if needed.`;
+        await createNotification(renter._id, 'User', renterMessage, 'booking', 'medium');
+      }
+
+      for (let booking of overdueBookings) {
+        const owner = await Owner.findById(booking.ownerId);
+        const renter = await User.findById(booking.renterId);
+        const vehicle = await Vehicle.findById(booking.vehicleId);
+
+        if (!owner || !renter || !vehicle) continue;
+
+        // Notify owner to mark rental as ended
+        const ownerEndSubject = 'Action Required: Mark Rental as Ended';
+        const ownerEndText = `Hello ${owner.name},\n\nThe rental for your vehicle ${vehicle.name} has ended, but it has not been marked as returned yet. Please confirm the rental end.`;
+        await sendEmail(owner.email, ownerEndSubject, ownerEndText);
+
+        const ownerEndMessage = `The rental for your vehicle ${vehicle.name} was supposed to end but hasn't been marked as ended yet. Please take action.`;
+        await createNotification(owner._id, 'Owner', ownerEndMessage, 'booking', 'high');
+
+        // Optionally notify the renter
+        const renterEndSubject = 'Your Rental End Date Passed';
+        const renterEndText = `Hello ${renter.name},\n\nYour booking for ${vehicle.name} was scheduled to end, but it has not been marked as completed yet. Please ensure the vehicle has been returned.`;
+        await sendEmail(renter.email, renterEndSubject, renterEndText);
+
+        const renterEndMessage = `Your booking for ${vehicle.name} was supposed to end but hasn't been marked as completed yet. Please follow up if needed.`;
+        await createNotification(renter._id, 'User', renterEndMessage, 'booking', 'medium');
+      }
 
     } catch (error) {
       console.error('Error running cron job:', error);
