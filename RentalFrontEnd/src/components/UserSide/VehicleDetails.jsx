@@ -40,6 +40,32 @@ export default function VehicleDetails() {
   const [isBooked, setIsBooked] = useState(isRequested);
   const [bookingId, setBookingId] = useState(null);
 
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  const [termsContent, setTermsContent] = useState("");
+  const [agreements, setAgreements] = useState({
+    terms: false,
+    cancellationPolicy: false,
+    damagePolicy: false
+  });
+
+  const handleAgreementChange = (e) => {
+    setAgreements({ ...agreements, [e.target.name]: e.target.checked });
+  };
+
+  const fetchTermsAndConditions = async () => {
+    try {
+      const response = await axios
+      .get(`http://localhost:3000/api/admin/page/getpagebyslug/terms-and-conditions`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setTermsContent(response.data.data.content);
+    } catch (error) {
+      console.error("Failed to fetch terms:", error);
+      setTermsContent("<p>Failed to load terms. Please try again later.</p>");
+    }
+  };
   
   useEffect(() => {
     const access_token = reactLocalStorage.get("access_token");
@@ -172,7 +198,7 @@ export default function VehicleDetails() {
             }
             );
             setExistingBookings(response.data.bookings); // Store all bookings
-        console.log("gg",response.data.bookings);
+        // console.log("gg",response.data.bookings);
 
         } catch (err) {
             console.error("Failed to fetch existing bookings.");
@@ -201,6 +227,12 @@ export default function VehicleDetails() {
   };
 
   const handleBooking = async () => {
+    if (!agreements.terms || !agreements.cancellationPolicy || !agreements.damagePolicy) {
+      toast.error("Please accept all terms before continuing.");
+      return;
+    }
+    setIsTermsModalOpen(false);
+
     if (!filters) {
       toast.error("Please select booking criteria.");
       return;
@@ -209,7 +241,6 @@ export default function VehicleDetails() {
         toast.error("Selected dates conflict with another booking. Please choose different dates.");
         return;
       }
-  
     try {
       const bookingData = {
         vehicleId: vehicle._id,
@@ -400,26 +431,26 @@ export default function VehicleDetails() {
               </div>
           </div>
 
- {/* Add-Ons Section */}
- <div className="bg-gray-50 p-6 rounded-lg mt-8 shadow-md">
-          <h3 className="font-semibold text-lg text-gray-800">Available Add-Ons</h3>
-          <ul className="mt-4 text-gray-700">
-            {vehicle.addOns?.map((addon, index) => (
-              <li key={index} className="flex justify-between py-2">
-                <span>{addon.name}</span>
-                <div className="flex items-center">
-                  <span className="text-green-600">+{addon.pricePerDay} NPR/day</span>
-                  <button
-                    onClick={() => handleAddOnToggle(addon)}
-                    className={`ml-4 text-blue-500 ${selectedAddOns.some((item) => item.name === addon.name) ? 'text-red-500' : ''}`}
-                  >
-                    {selectedAddOns.some((item) => item.name === addon.name) ? 'Remove' : 'Add'}
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+          {/* Add-Ons Section */}
+          <div className="bg-gray-50 p-6 rounded-lg mt-8 shadow-md">
+              <h3 className="font-semibold text-lg text-gray-800">Available Add-Ons</h3>
+              <ul className="mt-4 text-gray-700">
+                {vehicle.addOns?.map((addon, index) => (
+                  <li key={index} className="flex justify-between py-2">
+                    <span>{addon.name}</span>
+                    <div className="flex items-center">
+                      <span className="text-green-600">+{addon.pricePerDay} NPR/day</span>
+                      <button
+                        onClick={() => handleAddOnToggle(addon)}
+                        className={`ml-4 text-blue-500 ${selectedAddOns.some((item) => item.name === addon.name) ? 'text-red-500' : ''}`}
+                      >
+                        {selectedAddOns.some((item) => item.name === addon.name) ? 'Remove' : 'Add'}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
             
             </div>
 
@@ -467,7 +498,11 @@ export default function VehicleDetails() {
                 Cancel Booking
               </Button>
             ):(
-            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={handleBooking}>
+            <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" 
+            onClick={()=>{
+              setIsTermsModalOpen(true);
+              fetchTermsAndConditions();
+              }}>
               Book Now
             </Button>
           )}
@@ -523,6 +558,40 @@ export default function VehicleDetails() {
             <p className="text-gray-500 mt-2">No reviews yet</p>
           )}
         </div>
+
+        {isTermsModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-150 max-h-[80vh] overflow-auto">
+            <h2 className="text-lg font-bold mb-4">Terms & Conditions</h2>
+            {/* Render Terms & Conditions dynamically */}
+            <div className="mb-4 text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: termsContent }} />
+            <div className="mb-4">
+              <label className="flex items-center space-x-2">
+                <input type="checkbox" name="terms" checked={agreements.terms} onChange={handleAgreementChange} />
+                <span>I agree to the general terms and conditions.</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input type="checkbox" name="cancellationPolicy" checked={agreements.cancellationPolicy} onChange={handleAgreementChange} />
+                <span>I understand the cancellation policy.</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input type="checkbox" name="damagePolicy" checked={agreements.damagePolicy} onChange={handleAgreementChange} />
+                <span>I accept responsibility for any damages.</span>
+              </label>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button className="bg-gray-300 px-4 py-2 rounded-md" onClick={() => setIsTermsModalOpen(false)}>Cancel</button>
+              <button 
+                className={`px-4 py-2 rounded-md ${agreements.terms && agreements.cancellationPolicy && agreements.damagePolicy ? 'bg-green-600 text-white' : 'bg-gray-400 cursor-not-allowed'}`}
+                onClick={handleBooking}
+              >
+                Accept & Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
