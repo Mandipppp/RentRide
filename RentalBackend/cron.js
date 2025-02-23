@@ -5,8 +5,8 @@ const User = require('./models/user');
 const Owner = require('./models/owner');
 const Vehicle = require('./models/vehicle');
 const Notification = require('./models/notification');
-const Chat = require('./models/chat');
-const Message = require('./models/message');
+const Chat = require('./models/Chat');
+const Message = require('./models/Message');
 
 
 

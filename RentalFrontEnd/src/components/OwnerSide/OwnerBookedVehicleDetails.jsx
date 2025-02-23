@@ -169,7 +169,7 @@ export default function OwnerBookedVehicleDetails() {
 
     useEffect(() => {
       if (booking){
-      if (booking.bookingStatus=="Accepted" || booking.bookingStatus=="RevisionRequired" || booking.bookingStatus=="Confirmed") {
+      if (booking.bookingStatus=="Accepted" || booking.bookingStatus=="RevisionRequired" || booking.bookingStatus=="Confirmed" || booking.bookingStatus=="Active") {
           const fetchMessages = async () => {
           try {
               const response = await axios.get(
@@ -544,7 +544,7 @@ export default function OwnerBookedVehicleDetails() {
         </div>
 
            {/* Conditional Rendering of Message Box */}
-        {(booking.bookingStatus === "Accepted" || booking.bookingStatus === "Confirmed" || booking.bookingStatus === "RevisionRequired") && (
+        {(booking.bookingStatus === "Accepted" || booking.bookingStatus === "Confirmed" || booking.bookingStatus === "RevisionRequired" || booking.bookingStatus === "Active") && (
           <div className="mt-6 bg-white p-4 rounded-lg shadow-lg border border-gray-200">
             <h3 className="font-semibold text-lg text-gray-900 mb-3">Chat with Owner</h3>
             
