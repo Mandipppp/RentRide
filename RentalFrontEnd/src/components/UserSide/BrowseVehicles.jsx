@@ -9,6 +9,7 @@ import { toast, ToastContainer } from 'react-toastify';
 
 export default function BrowseVehicles() {
   const [vehicles, setVehicles] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const today = new Date().toISOString().split("T")[0];
   const navigate = useNavigate();
   const [requestedVehicleIds, setRequestedVehicleIds] = useState([]);
@@ -73,6 +74,7 @@ export default function BrowseVehicles() {
   };
 
   const handleSearch = async () => {
+    setHasSearched(true);
     const token = reactLocalStorage.get("access_token");
     // console.log("Filters: ", filters);
     if (!filters.pickupDate || !filters.dropDate) {
@@ -178,6 +180,12 @@ export default function BrowseVehicles() {
 
       {/* Results Panel */}
       <div className="w-2/3 p-6">
+      <h2 className="text-2xl font-bold mb-4">Results</h2>
+      {!hasSearched ? (
+    <p className="text-gray-500 text-center mt-4">Start searching for vehicles by entering your details.</p>
+  ) : vehicles.length === 0 ? (
+            <p className="text-gray-500 text-center mt-4">No vehicles found.</p>
+          ) : (
         <div className="grid grid-cols-1 gap-6 items-start">
           {vehicles.map((vehicle, index) => {
               const isRequested = requestedVehicleIds.includes(vehicle._id);
@@ -209,6 +217,7 @@ export default function BrowseVehicles() {
           );
         })}
         </div>
+          )}
       </div>
 
     </div>
