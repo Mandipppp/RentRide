@@ -57,7 +57,31 @@ export default function UserBookedVehicleDetails() {
   const [walletDetails, setWalletDetails] = useState({ name: "", id: "" });
   const [rating, setRating] = useState(0); // Store rating (1-5 stars)
   const [averageRating, setAverageRating] = useState(null);
-const [comment, setComment] = useState(""); // Store comment
+  const [comment, setComment] = useState(""); // Store comment
+  const [isCancelModelOpen, setIsCancelModelOpen] = useState(false);
+  const [cancelContent, setCancelContent] = useState("");
+  const [agreements, setAgreements] = useState({
+    cancellationPolicy: false
+  });
+
+  const handleAgreementChange = (e) => {
+    setAgreements({ ...agreements, [e.target.name]: e.target.checked });
+  };
+
+  const fetchCancellation = async () => {
+    try {
+      const response = await axios
+      .get(`http://localhost:3000/api/admin/page/getpagebyslug/cancellation-policy`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setCancelContent(response.data.data.content);
+    } catch (error) {
+      console.error("Failed to fetch terms:", error);
+      setCancelContent("<p>Failed to load terms. Please try again later.</p>");
+    }
+  };
 
 const handleSubmitReview = async () => {
   // Here, you can handle the submission of the review.
@@ -417,6 +441,31 @@ const handleSubmitReview = async () => {
   
   
   const handleCancelBooking = async () => {
+    // try {
+    //   const response = await axios.put(
+    //     `http://localhost:3000/api/user/booking/cancel/${bookingId}`,
+    //     {},
+    //     {
+    //       headers: { Authorization: `Bearer ${token}` },
+    //     }
+    //   );
+  
+    //   toast.success("Booking cancelled successfully!");
+    // } catch (error) {
+    //   console.error("Cancellation failed:", error.response?.data || error.message);
+    //   toast.error("Failed to cancel booking. Please try again.");
+    // }
+    fetchCancellation();
+    setIsCancelModelOpen(true);
+  };
+
+  const proceedWithCancellation = async () => {
+    if (!agreements.cancellationPolicy) {
+      toast.error("Please accept all terms before continuing.");
+      return;
+    }
+
+    setIsCancelModelOpen(false);
     try {
       const response = await axios.put(
         `http://localhost:3000/api/user/booking/cancel/${bookingId}`,
@@ -427,11 +476,15 @@ const handleSubmitReview = async () => {
       );
   
       toast.success("Booking cancelled successfully!");
+      // setTimeout(() => {
+      //   navigate("/myBookings");
+      // }, 1500);
     } catch (error) {
       console.error("Cancellation failed:", error.response?.data || error.message);
       toast.error("Failed to cancel booking. Please try again.");
     }
-  };
+  }
+
 
   const handleAcceptBooking = async () =>{
     try {
@@ -1078,6 +1131,36 @@ const handleSubmitReview = async () => {
                   <p className="text-gray-500 mt-2">No reviews yet</p>
                 )}
               </div>
+
+              {isCancelModelOpen && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white p-6 rounded-lg shadow-lg w-150 max-h-[80vh] overflow-auto">
+                  <h2 className="text-lg font-bold mb-4">Cancellation Policy</h2>
+
+                  {/* Render Terms & Conditions dynamically */}
+                  <div className="mb-4 text-sm text-gray-700" dangerouslySetInnerHTML={{ __html: cancelContent }} />
+
+                  {/* Agreement Checkboxes */}
+                  <div className="mb-4">
+                    <label className="flex items-center space-x-2">
+                      <input type="checkbox" name="cancellationPolicy" checked={agreements.cancellationPolicy} onChange={handleAgreementChange} />
+                      <span>I understand the cancellation policy.</span>
+                    </label>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex justify-end space-x-3">
+                    <button className="bg-gray-300 px-4 py-2 rounded-md" onClick={() => setIsCancelModelOpen(false)}>Cancel</button>
+                    <button 
+                      className={`px-4 py-2 rounded-md ${agreements.cancellationPolicy ? 'bg-green-600 text-white' : 'bg-gray-400 cursor-not-allowed'}`}
+                      onClick={proceedWithCancellation}
+                    >
+                      Accept & Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
     </div>
   );
 }
