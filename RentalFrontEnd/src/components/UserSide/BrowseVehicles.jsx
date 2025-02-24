@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { reactLocalStorage } from 'reactjs-localstorage';
 import Navigation from "./Navigation";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { toast, ToastContainer } from 'react-toastify';
 
 
@@ -13,20 +13,26 @@ export default function BrowseVehicles() {
   const today = new Date().toISOString().split("T")[0];
   const navigate = useNavigate();
   const [requestedVehicleIds, setRequestedVehicleIds] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  // Initialize filters from URL params
   const [filters, setFilters] = useState({
-    pickAndDropLocation: "",
-    pickupDate: today,
-    pickupTime: "",
-    dropDate: "",
-    dropTime: "",
-    verified: false,
-    addOns: [],
-    fuel: "Petrol"
+    pickAndDropLocation: searchParams.get("pickAndDropLocation") || "",
+    pickupDate: searchParams.get("pickupDate") || today,
+    pickupTime: searchParams.get("pickupTime") || "",
+    dropDate: searchParams.get("dropDate") || "",
+    dropTime: searchParams.get("dropTime") || "",
+    verified: searchParams.get("verified") === "true",
+    addOns: searchParams.get("addOns") ? searchParams.get("addOns").split(",") : [],
+    fuel: searchParams.get("fuel") || "Petrol"
   });
 
   //fetch all the vehicles id that the user has requested
   useEffect(() => {
+    // console.log("data i have: ", filters);
+    if(filters.dropDate != ""){
+      handleSearch();
+    }
     fetchRequestedBookings();
   }, []);
 
@@ -45,6 +51,20 @@ export default function BrowseVehicles() {
     } catch (err) {
       console.log(err.response?.data?.message || "Failed to fetch booking requests.");
     }
+  };
+
+  // Update URL when search parameters change
+  const updateURLParams = () => {
+    setSearchParams({
+      pickAndDropLocation: filters.pickAndDropLocation,
+      pickupDate: filters.pickupDate,
+      pickupTime: filters.pickupTime,
+      dropDate: filters.dropDate,
+      dropTime: filters.dropTime,
+      verified: filters.verified,
+      addOns: filters.addOns.join(","),
+      fuel: filters.fuel
+    });
   };
 
   const handleInputChange = (e) => {
@@ -75,6 +95,7 @@ export default function BrowseVehicles() {
 
   const handleSearch = async () => {
     setHasSearched(true);
+    updateURLParams();
     const token = reactLocalStorage.get("access_token");
     // console.log("Filters: ", filters);
     if (!filters.pickupDate || !filters.dropDate) {
@@ -117,7 +138,7 @@ export default function BrowseVehicles() {
       <div className="flex w-full p-6">
         {/* Search Panel */}
         <div className="w-1/3 border p-6 rounded-lg shadow-lg bg-white">
-          <input className="border p-3 rounded w-full mb-4" name="pickAndDropLocation" placeholder="Pick-up and return location" onChange={handleInputChange} />
+          <input className="border p-3 rounded w-full mb-4" name="pickAndDropLocation" placeholder="Pick-up and return location" value={filters.pickAndDropLocation} onChange={handleInputChange} />
           <div className="grid grid-cols-1 gap-4 mb-6">
             <div className="border p-3 rounded">
               <label className="block text-sm font-semibold">Pick-up Date</label>
@@ -125,7 +146,7 @@ export default function BrowseVehicles() {
             </div>
             <div className="border p-3 rounded">
               <label className="block text-sm font-semibold">Pick-up Time</label>
-              <input className="w-full" name="pickupTime" type="time" onChange={handleInputChange} />
+              <input className="w-full" name="pickupTime" type="time" value={filters.pickupTime} onChange={handleInputChange} />
             </div>
             <div className="border p-3 rounded">
               <label className="block text-sm font-semibold">Return Date</label>
@@ -133,7 +154,7 @@ export default function BrowseVehicles() {
             </div>
             <div className="border p-3 rounded">
               <label className="block text-sm font-semibold">Return Time</label>
-              <input className="w-full" name="dropTime" type="time" onChange={handleInputChange} />
+              <input className="w-full" name="dropTime" type="time" value={filters.dropTime} onChange={handleInputChange} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 mb-6">
@@ -143,11 +164,11 @@ export default function BrowseVehicles() {
             <p className="font-semibold mb-2">Add-On</p>
             <div className="space-y-2">
               <label className="flex items-center space-x-3">
-                <input type="checkbox" name="Child-Seat" onChange={handleCheckboxChange} />
+                <input type="checkbox" name="Child-Seat" checked = {filters.addOns.includes("Child-Seat")} onChange={handleCheckboxChange} />
                 <span>Child-Seat</span>
               </label>
               <label className="flex items-center space-x-3">
-                <input type="checkbox" name="Roof Rack/Carrier" onChange={handleCheckboxChange} />
+                <input type="checkbox" name="Roof Rack/Carrier" checked = {filters.addOns.includes("Roof Rack/Carrier")} onChange={handleCheckboxChange} />
                 <span>Roof Rack/Carrier</span>
               </label>
             </div>

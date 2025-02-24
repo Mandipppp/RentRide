@@ -93,8 +93,22 @@ const scheduleCronJobs = () => {
       const oneDayFromNow = new Date();
       oneDayFromNow.setDate(oneDayFromNow.getDate() + 1);
 
-      const usersWithUnreadMessages = await User.find(); // Get all users
-      const ownersWithUnreadMessages = await Owner.find(); // Get all owners
+      const relevantStatuses = ['Accepted', 'RevisionRequired', 'Confirmed', 'Active'];
+
+      // Fetch bookings with the required statuses
+      const bookings = await Booking.find({
+        bookingStatus: { $in: relevantStatuses },
+      }).select('renterId ownerId');
+
+      // Extract unique renter and owner IDs
+      const renterIds = [...new Set(bookings.map((b) => b.renterId.toString()))];
+      const ownerIds = [...new Set(bookings.map((b) => b.ownerId.toString()))];
+      // const usersWithUnreadMessages = await User.find(); // Get all users
+      // const ownersWithUnreadMessages = await Owner.find(); // Get all owners
+
+      // Fetch users and owners who have bookings with the relevant statuses
+      const usersWithUnreadMessages = await User.find({ _id: { $in: renterIds } });
+      const ownersWithUnreadMessages = await Owner.find({ _id: { $in: ownerIds } });
 
        // Check unread messages for users
        for (let user of usersWithUnreadMessages) {

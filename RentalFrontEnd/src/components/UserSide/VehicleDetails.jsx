@@ -302,7 +302,7 @@ export default function VehicleDetails() {
 
       <div className="flex items-center mb-6">
         <button
-          onClick={() => navigate("/browsevehicles")}
+          onClick={() => navigate(-1)}
           className="flex items-center text-gray-600 hover:text-gray-900"
         >
           <i className="fa-solid fa-arrow-left mr-2"></i>
