@@ -990,7 +990,7 @@ const handleSubmitReview = async () => {
               Download Receipt
             </button>
           )}
-            {(booking.bookingStatus === "Confirmed" && (booking.paymentStatus === "Partial" || booking.paymentStatus === "Pending")) && <div>
+            {((booking.bookingStatus === "Confirmed" || booking.bookingStatus === "Active") && (booking.paymentStatus === "Partial" || booking.paymentStatus === "Pending")) && <div>
     
             <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg " onClick={handleRemainingPay}>
                 Pay Remaining

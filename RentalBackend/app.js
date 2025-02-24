@@ -89,7 +89,7 @@ io.on('connection', (socket) => {
 
     socket.on('register', (userId) => {
       users.set(userId, socket.id);
-      console.log("Connected");
+      // console.log("Connected");
   });
 
   // User joins a chat room

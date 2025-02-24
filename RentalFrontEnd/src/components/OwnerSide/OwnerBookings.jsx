@@ -15,8 +15,16 @@ function OwnerBookings() {
     const [activeTab, setActiveTab] = useState("Pending");
     const [bookings, setBookings] = useState({ upcoming: [], confirmed: [], active : [], completed: [], cancelled: [], refunds: [] });
     const [loading, setLoading] = useState(true);
-      const [userId, setUserId] = useState("");
+    const [userId, setUserId] = useState("");
     const navigate = useNavigate();
+
+    // Load tab state from localStorage on mount
+    useEffect(() => {
+        const storedTab = localStorage.getItem("activeTab");
+        if (storedTab && TABS.includes(storedTab)) {
+            setActiveTab(storedTab);
+        }
+    }, []);
 
     useEffect(() => {
         const fetchBookings = async () => {
@@ -75,6 +83,11 @@ function OwnerBookings() {
         }
     };
 
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        localStorage.setItem("activeTab", tab); // Save to localStorage
+    };
+
     return (
         <div className="min-h-screen bg-gray-100 flex flex-col">
             <OwnerNavigation />
@@ -82,10 +95,20 @@ function OwnerBookings() {
             <div className="mx-auto w-full mt-6 p-4">
                 {/* Tabs */}
                 <div className="flex justify-around bg-white shadow-md rounded-xl p-3 mb-4">
-                    {TABS.map((tab) => (
+                {TABS.map((tab) => {
+                    const count = {
+                        "Pending": bookings.upcoming.length,
+                        "Confirmed": bookings.confirmed.length,
+                        "Active": bookings.active.length,
+                        "Completed": bookings.completed.length,
+                        "Cancelled": bookings.cancelled.length,
+                        "Refund": bookings.refunds.length
+                    }[tab] || 0; 
+
+                    return (
                         <button
                             key={tab}
-                            onClick={() => setActiveTab(tab)}
+                            onClick={() => handleTabChange(tab)}
                             className={`relative px-4 py-2 text-lg font-medium transition-all rounded-full ${
                                 activeTab === tab 
                                     ? "bg-pink-600 text-white shadow-md transform scale-105" 
@@ -93,9 +116,15 @@ function OwnerBookings() {
                             }`}
                         >
                             {tab}
+                            {count > 0 && (
+                                <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full border-2 border-white">
+                                    {count}
+                                </span>
+                            )}
                         </button>
-                    ))}
-                </div>
+                    );
+                })}
+            </div>
 
 
                 {/* Booking List */}
