@@ -358,7 +358,8 @@ exports.getRenterBookings = async (req, res) => {
 
       // Categorize bookings
     const categorizedBookings = {
-      upcoming: bookings.filter(b => ["Pending", "Accepted",'RevisionRequired', "Confirmed"].includes(b.bookingStatus)),
+      upcoming: bookings.filter(b => ["Pending", "Accepted", 'RevisionRequired', "Confirmed"].includes(b.bookingStatus)),
+      active: bookings.filter(b => b.bookingStatus === "Active"),
       completed: bookings.filter(b => b.bookingStatus === "Completed"),
       cancelled: bookings.filter(b => b.bookingStatus === "Cancelled"),
     };

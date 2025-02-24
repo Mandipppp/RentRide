@@ -9,7 +9,7 @@ import { reactLocalStorage } from "reactjs-localstorage";
 import { useNavigate } from "react-router-dom";
 
 const UserBookings = () => {
-  const [bookings, setBookings] = useState({ upcoming: [], completed: [], cancelled: [] });
+  const [bookings, setBookings] = useState({ upcoming: [], active: [], completed: [], cancelled: [] });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -40,6 +40,8 @@ const UserBookings = () => {
         return "bg-blue-500";
       case "Confirmed":
         return "bg-green-500";
+      case "Active":
+      return "bg-green-700";
       case "Cancelled":
         return "bg-red-500";
       case "Completed":
@@ -69,7 +71,7 @@ const UserBookings = () => {
   };
 
   const handleBookingClick = (bookingId) => {
-    console.log("Navigating to:", `/bookingVehicleDetails/${bookingId}`);
+    // console.log("Navigating to:", `/bookingVehicleDetails/${bookingId}`);
     navigate(`/bookingVehicleDetails/${bookingId}`);
   };
     
@@ -146,6 +148,7 @@ const UserBookings = () => {
           <p className="text-center text-gray-600">Loading...</p>
         ) : (
           <>
+            {renderBookings("Active Bookings", bookings.active)}
             {renderBookings("Upcoming Bookings", bookings.upcoming)}
             {renderBookings("Completed Bookings", bookings.completed)}
             {renderBookings("Cancelled Bookings", bookings.cancelled)}
