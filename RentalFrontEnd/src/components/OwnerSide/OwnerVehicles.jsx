@@ -67,7 +67,7 @@ const OwnerVehicles = () => {
       })
       .catch((err) => {
         console.error('Error removing vehicle:', err);
-        toast.error('Failed to remove vehicle. Please try again later.');
+        toast.error(err.response.data.message ||'Failed to remove vehicle. Please try again later.');
         setShowModal(false);
       });
   };
@@ -89,7 +89,7 @@ const OwnerVehicles = () => {
       })
       .catch((err) => {
         console.error('Error disabling vehicle:', err);
-        toast.error('Failed to disable vehicle. Please try again later.');
+        toast.error(err.response.data.message || 'Failed to disable vehicle. Please try again later.');
       });
   };
 

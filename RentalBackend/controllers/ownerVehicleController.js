@@ -225,7 +225,7 @@ const getOwnerVehicles = async (req, res) => {
       // Check if the vehicle has any active bookings with status "Confirmed"
     const activeBookings = await Booking.findOne({
       vehicleId: vehicleId,
-      bookingStatus: 'Confirmed',
+      bookingStatus: { $in: ['Confirmed', 'Active'] },
     });
 
     if (activeBookings) {
@@ -365,6 +365,19 @@ const getOwnerVehicles = async (req, res) => {
           message: 'Vehicle not found or unauthorized.',
         });
       }
+
+       // Check if there are active or confirmed bookings
+       const existingActiveBookings = await Booking.findOne({
+        vehicleId: vehicleId,
+        bookingStatus: { $in: ['Confirmed', 'Active'] },
+    });
+
+    if (existingActiveBookings) {
+        return res.status(400).json({
+            success: false,
+            message: 'This vehicle cannot be disabled as it has active or confirmed bookings.',
+        });
+    }
       
       // Find bookings that are still in progress but not confirmed
     const affectedBookings = await Booking.find({
