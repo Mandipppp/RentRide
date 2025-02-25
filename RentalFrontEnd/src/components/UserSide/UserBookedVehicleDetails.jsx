@@ -1075,6 +1075,12 @@ const handleSubmitReview = async () => {
             </div>
           )}
 
+      {(booking.paymentMethod === "Cash") && (
+            <div>
+              <p className="mt-4 text-yellow-600 font-semibold">*Your payment method was set to CASH by the owner</p>
+            </div>
+          )}
+
 
             {booking.bookingStatus === "Accepted" && <div>
               <div className='flex flex-row space-x-4'>

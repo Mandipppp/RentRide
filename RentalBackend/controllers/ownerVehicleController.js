@@ -1,7 +1,9 @@
 const Vehicle = require('../models/vehicle');
 const Owner= require('../models/owner');
+const User= require('../models/user');
 const fs = require('fs');
 const Booking = require('../models/Booking');
+const Notification = require('../models/notification');
 const nodemailer = require("nodemailer");
 
 
@@ -629,6 +631,106 @@ const getOwnerVehicles = async (req, res) => {
   
       if (!updatedVehicle) {
         return res.status(404).json({ message: "Failed to update the vehicle." });
+      }
+
+      // After successfully updating the vehicle, update pending bookings
+      const pendingBookings = await Booking.find({ vehicleId, bookingStatus: "Pending" });
+
+      for (const booking of pendingBookings) {
+        let updatedAmountDue = booking.totalDays * updatedVehicle.dailyPrice;
+      
+        // Update addOns prices
+        let updatedAddOns = [];
+        if (updatedVehicle.addOns && booking.addOns) {
+          updatedAddOns = booking.addOns.map((addOn) => {
+            const matchingAddOn = updatedVehicle.addOns.find((vAddOn) => vAddOn.name === addOn.name);
+            if (matchingAddOn) {
+              return {
+                name: matchingAddOn.name,
+                pricePerDay: matchingAddOn.pricePerDay,
+                totalPrice: matchingAddOn.pricePerDay * booking.totalDays,
+              };
+            }
+            return addOn;
+          });
+        }
+        // Sum up the new add-on prices
+        const addOnsTotalPrice = updatedAddOns.reduce((sum, addOn) => sum + addOn.totalPrice, 0);
+        updatedAmountDue += addOnsTotalPrice;
+
+        // Update the booking
+        await Booking.findByIdAndUpdate(
+          booking._id,
+          {
+            $set: {
+              amountDue: updatedAmountDue,
+              addOns: updatedAddOns,
+              updatedAt: Date.now(),
+            },
+          },
+          { new: true }
+        );
+
+        // Create a notification for the user
+      await Notification.create({
+        recipientId: booking.renterId,
+        recipientModel: "User",
+        message: `The price for your pending booking has changed. Your new total cost is Rs. ${updatedAmountDue}.`,
+        type: "booking",
+        status: "unread",
+        priority: "high",
+      });
+
+      const user = await User.findById(booking.renterId);
+
+       // Send email to the user
+       const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: `Booking Price Update Notification for Vehicle: ${vehicle.name}`,
+        html: `
+          <html>
+            <head>
+              <style>
+                body { font-family: Arial, sans-serif; color: #333; background-color: #f4f4f4; padding: 20px; }
+                .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+                .header { text-align: center; margin-bottom: 20px; }
+                .header h1 { color: #d9534f; }
+                .content { font-size: 16px; }
+                .footer { margin-top: 30px; font-size: 12px; color: #777; text-align: center; }
+                .button { background-color: #d9534f; color: white; padding: 10px 20px; text-align: center; display: inline-block; font-size: 16px; border-radius: 5px; text-decoration: none; }
+                .button:hover { background-color: #c9302c; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>Booking Cancelled</h1>
+                </div>
+                <div class="content">
+                  <p>Dear <strong>${user.name}</strong>,</p>
+                  <p>The price for your pending booking has been updated. Your new total cost is Rs. ${updatedAmountDue}.</p>
+                  <p>Please review your booking in your account.</p>
+                </div>
+                <div class="footer">
+                  <p>&copy; 2025 RentRide. All rights reserved.</p>
+                </div>
+              </div>
+            </body>
+          </html>
+        `,
+      };
+
+      const transporter = nodemailer.createTransport({
+        service: "Gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      await transporter.sendMail(mailOptions);
+      
       }
   
       res.status(200).json({
