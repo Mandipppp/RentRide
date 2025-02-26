@@ -9,7 +9,7 @@ import { reactLocalStorage } from "reactjs-localstorage";
 import { useNavigate } from "react-router-dom";
 
 const UserBookings = () => {
-  const [bookings, setBookings] = useState({ upcoming: [], active: [], completed: [], cancelled: [] });
+  const [bookings, setBookings] = useState({ upcoming: [], active: [], completed: [], cancelled: [], refunds: [] });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -149,6 +149,7 @@ const UserBookings = () => {
         ) : (
           <>
             {renderBookings("Active Bookings", bookings.active)}
+            {renderBookings("Refunds Bookings", bookings.refunds)}
             {renderBookings("Upcoming Bookings", bookings.upcoming)}
             {renderBookings("Completed Bookings", bookings.completed)}
             {renderBookings("Cancelled Bookings", bookings.cancelled)}

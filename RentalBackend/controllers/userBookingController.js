@@ -361,7 +361,8 @@ exports.getRenterBookings = async (req, res) => {
       upcoming: bookings.filter(b => ["Pending", "Accepted", 'RevisionRequired', "Confirmed"].includes(b.bookingStatus)),
       active: bookings.filter(b => b.bookingStatus === "Active"),
       completed: bookings.filter(b => b.bookingStatus === "Completed"),
-      cancelled: bookings.filter(b => b.bookingStatus === "Cancelled"),
+      cancelled: bookings.filter(b => (b.bookingStatus === "Cancelled" && (b.paymentStatus === "Pending" || b.paymentStatus === "Refunded"))),
+      refunds: bookings.filter(b => (b.bookingStatus === "Cancelled" && (b.paymentStatus === "Partial" || b.paymentStatus === "Full"))),
     };
 
     if (!bookings.length) {
