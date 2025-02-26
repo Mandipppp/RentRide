@@ -11,6 +11,13 @@ import { useNavigate } from "react-router-dom";
 const UserBookings = () => {
   const [bookings, setBookings] = useState({ upcoming: [], active: [], completed: [], cancelled: [], refunds: [] });
   const [loading, setLoading] = useState(true);
+  const [collapsedSections, setCollapsedSections] = useState({
+    upcoming: false,
+    active: false,
+    completed: true,
+    cancelled: true,
+    refunds: false,
+  });
   const navigate = useNavigate();
 
 
@@ -31,6 +38,13 @@ const UserBookings = () => {
     };
     fetchBookings();
   }, []);
+
+  const toggleSection = (section) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -75,10 +89,18 @@ const UserBookings = () => {
     navigate(`/bookingVehicleDetails/${bookingId}`);
   };
     
-  const renderBookings = (title, list) => (
+  const renderBookings = (title, list, section) => (
     
     <div className="mt-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">{title}</h3>
+      <div
+        className="flex justify-between items-center cursor-pointer"
+        onClick={() => toggleSection(section)}
+      >
+        <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+        <span className="text-lg font-bold">{collapsedSections[section] ? <i className="fa-solid fa-chevron-up fa-rotate-180"></i> : <i className="fa-solid fa-chevron-up"></i>}</span>
+      </div>
+      {!collapsedSections[section] && (
+        <div className="mt-4">
       {list.length === 0 ? (
         <p className="text-center text-gray-500">No {title.toLowerCase()}.</p>
       ) : (
@@ -135,6 +157,8 @@ const UserBookings = () => {
             </div>
         ))
       )}
+      </div>
+      )}
     </div>
   );
 
@@ -148,11 +172,11 @@ const UserBookings = () => {
           <p className="text-center text-gray-600">Loading...</p>
         ) : (
           <>
-            {renderBookings("Active Bookings", bookings.active)}
-            {renderBookings("Refunds Bookings", bookings.refunds)}
-            {renderBookings("Upcoming Bookings", bookings.upcoming)}
-            {renderBookings("Completed Bookings", bookings.completed)}
-            {renderBookings("Cancelled Bookings", bookings.cancelled)}
+            {renderBookings("Active Bookings", bookings.active, "active")}
+          {renderBookings("Refunds", bookings.refunds, "refunds")}
+          {renderBookings("Upcoming Bookings", bookings.upcoming, "upcoming")}
+          {renderBookings("Completed Bookings", bookings.completed, "completed")}
+          {renderBookings("Cancelled Bookings", bookings.cancelled, "cancelled")}
           </>
         )}
       </div>
