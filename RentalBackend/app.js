@@ -142,14 +142,13 @@ io.on('connection', (socket) => {
 
 ////////////////
   // Listen for 'bookingUpdated' event
-  socket.on("bookingUpdated", (updatedBooking) => {
-    const ownerSocketId = users.get(updatedBooking.ownerId.toString());
-    const renterSocketId = users.get(updatedBooking.renterId.toString());
-    console.log("Booo");
+//   socket.on("bookingUpdated", (updatedBooking) => {
+//     const ownerSocketId = users.get(updatedBooking.ownerId.toString());
+//     const renterSocketId = users.get(updatedBooking.renterId.toString());
     
-    if (ownerSocketId) io.to(ownerSocketId).emit("bookingUpdated", updatedBooking);
-    if (renterSocketId) io.to(renterSocketId).emit("bookingUpdated", updatedBooking);
-});
+//     if (ownerSocketId) io.to(ownerSocketId).emit("bookingUpdated", updatedBooking);
+//     if (renterSocketId) io.to(renterSocketId).emit("bookingUpdated", updatedBooking);
+// });
 
   // Handle user disconnect
   socket.on('disconnect', () => {

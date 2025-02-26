@@ -38,8 +38,8 @@ function OwnerBookings() {
 
                 ////////////////
                 setUserId(response.data.ownerId);
-                if(userId){
-                    socket.emit('register', userId);
+                if(response.data.ownerId){
+                    socket.emit('register', response.data.ownerId);
                 }
             } catch (error) {
                 console.error("Error fetching bookings:", error);
@@ -52,23 +52,64 @@ function OwnerBookings() {
     }, []);
 
 ////////////////
-    useEffect(()=>{
-        if(bookings){
+    // WebSocket - Handle booking updates in real-time
+    useEffect(() => {
         socket.on("bookingUpdated", (updatedBooking) => {
-            console.log("📢 Booking update received:", updatedBooking);
+            // console.log("Booking update received:", updatedBooking);
 
-            setBookings((prevBookings) =>
-                prevBookings.map((b) => (b._id === updatedBooking._id ? updatedBooking : b))
-            );
+            setBookings((prev) => {
+                const newBookings = { ...prev };
 
-            toast.info(`Booking status updated to: ${updatedBooking.bookingStatus}`);
+                // Find the old category of the booking
+                let oldCategory = null;
+                Object.keys(newBookings).forEach((category) => {
+                    if (newBookings[category].some((b) => b._id === updatedBooking._id)) {
+                        oldCategory = category;
+                    }
+                });
+
+                // Remove booking from the old category
+                if (oldCategory) {
+                    newBookings[oldCategory] = newBookings[oldCategory].filter(
+                        (b) => b._id !== updatedBooking._id
+                    );
+                }
+
+                // Determine new category
+                let newCategory = "";
+                if (["Pending", "Accepted", "RevisionRequired"].includes(updatedBooking.bookingStatus)) {
+                    newCategory = "upcoming";
+                } else if (updatedBooking.bookingStatus === "Confirmed") {
+                    newCategory = "confirmed";
+                } else if (updatedBooking.bookingStatus === "Active") {
+                    newCategory = "active";
+                } else if (updatedBooking.bookingStatus === "Completed") {
+                    newCategory = "completed";
+                } else if (
+                    updatedBooking.bookingStatus === "Cancelled" &&
+                    ["Pending", "Refunded"].includes(updatedBooking.paymentStatus)
+                ) {
+                    newCategory = "cancelled";
+                } else if (
+                    updatedBooking.bookingStatus === "Cancelled" &&
+                    ["Partial", "Full"].includes(updatedBooking.paymentStatus)
+                ) {
+                    newCategory = "refunds";
+                }
+
+                if (newCategory) {
+                    newBookings[newCategory] = [...newBookings[newCategory], updatedBooking];
+                }
+
+                return newBookings;
+            });
+
+            toast.info(`Booking updated: ${updatedBooking.bookingStatus}`);
         });
 
-        // Cleanup WebSocket listener when component unmounts
         return () => {
             socket.off("bookingUpdated");
         };
-    }
     }, []);
 
     const getBookingsForTab = () => {

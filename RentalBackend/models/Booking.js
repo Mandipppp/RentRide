@@ -71,12 +71,28 @@ const BookingSchema = new mongoose.Schema({
 });
 
 ////////////////
-BookingSchema.post("save", function (doc) {
-  if (doc.bookingStatus) {
-    const io = require("../socket").getIo();
-    io.to(doc.renterId.toString()).emit("bookingUpdated", doc);
-    io.to(doc.ownerId.toString()).emit("bookingUpdated", doc);
+BookingSchema.post("save", async function (doc) {
+  const io = require("../socket").getIo();
+  const users = require("../app").users;
+  const Booking = require("../models/Booking");
+
+  try {
+    // Populate vehicle and owner details
+    const updatedBooking = await Booking.findById(doc._id)
+      .populate("renterId", "name email") // Include renter details
+      .populate("vehicleId", "name type builtYear dailyPrice imageUrls") // Include vehicle details
+      .lean(); // Convert Mongoose document to plain JSON object
+
+    if (!updatedBooking) return;
+
+    const ownerSocketId = users.get(updatedBooking.ownerId.toString());
+    const renterSocketId = users.get(updatedBooking.renterId.toString());
+
+    if (ownerSocketId) io.to(ownerSocketId).emit("bookingUpdated", updatedBooking);
+    if (renterSocketId) io.to(renterSocketId).emit("bookingUpdated", updatedBooking);
     // console.log(`Booking ${doc._id} status changed to ${doc.bookingStatus}`);
+  } catch (error) {
+    console.error("Error populating booking before WebSocket emit:", error);
   }
 });
 
