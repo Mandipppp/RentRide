@@ -198,7 +198,13 @@ exports.setupPassword = async (req, res) => {
         priority,
       }));
   
-      await Notification.insertMany(notifications);
+      // await Notification.insertMany(notifications);
+      
+      // Save each notification individually to trigger the post hook
+    for (const notification of notifications) {
+      const newNotification = new Notification(notification);
+      await newNotification.save(); // Save individually
+    }
   
       const transporter = nodemailer.createTransport({
         service: 'Gmail',

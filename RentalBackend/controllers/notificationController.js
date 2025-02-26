@@ -24,7 +24,7 @@ exports.getNotifications = async (req, res) => {
       .sort({ createdAt: -1 }); // Sort notifications by creation date
 
     // Return the notifications
-    res.status(200).json({ notifications });
+    res.status(200).json({ notifications, id: recipient.id });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error, please try again later.' });

@@ -562,7 +562,7 @@ export default function OwnerBookedVehicleDetails() {
            {/* Conditional Rendering of Message Box */}
         {(booking.bookingStatus === "Accepted" || booking.bookingStatus === "Confirmed" || booking.bookingStatus === "RevisionRequired" || booking.bookingStatus === "Active") && (
           <div className="mt-6 bg-white p-4 rounded-lg shadow-lg border border-gray-200">
-            <h3 className="font-semibold text-lg text-gray-900 mb-3">Chat with Owner</h3>
+            <h3 className="font-semibold text-lg text-gray-900 mb-3">Chat with User</h3>
             
             <div className="flex flex-col h-72">
               {/* Messages Container */}

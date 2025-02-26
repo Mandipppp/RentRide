@@ -3,6 +3,9 @@ import React, { useContext, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { UserContext } from "../UserContext/UserContext";
 import axios from "axios";
+import io from "socket.io-client";
+
+const socket = io("http://localhost:3000");
 
 const Navigation = () => {
   const location = useLocation(); // Hook to get the current path
@@ -26,6 +29,9 @@ const Navigation = () => {
         });
         const fetchedNotifications = response.data.notifications;
         setNotifications(fetchedNotifications);
+        if (response.data.id) {
+          socket.emit("register", response.data.id);
+        }
 
         // Calculate unread notifications
         const unread = fetchedNotifications.filter((notification) => notification.status === 'unread');
@@ -38,6 +44,22 @@ const Navigation = () => {
     fetchNotifications();
   }, [token]);
 
+
+  useEffect(() => {
+        socket.on("newNotification", (notification) => {
+          setNotifications((prev) => {
+            const updatedNotifications = [notification, ...prev];
+            const unread = updatedNotifications.filter((n) => n.status === 'unread');
+            setUnreadCount(unread.length);
+            return updatedNotifications;
+          });
+        });
+      
+        return () => {
+          socket.off("newNotification");
+        };
+      }, [token]);
+      
   const toggleNotifications = () => {
     setIsNotificationsOpen(!isNotificationsOpen);
   };

@@ -1,6 +1,9 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import io from "socket.io-client";
+
+const socket = io("http://localhost:3000");
 
 const Navbar = () => {
   const location = useLocation(); // Hook to get the current path
@@ -9,6 +12,8 @@ const Navbar = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState('all'); // 'all' or 'unread'
   const token = localStorage.getItem('access_token');
+  const [userId, setUserId] = useState("");
+  
 
   useEffect(() => {
     // Fetch notifications on component mount
@@ -21,6 +26,11 @@ const Navbar = () => {
         });
         const fetchedNotifications = response.data.notifications;
         setNotifications(fetchedNotifications);
+        setUserId(response.data.id);
+        if (response.data.id) {
+          socket.emit("register", response.data.id);
+        }
+        // console.log(response.data.id);
 
         // Calculate unread notifications
         const unread = fetchedNotifications.filter((notification) => notification.status === 'unread');
@@ -31,6 +41,21 @@ const Navbar = () => {
     };
 
     fetchNotifications();
+  }, [token]);
+
+  useEffect(() => {
+    socket.on("newNotification", (notification) => {
+      setNotifications((prev) => {
+        const updatedNotifications = [notification, ...prev];
+        const unread = updatedNotifications.filter((n) => n.status === 'unread');
+        setUnreadCount(unread.length);
+        return updatedNotifications;
+      });
+    });
+  
+    return () => {
+      socket.off("newNotification");
+    };
   }, [token]);
 
   const toggleNotifications = () => {

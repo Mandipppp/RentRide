@@ -87,9 +87,11 @@ io.on('connection', (socket) => {
 
 ////////////////
 
-    socket.on('register', (userId) => {
-      users.set(userId, socket.id);
-      // console.log("Connected");
+  socket.on('register', (userId) => {
+    users.set(userId, socket.id);
+    setTimeout(() => {}, 0);
+    // console.log(`User registered -> userId: ${userId}, socketId: ${socket.id}`);
+  // console.log("Current users map:", users);
   });
 
   // User joins a chat room
@@ -97,6 +99,13 @@ io.on('connection', (socket) => {
     socket.join(chatId);
     users.set(userId, socket.id);
     // console.log(`User ${userId} joined chat ${chatId}`);
+  });
+
+  // User leaves a chat room
+  socket.on('leaveChat', ({ chatId, userId }) => {
+    socket.leave(chatId);
+    users.delete(userId); // Optionally remove the user from the active users map
+    // console.log(`User ${userId} left chat ${chatId}`);
   });
 
   // Handle sending a message
@@ -160,3 +169,5 @@ scheduleCronJobs();
 server.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
+
+module.exports={users};

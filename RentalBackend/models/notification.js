@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const socketManager = require("../socket");
 
 const NotificationSchema = new mongoose.Schema({
   recipientId: { type: mongoose.Schema.Types.ObjectId, required: true },
@@ -16,6 +17,23 @@ NotificationSchema.virtual('recipient', {
   localField: 'recipientId',
   foreignField: '_id',
   justOne: true,
+});
+
+// ** Real-time notification trigger **
+NotificationSchema.post("save", function (doc) {
+  const io = require("../socket").getIo();
+  const users = require("../app").users;
+  
+  try {
+    const recipientSocketId = users.get(doc.recipientId.toString()); // Convert ObjectId to string
+    if (recipientSocketId) {
+      io.to(recipientSocketId).emit("newNotification", doc);
+      // console.log("Notification emitted to:", recipientSocketId);
+    }
+  } catch (error) {
+    console.error("Error emitting notification:", error);
+  }
+
 });
 
 module.exports = mongoose.model('Notification', NotificationSchema);
