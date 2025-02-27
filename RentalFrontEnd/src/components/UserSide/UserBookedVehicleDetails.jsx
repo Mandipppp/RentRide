@@ -130,7 +130,8 @@ const handleSubmitReview = async () => {
         if (response.data.success) {
             toast.success("Refund request submitted successfully!");
             setIsModalOpen(false);
-            window.location.reload(); // Refresh to reflect changes
+            // window.location.reload(); // Refresh to reflect changes
+            setBooking(response.data.booking);
         }
       } catch (err) {
           console.error("Refund request failed:", err);
@@ -484,6 +485,7 @@ const handleSubmitReview = async () => {
       );
   
       toast.success("Booking cancelled successfully!");
+      setBooking(response.data.booking);
       // setTimeout(() => {
       //   navigate("/myBookings");
       // }, 1500);
@@ -504,6 +506,7 @@ const handleSubmitReview = async () => {
         }
       );
       toast.success("Booking revised successfully!");
+      setBooking(response.data.booking);
     } catch (error) {
       console.error("Cancellation failed:", error.response?.data || error.message);
       toast.error("Failed to revise booking. Please try again.");
@@ -587,11 +590,12 @@ const handleSubmitReview = async () => {
           {
             headers: { Authorization: `Bearer ${token}` },
           });
-          console.log("Payment data: ", response.data);
-          if (response.data.status === "Completed") {
+          console.log("Payment data: ", response.data.data);
+          if (response.data.data.status === "Completed") {
             setStatus("success");
             toast.success('Payment successful!');
             setReceiptUrl(`http://localhost:3000/api/auth/payment/receipt?pidx=${pidx}`);
+            setBooking(response.data.booking);
           } else {
             setStatus("failed");
             toast.error('Payment verification failed. Please try again.');

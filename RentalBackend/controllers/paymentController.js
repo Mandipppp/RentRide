@@ -193,14 +193,22 @@ const verifyPayment = async (req, res) => {
     await payment.save();
 
     // Update booking details
-    const booking = await Booking.findById(payment.bookingId).populate('renterId');
+    // const booking = await Booking.findById(payment.bookingId).populate('renterId');
+    const booking = await Booking.findById(payment.bookingId)
+          .populate('vehicleId')
+          .populate('renterId')
+          .populate({
+            path: 'ownerId',
+            populate: { path: 'kycId' } // Get owner details along with KYC
+          });
+
     if (!booking) {
       return res.status(404).json({ success: false, message: "Booking not found." });
     }
 
     // Check for overlapping confirmed bookings for the same vehicle
     const overlappingBookings = await Booking.find({
-      vehicleId: booking.vehicleId,
+      vehicleId: booking.vehicleId._id,
       bookingStatus: 'Confirmed',
       _id: { $ne: payment.bookingId }, // Exclude the current booking
       $or: [
@@ -254,8 +262,8 @@ const verifyPayment = async (req, res) => {
     doc.text(`Date: ${new Date(payment.createdAt).toLocaleString()}`);
     doc.moveDown();
     doc.fontSize(14).text("Booking Details", { underline: true });
-    doc.fontSize(12).text(`Renter ID: ${booking.renterId}`);
-    doc.text(`Vehicle ID: ${booking.vehicleId}`);
+    doc.fontSize(12).text(`Renter ID: ${booking.renterId._id}`);
+    doc.text(`Vehicle ID: ${booking.vehicleId._id}`);
     doc.text(`Rental Start: ${new Date(booking.startDate).toLocaleDateString()}`);
     doc.text(`Rental End: ${new Date(booking.endDate).toLocaleDateString()}`);
     doc.text(`Pickup Location: ${booking.pickAndDropLocation || "N/A"}`);
@@ -280,7 +288,7 @@ const verifyPayment = async (req, res) => {
 
         const mailOptions = {
           from: process.env.EMAIL_USER,
-          to: booking.renterId.email, // Assuming you have the renter's email in the booking
+          to: booking.renterId.email,
           subject: "Payment Successful - Receipt Attached",
           text: `Dear Customer,\n\nYour payment of NPR ${payment.amountPaid} has been successfully processed.\n\nPlease find the attached invoice for your reference.\n\nThank you for choosing us!`,
           attachments: [
@@ -293,7 +301,13 @@ const verifyPayment = async (req, res) => {
 
         await transporter.sendMail(mailOptions);
 
-        res.json(response.data);
+        // res.json(response.data);
+        res.status(200).json({
+          success: true,
+          message: 'Payment Success',
+          data: response.data,
+          booking
+        });
 
       } catch (emailError) {
         console.error("Email sending failed:", emailError);
@@ -376,7 +390,7 @@ const verifyRefund = async (req, res) => {
     doc.moveDown();
     doc.fontSize(14).text("Booking Details", { underline: true });
     doc.fontSize(12).text(`Renter ID: ${booking.renterId._id}`);
-    doc.text(`Vehicle ID: ${booking.vehicleId}`);
+    doc.text(`Vehicle ID: ${booking.vehicleId._id}`);
     doc.text(`Rental Start: ${new Date(booking.startDate).toLocaleDateString()}`);
     doc.text(`Rental End: ${new Date(booking.endDate).toLocaleDateString()}`);
     doc.text(`Pickup Location: ${booking.pickAndDropLocation || "N/A"}`);

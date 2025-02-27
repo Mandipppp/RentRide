@@ -95,7 +95,7 @@ exports.acceptBooking = async (req, res) => {
 
     // Check for overlapping confirmed bookings for the same vehicle
     const overlappingBookings = await Booking.find({
-      vehicleId: booking.vehicleId,
+      vehicleId: booking.vehicleId._id,
       bookingStatus: 'Confirmed',
       _id: { $ne: bookingId }, // Exclude the current booking
       $or: [
@@ -177,8 +177,8 @@ exports.acceptBooking = async (req, res) => {
      // Create a chat for the booking if it doesn't exist
      const newChat = new Chat({
        bookingId: booking._id,
-       ownerId: booking.ownerId,
-       renterId: booking.renterId,
+       ownerId: booking.ownerId._id,
+       renterId: booking.renterId._id,
        messages: [], // Initialize with an empty messages array
        createdAt: Date.now(),
      });
@@ -188,7 +188,7 @@ exports.acceptBooking = async (req, res) => {
     
     // Send notification to the renter
     const notification = new Notification({
-      recipientId: booking.renterId,
+      recipientId: booking.renterId._id,
       recipientModel: 'User',
       message: notificationMessage,
       type: 'booking',
@@ -311,7 +311,7 @@ exports.cancelBooking = async (req, res) => {
     if (booking.bookingStatus === 'Cancelled') {
       return res.status(400).json({ message: 'Booking is already cancelled' });
     }
-    const user = await User.findById(booking.renterId);
+    const user = await User.findById(booking.renterId._id);
 
     let cancellationFee = 0;
 
@@ -332,7 +332,7 @@ exports.cancelBooking = async (req, res) => {
 
     // Send notification to the renter
     const notification = new Notification({
-      recipientId: booking.renterId,
+      recipientId: booking.renterId._id,
       recipientModel: 'User',
       message: `Your booking for ${booking.vehicleId.name} has been cancelled by the owner.`,
       type: 'booking',
@@ -488,7 +488,7 @@ exports.confirmBooking = async (req, res) => {
 
     // Send a notification to the renter about the confirmation
     const notification = new Notification({
-      recipientId: booking.renterId,
+      recipientId: booking.renterId._id,
       recipientModel: 'User',
       message: `Your booking for ${booking.vehicleId.name} has been confirmed by the owner.`,
       type: 'booking',
@@ -498,7 +498,7 @@ exports.confirmBooking = async (req, res) => {
     await notification.save();
 
     // Send confirmation email to the renter
-    const user = await User.findById(booking.renterId);
+    const user = await User.findById(booking.renterId._id);
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -641,7 +641,7 @@ exports.setPaymentMethodToCash = async (req, res) => {
 
     // Send a notification to the renter about the payment method update
     const notification = new Notification({
-      recipientId: booking.renterId,
+      recipientId: booking.renterId._id,
       recipientModel: 'User',
       message: `The owner has set your payment method to Cash for the booking of ${booking.vehicleId.name}.`,
       type: 'payment',
@@ -651,7 +651,7 @@ exports.setPaymentMethodToCash = async (req, res) => {
     await notification.save();
 
     // Send an email to the renter regarding the payment method change
-    const user = await User.findById(booking.renterId);
+    const user = await User.findById(booking.renterId._id);
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -818,7 +818,7 @@ exports.startRental = async (req, res) => {
 
     // Send notification to renter
     const notification = new Notification({
-      recipientId: booking.renterId,
+      recipientId: booking.renterId._id,
       recipientModel: 'User',
       message: `Your rental for ${booking.vehicleId.name} has started.`,
       type: 'booking',
@@ -913,7 +913,7 @@ exports.endRental = async (req, res) => {
 
     // Send notification to renter
     const notification = new Notification({
-      recipientId: booking.renterId,
+      recipientId: booking.renterId._id,
       recipientModel: 'User',
       message: `Your rental for ${booking.vehicleId.name} has ended.`,
       type: 'booking',

@@ -406,13 +406,20 @@ exports.cancelUserBooking = async (req, res) => {
     const renter = await User.findById(userId);
 
     // Find the booking
-    const booking = await Booking.findById(bookingId);
+    // const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(bookingId)
+      .populate('vehicleId')
+      .populate({
+        path: 'ownerId',
+        populate: { path: 'kycId' } // Get owner details along with KYC
+      });
+
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
-    const vehicle = await Vehicle.findById(booking.vehicleId);
+    const vehicle = await Vehicle.findById(booking.vehicleId._id);
 
-    const ownerId = vehicle.ownerId;
+    const ownerId = vehicle.ownerId._id;
     const owner = await Owner.findById(ownerId);
     // Check if the user is authorized (either renter or owner)
     if (String(booking.renterId) !== userId) {
@@ -448,7 +455,7 @@ exports.cancelUserBooking = async (req, res) => {
 
     // Send notification to the owner
     const notification = new Notification({
-      recipientId: booking.ownerId,
+      recipientId: booking.ownerId._id,
       recipientModel: 'Owner',
       message: `Booking for vehicle ${vehicle.name} has been Cancelled.`,
       type: 'booking',
@@ -571,7 +578,13 @@ exports.acceptRevisionBooking = async (req, res) => {
     const { bookingId } = req.params;
 
     // Find the booking by ID
-    const booking = await Booking.findById(bookingId);
+    // const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(bookingId)
+      .populate('vehicleId')
+      .populate({
+        path: 'ownerId',
+        populate: { path: 'kycId' } // Get owner details along with KYC
+      });
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
@@ -584,7 +597,7 @@ exports.acceptRevisionBooking = async (req, res) => {
 
     // Check for overlapping confirmed bookings for the same vehicle
     const overlappingBookings = await Booking.find({
-      vehicleId: booking.vehicleId,
+      vehicleId: booking.vehicleId._id,
       bookingStatus: 'Confirmed',
       _id: { $ne: bookingId }, // Exclude the current booking
       $or: [
@@ -604,7 +617,7 @@ exports.acceptRevisionBooking = async (req, res) => {
     await booking.save();
 
     // Send email notification to the renter
-    const vehicle = await Vehicle.findById(booking.vehicleId);
+    const vehicle = await Vehicle.findById(booking.vehicleId._id);
     const renter = await User.findById(booking.renterId);
 
     // // Check if a chat already exists for the given bookingId
@@ -742,7 +755,15 @@ exports.requestRefund = async (req, res) => {
       const userId = req.user.id;
 
       // Find booking by ID and ensure the user owns it
-      const booking = await Booking.findOne({ _id: bookingId, renterId: userId });
+      // const booking = await Booking.findOne({ _id: bookingId, renterId: userId });
+
+      // Fetch booking details and populate vehicle and owner details
+      const booking = await Booking.findOne({ _id: bookingId, renterId: userId })
+      .populate('vehicleId')
+      .populate({
+        path: 'ownerId',
+        populate: { path: 'kycId' } // Get owner details along with KYC
+      });
 
       if (!booking) {
           return res.status(404).json({ success: false, message: "Booking not found or unauthorized" });
