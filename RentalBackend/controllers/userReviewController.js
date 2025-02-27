@@ -73,10 +73,16 @@ exports.getReviews = async (req, res) => {
       .populate('userId', 'name')
       .populate('bookingId', 'startDate endDate')
       .sort({ createdAt: -1 });
+
+    // Fetch all reviews to get all booking IDs
+    const allReviews = await Review.find({ vehicleId }).select('bookingId');
+    // Extract booking IDs
+    const bookingIds = allReviews.map(review => review.bookingId);
+
     // Calculate the average rating
     const totalRatings = reviews.reduce((sum, review) => sum + review.rating, 0);
     const averageRating = reviews.length > 0 ? (totalRatings / reviews.length).toFixed(1) : null; // 1 decimal place
-    res.json({ reviews, averageRating });
+    res.json({ reviews, averageRating, bookingIds });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching reviews' });

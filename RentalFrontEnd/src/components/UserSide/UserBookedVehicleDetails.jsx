@@ -31,6 +31,8 @@ export default function UserBookedVehicleDetails() {
   const [addOnsCost, setAddOnsCost] = useState(0);
   const [existingBookings, setExistingBookings] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [isReviewed, setIsReviewed] = useState(false);
+
   
 
   const [totalCost, setTotalCost] = useState(0);
@@ -84,9 +86,6 @@ export default function UserBookedVehicleDetails() {
   };
 
 const handleSubmitReview = async () => {
-  // Here, you can handle the submission of the review.
-  // For example, send it to the backend or store it in the state.
-  // console.log("Review submitted:", { rating, comment });
   if(token && booking){
     try {
       const response = await axios.post('http://localhost:3000/api/user/review/post-review', 
@@ -100,6 +99,7 @@ const handleSubmitReview = async () => {
         }
       );
       toast.success("Review Posted Successfully!!");
+      setIsReviewed(true);
     }catch (err) {
       console.error("Review post Failed", err);
       toast.error(err.response?.data?.message || "Something went wrong.");
@@ -182,6 +182,14 @@ const handleSubmitReview = async () => {
         );
         setReviews(response.data.reviews);
         setAverageRating(response.data.averageRating);
+
+        // Check if current booking has a review
+        const hasReview = response.data.bookingIds.some(
+          (review) => review === bookingId
+        );
+        // console.log(hasReview);
+        setIsReviewed(hasReview);
+
       } catch (err) {
         console.log("Failed to fetch reviews.");
       }
@@ -190,7 +198,7 @@ const handleSubmitReview = async () => {
     if (booking) {
       fetchReviews();
     }
-  }, [booking, token]);
+  }, [booking, token, isReviewed]);
 
   useEffect(() => {
     // Recalculate the total cost whenever selected add-ons change
@@ -622,7 +630,7 @@ const handleSubmitReview = async () => {
         <h2 className="font-bold text-xl text-gray-800 ml-6">Booking Details</h2>
       </div>
 
-      {booking.bookingStatus === "Completed" &&
+      {(booking.bookingStatus === "Completed" && !isReviewed) &&
       <div className="flex flex-col mt-8 mb-8 bg-white p-8 rounded-lg shadow-lg border border-gray-200">
       <h3 className="font-semibold text-xl text-gray-900 mb-4">Leave a Review</h3>
 
