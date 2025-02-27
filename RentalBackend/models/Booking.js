@@ -86,7 +86,7 @@ BookingSchema.post("save", async function (doc) {
     if (!updatedBooking) return;
 
     const ownerSocketId = users.get(updatedBooking.ownerId.toString());
-    const renterSocketId = users.get(updatedBooking.renterId.toString());
+    const renterSocketId = users.get(updatedBooking.renterId._id.toString());
 
     if (ownerSocketId) io.to(ownerSocketId).emit("bookingUpdated", updatedBooking);
     if (renterSocketId) io.to(renterSocketId).emit("bookingUpdated", updatedBooking);

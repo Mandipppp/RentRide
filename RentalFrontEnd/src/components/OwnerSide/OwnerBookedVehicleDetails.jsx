@@ -385,6 +385,8 @@ export default function OwnerBookedVehicleDetails() {
       });
       toast.success("Rental has closed.");
       console.log('Closed rental:', response.data);
+      setBooking(response.data.booking);
+
     } catch (error) {
       console.error('Error closing rental:', error.response?.data || error.message);
       toast.error(error.response?.data?.message || "Error closing rental.");

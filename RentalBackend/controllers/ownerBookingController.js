@@ -832,13 +832,21 @@ exports.endRental = async (req, res) => {
   try {
     const { bookingId } = req.body;
 
-    const booking = await Booking.findById(bookingId).populate('vehicleId').populate('renterId');
+    // const booking = await Booking.findById(bookingId).populate('vehicleId').populate('renterId');
+    // Fetch booking details and populate vehicle and owner details
+    const booking = await Booking.findById(bookingId)
+      .populate('vehicleId')
+      .populate({
+        path: 'ownerId',
+        populate: { path: 'kycId' } // Get owner details along with KYC
+      })
+      .populate('renterId');
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    if (booking.ownerId.toString() !== req.user.id) {
+    if (booking.ownerId._id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
     }
 

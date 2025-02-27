@@ -7,6 +7,8 @@ import { toast, ToastContainer } from "react-toastify";
 import car from '../Images/HomeCar.png';
 import { reactLocalStorage } from "reactjs-localstorage";
 import { useNavigate } from "react-router-dom";
+import io from "socket.io-client";
+const socket = io("http://localhost:3000");
 
 const UserBookings = () => {
   const [bookings, setBookings] = useState({ upcoming: [], active: [], completed: [], cancelled: [], refunds: [] });
@@ -29,6 +31,11 @@ const UserBookings = () => {
             headers: { Authorization: `Bearer ${token}` }
           });
           setBookings(response.data.bookings);
+          // console.log(response.data);
+
+          if(response.data.userId){
+            socket.emit('register', response.data.userId);
+        }
       } catch (error) {
         console.error("Error fetching bookings:", error);
         toast.error("Failed to load bookings");
@@ -38,6 +45,45 @@ const UserBookings = () => {
     };
     fetchBookings();
   }, []);
+
+    useEffect(() => {
+           socket.on("bookingUpdated", (updatedBooking) => {
+               console.log("Booking update received:", updatedBooking);
+               setBookings((prevBookings) => {
+                // Categorize the updated booking
+                const categorizedBookings = {
+                  upcoming: [],
+                  active: [],
+                  completed: [],
+                  cancelled: [],
+                  refunds: [],
+                };
+        
+                // Merge updated booking into correct category
+                Object.keys(prevBookings).forEach(category => {
+                  categorizedBookings[category] = prevBookings[category].filter(b => b._id !== updatedBooking._id);
+                });
+        
+                if (["Pending", "Accepted", "RevisionRequired", "Confirmed"].includes(updatedBooking.bookingStatus)) {
+                  categorizedBookings.upcoming.push(updatedBooking);
+                } else if (updatedBooking.bookingStatus === "Active") {
+                  categorizedBookings.active.push(updatedBooking);
+                } else if (updatedBooking.bookingStatus === "Completed") {
+                  categorizedBookings.completed.push(updatedBooking);
+                } else if (updatedBooking.bookingStatus === "Cancelled" && ["Pending", "Refunded"].includes(updatedBooking.paymentStatus)) {
+                  categorizedBookings.cancelled.push(updatedBooking);
+                } else if (updatedBooking.bookingStatus === "Cancelled" && ["Partial", "Full"].includes(updatedBooking.paymentStatus)) {
+                  categorizedBookings.refunds.push(updatedBooking);
+                }
+        
+                return categorizedBookings;
+              });
+           });
+   
+           return () => {
+               socket.off("bookingUpdated");
+           };
+       }, []);
 
   const toggleSection = (section) => {
     setCollapsedSections(prev => ({
