@@ -319,7 +319,8 @@ export default function OwnerBookedVehicleDetails() {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Booking accepted successfully");
-      console.log('Booking updated successfully:', response.data);
+      // console.log('Booking updated successfully:', response.data);
+      setBooking(response.data.booking);
     } catch (error) {
       console.error('Error accepting booking:', error.response?.data || error.message);
       toast.error("Error accepting booking.");
@@ -336,7 +337,8 @@ export default function OwnerBookedVehicleDetails() {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Booking confirmed successfully");
-      console.log('Booking updated successfully:', response.data);
+      // console.log('Booking updated successfully:', response.data);
+      setBooking(response.data.booking);
     } catch (error) {
       console.error('Error accepting booking:', error.response?.data || error.message);
       toast.error("Error confirming booking.");
@@ -352,7 +354,9 @@ export default function OwnerBookedVehicleDetails() {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Rental has started.");
-      console.log('Starting rental:', response.data);
+      // console.log('Starting rental:', response.data);
+      setBooking(response.data.booking);
+
     } catch (error) {
       console.error('Error starting rental:', error.response?.data || error.message);
       toast.error(error.response?.data?.message || "Error starting rental.");
@@ -368,7 +372,8 @@ export default function OwnerBookedVehicleDetails() {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Selected Cash as mode of payment.");
-      console.log('Starting rental:', response.data);
+      // console.log('Starting rental:', response.data);
+      setBooking(response.data.booking);
     } catch (error) {
       console.error('Error starting rental:', error.response?.data || error.message);
       toast.error(error.response?.data?.message || "Error setting mode of payment to cash.");
@@ -384,7 +389,7 @@ export default function OwnerBookedVehicleDetails() {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Rental has closed.");
-      console.log('Closed rental:', response.data);
+      // console.log('Closed rental:', response.data);
       setBooking(response.data.booking);
 
     } catch (error) {
@@ -402,7 +407,8 @@ export default function OwnerBookedVehicleDetails() {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Booking cancelled successfully");
-      console.log('Booking updated successfully:', response.data);
+      // console.log('Booking updated successfully:', response.data);
+      setBooking(response.data.booking);
     } catch (error) {
       console.error('Error cancelling booking:', error.response?.data || error.message);
       toast.error("Error cancelling booking.");
@@ -452,10 +458,11 @@ export default function OwnerBookedVehicleDetails() {
           {
             headers: { Authorization: `Bearer ${token}` },
           });
-          console.log("Payment data: ", response.data.status);
-          if (response.data.status === "Completed") {
+          // console.log("Payment data: ", response.data.data.status);
+          if (response.data.data.status === "Completed") {
             toast.success('Payment successful!');
             setReceiptUrl(`http://localhost:3000/api/auth/payment/receipt?pidx=${pidx}`);
+            setBooking(response.data.booking);
           } else {
             toast.error('Payment verification failed. Please try again.');
           }

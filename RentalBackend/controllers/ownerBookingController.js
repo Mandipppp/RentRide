@@ -75,13 +75,21 @@ exports.acceptBooking = async (req, res) => {
     const { bookingId, approvedAddOns } = req.body;
     
     // Find the booking
-    const booking = await Booking.findById(bookingId).populate('vehicleId').populate('renterId');
+    // const booking = await Booking.findById(bookingId).populate('vehicleId').populate('renterId');
+    const booking = await Booking.findById(bookingId)
+      .populate('vehicleId')
+      .populate({
+        path: 'ownerId',
+        populate: { path: 'kycId' } // Get owner details along with KYC
+      })
+      .populate('renterId');
+
     
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    if (booking.ownerId.toString() !== req.user.id) {
+    if (booking.ownerId._id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
     }
 
@@ -282,13 +290,21 @@ exports.cancelBooking = async (req, res) => {
     const { bookingId } = req.body;
 
     // Find the booking
-    const booking = await Booking.findById(bookingId).populate('vehicleId');
+    // const booking = await Booking.findById(bookingId).populate('vehicleId');
+
+    const booking = await Booking.findById(bookingId)
+    .populate('vehicleId')
+    .populate({
+      path: 'ownerId',
+      populate: { path: 'kycId' } // Get owner details along with KYC
+    })
+    .populate('renterId');
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    if (booking.ownerId.toString() !== req.user.id) {
+    if (booking.ownerId._id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
     }
 
@@ -426,6 +442,7 @@ exports.cancelBooking = async (req, res) => {
       success: true,
       message: 'Booking cancelled successfully',
       cancellationFee,
+      booking
     });
   } catch (error) {
     console.error('Error cancelling booking:', error);
@@ -438,13 +455,20 @@ exports.confirmBooking = async (req, res) => {
     const { bookingId } = req.body;
 
     // Find the booking
-    const booking = await Booking.findById(bookingId).populate('vehicleId');
+    // const booking = await Booking.findById(bookingId).populate('vehicleId');
+    const booking = await Booking.findById(bookingId)
+    .populate('vehicleId')
+    .populate({
+      path: 'ownerId',
+      populate: { path: 'kycId' } // Get owner details along with KYC
+    })
+    .populate('renterId');
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    if (booking.ownerId.toString() !== req.user.id) {
+    if (booking.ownerId._id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
     }
 
@@ -572,6 +596,7 @@ exports.confirmBooking = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Booking confirmed successfully',
+      booking
     });
   } catch (error) {
     console.error('Error confirming booking:', error);
@@ -584,13 +609,20 @@ exports.setPaymentMethodToCash = async (req, res) => {
     const { bookingId } = req.body;
 
     // Find the booking
-    const booking = await Booking.findById(bookingId).populate('vehicleId');
+    // const booking = await Booking.findById(bookingId).populate('vehicleId');
+    const booking = await Booking.findById(bookingId)
+    .populate('vehicleId')
+    .populate({
+      path: 'ownerId',
+      populate: { path: 'kycId' } // Get owner details along with KYC
+    })
+    .populate('renterId');
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    if (booking.ownerId.toString() !== req.user.id) {
+    if (booking.ownerId._id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
     }
 
@@ -717,6 +749,7 @@ exports.setPaymentMethodToCash = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Payment method updated to Cash successfully',
+      booking
     });
   } catch (error) {
     console.error('Error updating payment method:', error);
@@ -732,14 +765,21 @@ exports.startRental = async (req, res) => {
     const { bookingId } = req.body;
 
     // Find the booking
-    const booking = await Booking.findById(bookingId).populate('vehicleId').populate('renterId');
+    // const booking = await Booking.findById(bookingId).populate('vehicleId').populate('renterId');
+    const booking = await Booking.findById(bookingId)
+      .populate('vehicleId')
+      .populate({
+        path: 'ownerId',
+        populate: { path: 'kycId' } // Get owner details along with KYC
+      })
+      .populate('renterId');
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
     // Ensure the requesting user is the owner of the vehicle
-    if (booking.ownerId.toString() !== req.user.id) {
+    if (booking.ownerId._id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
     }
 

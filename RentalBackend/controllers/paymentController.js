@@ -331,7 +331,15 @@ const verifyRefund = async (req, res) => {
     await payment.save();
 
     // Update booking details
-    const booking = await Booking.findById(payment.bookingId).populate("ownerId");
+    // const booking = await Booking.findById(payment.bookingId).populate("ownerId");
+    const booking = await Booking.findById(payment.bookingId)
+    .populate('vehicleId')
+    .populate({
+      path: 'ownerId',
+      populate: { path: 'kycId' } // Get owner details along with KYC
+    })
+    .populate('renterId');
+
     if (!booking) {
       return res.status(404).json({ success: false, message: "Booking not found." });
     }
@@ -367,7 +375,7 @@ const verifyRefund = async (req, res) => {
     doc.text(`Date: ${new Date(payment.createdAt).toLocaleString()}`);
     doc.moveDown();
     doc.fontSize(14).text("Booking Details", { underline: true });
-    doc.fontSize(12).text(`Renter ID: ${booking.renterId}`);
+    doc.fontSize(12).text(`Renter ID: ${booking.renterId._id}`);
     doc.text(`Vehicle ID: ${booking.vehicleId}`);
     doc.text(`Rental Start: ${new Date(booking.startDate).toLocaleDateString()}`);
     doc.text(`Rental End: ${new Date(booking.endDate).toLocaleDateString()}`);
@@ -406,7 +414,13 @@ const verifyRefund = async (req, res) => {
 
         await transporter.sendMail(mailOptions);
 
-        res.json(response.data);
+        // res.json(response.data);
+        res.status(200).json({
+          success: true,
+          message: 'Payment Success',
+          data: response.data,
+          booking
+        });
 
       } catch (emailError) {
         console.error("Email sending failed:", emailError);
