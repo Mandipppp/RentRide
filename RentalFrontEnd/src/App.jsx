@@ -97,7 +97,7 @@ const App = () => {
 
       <Routes>
         {/* Redirect root to login page */}
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/home" />} />
         {/* Login and Signup routes */}
         <Route path="/home" element={<HomePage />} />
         <Route path="/login" element={<Login />} />

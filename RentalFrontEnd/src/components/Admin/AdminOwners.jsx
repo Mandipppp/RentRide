@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Navbar from "./Navbar";
 import { reactLocalStorage } from "reactjs-localstorage";
 import { useLocation, useNavigate } from "react-router-dom"; // For navigation
+import { toast, ToastContainer } from "react-toastify";
+
 
 const AdminOwners = () => {
   const [owners, setOwners] = useState([]);
@@ -12,6 +14,12 @@ const AdminOwners = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const highlightOwnerId = params.get("highlight");
+    const [activeUserId, setActiveUserId] = useState(null); // Track active user for dropdown
+  
+   const [dropdownVisible, setDropdownVisible] = useState(false); // Track visibility of dropdown
+    const [dropdownPosition, setDropdownPosition] = useState({ left: 0, top: 0 }); // State for dropdown position
+      const dropdownRef = useRef(null); // Reference for dropdown
+    
 
   useEffect(() => {
     const token = reactLocalStorage.get("access_token");
@@ -77,10 +85,47 @@ const AdminOwners = () => {
     navigate(`/owners/${userId}`); // Navigate to the user's details page
   };
 
+  const toggleDropdown = (userId, e) => {
+    if (activeUserId === userId) {
+      setDropdownVisible(!dropdownVisible); 
+    } else {
+      setActiveUserId(userId);
+      setDropdownVisible(true);
+
+      const rect = e.target.getBoundingClientRect();
+      const windowWidth = window.innerWidth;
+      const dropdownWidth = 200;
+      const newLeft = rect.right + dropdownWidth > windowWidth ? rect.left - dropdownWidth : rect.left;
+
+      setDropdownPosition({
+        left: newLeft,
+        top: rect.bottom,
+      });
+    }
+  };
+
+  const handleBlockUser = (userId) => {
+      console.log(`Blocking user with ID: ${userId}`);
+    };
+  
+    const handleSendResetPassword = (userId) => {
+      console.log(`Sending reset password link to user with ID: ${userId}`);
+    };
+  
+    const handleCopyId = (userId) => {
+      navigator.clipboard.writeText(userId).then(() => {
+        toast.success("User ID copied to clipboard!");
+      }).catch((err) => {
+        console.error("Failed to copy text: ", err);
+      });
+    };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mt-6 pt-16">
       {/* Navbar */}
       <Navbar />
+      <ToastContainer />
+      
 
       {/* Title */}
       <h2 className="text-4xl font-bold mb-4">Owners</h2>
@@ -148,10 +193,49 @@ const AdminOwners = () => {
                     ? "Approval Pending"
                     : "Approval Denied"}
                 </td>
-                <td className="py-3 px-4">
-                  <button className="text-gray-500 hover:text-blue-500">
+                <td className="py-3 px-4"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent row click
+                  toggleDropdown(owner._id, e);
+                }}>
+                  <button 
+                  className="text-gray-500 hover:text-blue-500"
+                  >
                     <i className="fas fa-ellipsis-v"></i>
                   </button>
+
+                  {/* Dropdown Menu */}
+                  {dropdownVisible && activeUserId === owner._id && (
+                    <div
+                      ref={dropdownRef} // Attach ref to the dropdown div
+                      className="absolute bg-white border border-gray-300 mt-2 w-58 rounded-lg shadow-lg"
+                      style={{
+                        left: `${dropdownPosition.left}px`,
+                        top: `${dropdownPosition.top}px`,
+                      }}
+                    >
+                      <ul className="py-2">
+                        <li
+                          className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
+                          onClick={() => handleBlockUser(owner._id)}
+                        >
+                          Block User
+                        </li>
+                        <li
+                          className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
+                          onClick={() => handleSendResetPassword(owner._id)}
+                        >
+                          Send Reset Password Link
+                        </li>
+                        <li
+                          className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => handleCopyId(owner._id)} // Copy User ID
+                        >
+                          Copy ID
+                        </li>
+                      </ul>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))
