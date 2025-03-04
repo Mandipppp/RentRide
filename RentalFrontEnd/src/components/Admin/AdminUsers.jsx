@@ -13,6 +13,9 @@ const AdminUsers = () => {
   const [activeUserId, setActiveUserId] = useState(null); // Track active user for dropdown
   const [dropdownVisible, setDropdownVisible] = useState(false); // Track visibility of dropdown
   const [dropdownPosition, setDropdownPosition] = useState({ left: 0, top: 0 }); // State for dropdown position
+  const [showBlockModal, setShowBlockModal] = useState(false); // Show/Hide block modal
+  const [blockReason, setBlockReason] = useState(""); // Store block reason
+  const [userToBlock, setUserToBlock] = useState(null); // Store user being blocked
   const dropdownRef = useRef(null); // Reference for dropdown
   const navigate = useNavigate(); // Initialize navigate hook
   const location = useLocation();
@@ -110,6 +113,47 @@ const AdminUsers = () => {
     }
   };
 
+  const openBlockModal = (userId) => {
+    setUserToBlock(userId);
+    setShowBlockModal(true);
+    setDropdownVisible(false);
+  };
+
+  const closeBlockModal = () => {
+    setShowBlockModal(false);
+    setBlockReason("");
+    setUserToBlock(null);
+  };
+
+  const confirmBlockUser = () => {
+    if (!blockReason.trim()) {
+      toast.error("Please provide a reason for blocking.");
+      return;
+    }
+
+    // console.log("Id: ", userToBlock);
+    // console.log("Reason: ", blockReason);
+
+
+    axios
+      .put(
+        `http://localhost:3000/api/admin/blockuser/${userToBlock}`,
+        { reason: blockReason },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      )
+      .then(() => {
+        toast.success("User blocked successfully.");
+        getDetails(accessToken);
+        closeBlockModal();
+      })
+      .catch((error) => {
+        console.error("Error blocking user:", error);
+        toast.error("Failed to block user.");
+      });
+  };
+
   const handleBlockUser = (userId) => {
     console.log(`Blocking user with ID: ${userId}`);
   };
@@ -200,7 +244,7 @@ const AdminUsers = () => {
                       <ul className="py-2">
                         <li
                           className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
-                          onClick={() => handleBlockUser(user._id)}
+                          onClick={() => openBlockModal(user._id)}
                         >
                           Block User
                         </li>
@@ -234,6 +278,18 @@ const AdminUsers = () => {
           )}
         </tbody>
       </table>
+
+      {showBlockModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-700 bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-xl font-bold mb-4">Block User</h3>
+            <input type="text" value={blockReason} onChange={(e) => setBlockReason(e.target.value)} placeholder="Enter reason..." className="w-full p-2 border rounded-lg mb-4"/>
+            <button className="bg-red-500 text-white px-4 py-2 rounded-lg mr-2" onClick={confirmBlockUser}>Confirm Blocking</button>
+            <button className="bg-gray-300 px-4 py-2 rounded-lg" onClick={closeBlockModal}>Cancel</button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

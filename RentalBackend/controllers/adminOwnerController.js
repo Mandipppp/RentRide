@@ -243,4 +243,51 @@ const updateKyc = async (req, res) => {
   }
 };
 
-module.exports = { getAllOwners, getOwnerById, updateKyc};
+const adminBlockOwner = async (req, res) => {
+  try {
+      const { ownerId } = req.params;
+      const { reason } = req.body; // Admin provides a reason for blocking
+
+      if (!reason) {
+          return res.status(400).json({
+              success: false,
+              message: 'Blocking reason is required.',
+          });
+      }
+
+      // Find the user by ID
+      const owner = await Owner.findById(ownerId);
+      if (!owner) {
+          return res.status(404).json({
+              success: false,
+              message: 'Owner not found.',
+          });
+      }
+      // Check if user is already blocked
+      if (owner.blockStatus === 'blocked') {
+        return res.status(400).json({ message: 'Owner is already blocked' });
+      }
+
+       // Update user block status
+       owner.blockStatus = 'blocked';
+       owner.blockReason = reason || 'No reason provided';
+       owner.blockInitiatedAt = new Date();
+       owner.blockedAt = new Date();
+
+       await owner.save();
+
+      return res.status(200).json({
+          success: true,
+          message: `owner has been blocked.`,
+          data: {
+              ownerId: owner._id,
+              reason: owner.blockReason,
+          },
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+module.exports = { getAllOwners, getOwnerById, updateKyc, adminBlockOwner};

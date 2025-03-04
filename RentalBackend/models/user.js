@@ -11,6 +11,17 @@ const UserSchema = new mongoose.Schema({
   // Fields for password reset
   resetPasswordToken: { type: String }, // Token for password reset
   resetPasswordExpiry: { type: Date },  // Expiry date for the token
+
+  // Blocking Feature
+  blockStatus: { 
+    type: String, 
+    enum: ['active', 'pending_block', 'blocked'], 
+    default: 'active' 
+  }, 
+  blockReason: { type: String, default: null }, // Reason for blocking
+  blockInitiatedAt: { type: Date, default: null }, // When block was requested
+  blockedAt: { type: Date, default: null } // When block was applied
+  
 });
 
 module.exports = mongoose.model('User', UserSchema);

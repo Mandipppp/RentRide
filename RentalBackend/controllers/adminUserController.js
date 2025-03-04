@@ -71,4 +71,51 @@ const getUserById = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, getUserById};
+const adminBlockUser = async (req, res) => {
+  try {
+      const { userId } = req.params;
+      const { reason } = req.body; // Admin provides a reason for blocking
+
+      if (!reason) {
+          return res.status(400).json({
+              success: false,
+              message: 'Blocking reason is required.',
+          });
+      }
+
+      // Find the user by ID
+      const user = await User.findById(userId);
+      if (!user) {
+          return res.status(404).json({
+              success: false,
+              message: 'User not found.',
+          });
+      }
+      // Check if user is already blocked
+      if (user.blockStatus === 'blocked') {
+        return res.status(400).json({ message: 'User is already blocked' });
+      }
+
+       // Update user block status
+       user.blockStatus = 'blocked';
+       user.blockReason = reason || 'No reason provided';
+       user.blockInitiatedAt = new Date();
+       user.blockedAt = new Date();
+
+       await user.save();
+
+      return res.status(200).json({
+          success: true,
+          message: `User has been blocked.`,
+          data: {
+              userId: user._id,
+              reason: user.blockReason,
+          },
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+module.exports = { getAllUsers, getUserById, adminBlockUser};
