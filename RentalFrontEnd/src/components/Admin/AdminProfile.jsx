@@ -1,16 +1,22 @@
-import React, {useState } from "react";
+import React, {useEffect, useState } from "react";
 
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { reactLocalStorage } from "reactjs-localstorage";
 import Navbar from "./Navbar";
 import ProfileDetails from "../UserSide/ProfileDetails";
 import PasswordDetails from "../UserSide/PasswordDetails";
 
 const AdminProfile = () => {
-  const [activeView, setActiveView] = useState("profile");
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const [activeView, setActiveView] = useState(searchParams.get("section") || "profile");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setActiveView(searchParams.get("section") || "profile");
+  }, [location.search]);
 
   const handleSignOut = () => {
       // Open the confirmation dialog when the sign-out is clicked

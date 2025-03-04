@@ -1,6 +1,7 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { reactLocalStorage } from "reactjs-localstorage";
 import io from "socket.io-client";
 
 const socket = io("http://localhost:3000");
@@ -13,6 +14,12 @@ const Navbar = () => {
   const [filter, setFilter] = useState('all'); // 'all' or 'unread'
   const token = localStorage.getItem('access_token');
   const [userId, setUserId] = useState("");
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuTimeout = useRef(null);
+  const navigate = useNavigate();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+
   
 
   useEffect(() => {
@@ -60,6 +67,36 @@ const Navbar = () => {
 
   const toggleNotifications = () => {
     setIsNotificationsOpen(!isNotificationsOpen);
+  };
+
+  const handleSignOut = () => {
+        // Open the confirmation dialog when the sign-out is clicked
+        setIsDialogOpen(true);
+      };
+    
+      const confirmSignOut = () => {
+        // Clear the token from local storage
+        reactLocalStorage.remove("access_token");
+        // Redirect to the login page
+        navigate("/login");
+      };
+    
+      const cancelSignOut = () => {
+        // Close the confirmation dialog without signing out
+        setIsDialogOpen(false);
+      };
+
+  const handleMouseEnter = () => {
+    if (userMenuTimeout.current) {
+      clearTimeout(userMenuTimeout.current); // Clear any existing timeout
+    }
+    setIsUserMenuOpen(true);
+  };
+  
+  const handleMouseLeave = () => {
+    userMenuTimeout.current = setTimeout(() => {
+      setIsUserMenuOpen(false);
+    }, 300); // Delay before closing the dropdown
   };
 
   const markAsRead = async (notificationId) => {
@@ -211,12 +248,68 @@ const Navbar = () => {
             )}
             </div>
         {/* User Icon */}
-        <div>
+        {/* <div>
           <Link to="/adminprofile">
             <i className="fas fa-user"></i>
           </Link>
+        </div> */}
+                  {/* User Icon & Dropdown Menu */}
+        <div
+          className="relative"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <i className="fas fa-user text-gray-600 hover:text-black cursor-pointer"
+          onClick={()=>navigate("/adminprofile")}
+          ></i>
+          {/* User Dropdown Menu */}
+          {isUserMenuOpen && (
+            <div className="absolute top-8 right-0 w-48 bg-white border shadow-md rounded-lg overflow-hidden z-50">
+              <Link to="/adminprofile?section=profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-200">
+                Profile Details
+              </Link>
+              <Link to="/adminprofile?section=password" className="block px-4 py-2 text-gray-700 hover:bg-gray-200">
+                Password Update
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-200"
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
+             
+
         </div>
+        {/* Confirmation Dialog */}
+        {isDialogOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full flex flex-col space-y-4">
+            <h3 className="text-lg font-semibold text-gray-800 text-center">
+              Are you sure you want to sign out?
+            </h3>
+            <p className="text-gray-600 text-xs text-center">
+              You will be logged out of your account. Please confirm your action.
+            </p>
+            <div className="flex justify-between mt-6">
+              <button
+                className="bg-green-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition"
+                onClick={confirmSignOut}
+              >
+                Yes, Sign Out
+              </button>
+              <button
+                className="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition"
+                onClick={cancelSignOut}
+              >
+                No, Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+        )}
       </nav>
     </header>
   );
