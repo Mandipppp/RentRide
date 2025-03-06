@@ -93,6 +93,14 @@ exports.acceptBooking = async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
     }
 
+    if (booking.renterId.blockStatus == "blocked") {
+      return res.status(400).json({ message: 'The user was blocked by the admin due to suspicious activity.' });
+    }
+
+    if (booking.ownerId.blockStatus == "blocked") {
+      return res.status(400).json({ message: 'You are blocked by the admin to perform any activities.' });
+    }
+
     // Check for overlapping confirmed bookings for the same vehicle
     const overlappingBookings = await Booking.find({
       vehicleId: booking.vehicleId._id,
@@ -470,6 +478,14 @@ exports.confirmBooking = async (req, res) => {
 
     if (booking.ownerId._id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Unauthorized: You are not the owner of this booking' });
+    }
+
+    if (booking.renterId.blockStatus == "blocked") {
+      return res.status(400).json({ message: 'The user was blocked by the admin due to suspicious activity.' });
+    }
+
+    if (booking.ownerId.blockStatus == "blocked") {
+      return res.status(400).json({ message: 'You are blocked by the admin to perform any activities.' });
     }
 
     if (booking.bookingStatus === 'Confirmed') {

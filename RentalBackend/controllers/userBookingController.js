@@ -37,6 +37,10 @@ exports.createBooking = async (req, res) => {
     //   { startDate: { $lte: new Date(endDate) }, endDate: { $gte: new Date(startDate) } }
     // ]
 
+    if (renter.blockStatus == "blocked") {
+      return res.status(400).json({ message: 'You are blocked by the admin to perform any activities.' });
+    }
+
     if (existingBooking) {
       return res.status(400).json({ message: 'You already have an active booking for this vehicle.' });
     }
@@ -590,6 +594,15 @@ exports.acceptRevisionBooking = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
+    const renter = await User.findById(booking.renterId);
+    if (renter.blockStatus == "blocked") {
+      return res.status(400).json({ message: 'You are blocked by the admin to perform any activities.' });
+    }
+
+    if (booking.ownerId.blockStatus == "blocked") {
+      return res.status(400).json({ message: 'The owner was blocked by the admin due to suspicious activity.' });
+    }
+
     // Check if the booking is in "RevisionRequired" status
     if (booking.bookingStatus !== 'RevisionRequired') {
       return res.status(400).json({ message: 'Booking is not in revision state' });
@@ -618,7 +631,7 @@ exports.acceptRevisionBooking = async (req, res) => {
 
     // Send email notification to the renter
     const vehicle = await Vehicle.findById(booking.vehicleId._id);
-    const renter = await User.findById(booking.renterId);
+    // const renter = await User.findById(booking.renterId);
 
     // // Check if a chat already exists for the given bookingId
     // const existingChat = await Chat.findOne({ bookingId: booking._id });

@@ -60,6 +60,7 @@ exports.getAvailableVehicles = async (req, res) => {
         }
       },
       { $unwind: "$owner" }, // Convert array to object
+      { $match: { "owner.blockStatus": "active" } },
 
       // Step 3: Join with KYC Collection
       {
