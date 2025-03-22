@@ -1,4 +1,6 @@
 const Owner = require('../models/owner'); // Import the Owner model
+const User= require('../models/user');
+
 const KYC = require('../models/kyc');
 const Notification = require('../models/notification'); 
 
@@ -275,6 +277,71 @@ const adminBlockOwner = async (req, res) => {
        owner.blockedAt = new Date();
 
        await owner.save();
+
+       /*** Cancel Bookings & Notify Renters ***/
+      const affectedBookings = await Booking.find({
+        ownerId,
+        bookingStatus: { $in: ['Pending', 'Accepted', 'RevisionRequired'] },
+      });
+
+      if (affectedBookings.length > 0) {
+        for (const booking of affectedBookings) {
+          booking.bookingStatus = 'Cancelled';
+          await booking.save();
+
+          const renter = await User.findById(booking.renterId);
+          if (renter) {
+            // Notify renter via email
+            const renterEmail = renter.email;
+            const renterName = renter.name;
+            const renterEmailSubject = 'Booking Cancelled - Potential Scam Alert';
+            const renterEmailBody = `
+              <html>
+                <head>
+                  <style>
+                    body { font-family: Arial, sans-serif; color: #333; background-color: #f4f4f4; padding: 20px; }
+                    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+                    .header { text-align: center; margin-bottom: 20px; }
+                    .header h1 { color: #FF0000; }
+                    .content { font-size: 16px; }
+                    .footer { margin-top: 30px; font-size: 12px; color: #777; text-align: center; }
+                  </style>
+                </head>
+                <body>
+                  <div class="container">
+                    <div class="header"><h1>Booking Cancelled</h1></div>
+                    <div class="content">
+                      <p>Dear <strong>${renterName}</strong>,</p>
+                      <p>We regret to inform you that your booking has been <strong>cancelled</strong> due to potential fraudulent activities by the owner.</p>
+                      <p>Your payment, if any, will be refunded as per our policy.</p>
+                      <p>Please browse our platform to find a different vehicle for your needs.</p>
+                      <p>Best regards,<br>The Support Team</p>
+                    </div>
+                    <div class="footer"><p>&copy; 2025 RentRide. All rights reserved.</p></div>
+                  </div>
+                </body>
+              </html>
+            `;
+
+            await transporter.sendMail({
+              from: '"Booking Support" <no-reply@example.com>',
+              to: renterEmail,
+              subject: renterEmailSubject,
+              html: renterEmailBody,
+            });
+
+            // Create in-app notification for the renter
+            const renterNotification = new Notification({
+              recipientId: renter._id,
+              recipientModel: 'User',
+              message: `Your booking has been cancelled due to a blocked owner.`,
+              type: 'system',
+            });
+
+            await renterNotification.save();
+          }
+        }
+      }
 
        // Send email notification
       const ownerEmail = owner.email;

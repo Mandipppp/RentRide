@@ -1,4 +1,6 @@
 const User= require('../models/user');
+const Owner = require('../models/owner');
+const Booking = require('../models/Booking');
 const Notification = require('../models/notification'); 
 const nodemailer = require('nodemailer');
 
@@ -106,6 +108,76 @@ const adminBlockUser = async (req, res) => {
        user.blockedAt = new Date();
 
        await user.save();
+
+       // Cancel all bookings where the blocked user is the renter and status is 'Pending', 'Accepted', or 'RevisionRequired'
+      const bookingsToCancel = await Booking.find({
+        renterId: userId,
+        bookingStatus: { $in: ['Pending', 'Accepted', 'RevisionRequired'] },
+      });
+
+      for (const booking of bookingsToCancel) {
+        booking.bookingStatus = 'Cancelled';
+        await booking.save();
+  
+        // Notify owner about the cancellation
+        const owner = await Owner.findById(booking.ownerId);
+        if (owner) {
+          const ownerEmail = owner.email;
+          const emailSubject = 'Booking Cancelled Due to Renter Block';
+          const emailBody = `
+            <html>
+              <head>
+                <style>
+                  body { font-family: Arial, sans-serif; color: #333; background-color: #f4f4f4; padding: 20px; }
+                  .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; }
+                  .header { text-align: center; margin-bottom: 20px; }
+                  .header h1 { color: #FF0000; }
+                  .content { font-size: 16px; }
+                  .footer { margin-top: 30px; font-size: 12px; color: #777; text-align: center; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <div class="header">
+                    <h1>Booking Cancelled</h1>
+                  </div>
+                  <div class="content">
+                    <p>Dear <strong>${owner.name}</strong>,</p>
+                    <p>We wanted to inform you that a booking associated with a renter has been <strong>cancelled</strong> due to security concerns.</p>
+                    <p><strong>Booking ID:</strong> ${booking._id}</p>
+                    <p><strong>Renter Name:</strong> ${user.name}</p>
+                    <p><strong>Reason:</strong> The renter was flagged as a potential scam.</p>
+                    <p>We apologize for any inconvenience caused. If you have any concerns, please contact support.</p>
+                    <p>Best regards,</p>
+                    <p>The Support Team</p>
+                  </div>
+                  <div class="footer">
+                    <p>&copy; 2025 RentRide. All rights reserved.</p>
+                  </div>
+                </div>
+              </body>
+            </html>
+          `;
+  
+          await transporter.sendMail({
+            from: '"Account Support" <no-reply@example.com>',
+            to: ownerEmail,
+            subject: emailSubject,
+            html: emailBody,
+          });
+  
+          // In-app notification for owner
+          const notification = new Notification({
+            recipientId: owner._id,
+            recipientModel: 'User',
+            message: `A booking with renter ${user.name} was cancelled due to potential fraud.`,
+            type: 'system',
+          });
+  
+          await notification.save();
+        }
+      }
+
 
        // Send email notification
       const userEmail = user.email;
