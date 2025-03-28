@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
 import { reactLocalStorage } from "reactjs-localstorage";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +36,7 @@ const AddVehicleForm = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [addOnsList, setAddOnsList] = useState([{ name: "", pricePerDay: "" }]);
+  const [showDialog, setShowDialog] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,7 +50,10 @@ const AddVehicleForm = () => {
     const { name, value } = e.target;
     if (name === "features") {
       // Convert comma-separated values into an array
-      const featuresArray = value.split(",").map((feature) => feature.trim());
+      const featuresArray = value.split(",")
+      .map((feature) => feature.trim())
+      // .filter(feature => feature !== '');
+      
       setVehicleData({
         ...vehicleData,
         [name]: featuresArray,
@@ -58,6 +64,13 @@ const AddVehicleForm = () => {
         [name]: value,
       });
     }
+  };
+
+  const handleYearChange = (date) => {
+    setVehicleData({
+      ...vehicleData,
+      builtYear: date.getFullYear(), // Store only the year
+    });
   };
 
    const handleAddOnChange = (index, e) => {
@@ -100,7 +113,14 @@ const AddVehicleForm = () => {
     // Convert addOnsList to JSON and add to vehicleData
     vehicleData.addOns = JSON.stringify(addOnsList);
 
-    vehicleData.features = JSON.stringify(vehicleData.features);
+    // vehicleData.features = JSON.stringify(vehicleData.features);
+    // Ensure features is always an array before stringifying
+    const featuresToSubmit = Array.isArray(vehicleData.features) 
+      ? vehicleData.features 
+      : [];
+    
+    // Convert features to JSON
+    vehicleData.features = JSON.stringify(featuresToSubmit);
 
     for (const key in vehicleData) {
       if (key !== "pictures") {
@@ -112,7 +132,10 @@ const AddVehicleForm = () => {
       }
     }
 
-    // console.log("Output: ",formData.entries())
+    // Log the formData entries using for...of loop
+  //   for (let [key, value] of formData.entries()) {
+  //     console.log(`${key}:`, value);
+  // }
 
     try {
       const token = reactLocalStorage.get("access_token");
@@ -177,7 +200,7 @@ const AddVehicleForm = () => {
       <div className="relative flex items-center justify-center mb-10">
         <button
           type="button"
-          onClick={() => navigate(-1)} // Navigate to the previous page
+          onClick={() => setShowDialog(true)} // Navigate to the previous page
           className="absolute left-0 bg-gray-400 text-white py-2 px-6 rounded-md font-semibold hover:bg-gray-500 transition duration-300"
         >
           Back
@@ -286,7 +309,7 @@ const AddVehicleForm = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="form-group">
+              {/* <div className="form-group">
                 <label htmlFor="builtYear" className="block text-lg font-medium text-gray-700">Built Year</label>
                 <input
                   type="number"
@@ -297,7 +320,21 @@ const AddVehicleForm = () => {
                   value={vehicleData.builtYear}
                   onChange={handleChange}
                 />
-              </div>
+              </div> */}
+
+              <div className="form-group">
+                    <label htmlFor="builtYear" className="block text-lg font-medium text-gray-700">
+                      Built Year
+                    </label>
+                    <DatePicker
+                      selected={vehicleData.builtYear ? new Date(vehicleData.builtYear, 0, 1) : null}
+                      onChange={handleYearChange}
+                      showYearPicker // Enables only year selection
+                      dateFormat="yyyy" // Displays only the year
+                      maxDate={new Date()} 
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
 
               <div className="form-group">
                 <label htmlFor="mileage" className="block text-lg font-medium text-gray-700">Mileage</label>
@@ -476,7 +513,7 @@ const AddVehicleForm = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="form-group">
                 <label htmlFor="latitude" className="block text-lg font-medium text-gray-700">Latitude</label>
                 <input
@@ -502,7 +539,7 @@ const AddVehicleForm = () => {
                   onChange={handleChange}
                 />
               </div>
-            </div>
+            </div> */}
 
             <div className="form-group">
               <label htmlFor="registrationCert" className="block text-lg font-medium text-gray-700">Registration Certificate</label>
@@ -559,6 +596,29 @@ const AddVehicleForm = () => {
           </>
         )}
       </form>
+      {/* Custom Dialog Box */}
+      {showDialog && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-90">
+            <h2 className="text-lg font-semibold mb-4">Confirm Navigation</h2>
+            <p>Are you sure you want to go back? Any unsaved changes will be lost.</p>
+            <div className="mt-4 flex justify-end space-x-4">
+              <button
+                onClick={() => setShowDialog(false)}
+                className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => navigate(-1)}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+              >
+                Yes, Go Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

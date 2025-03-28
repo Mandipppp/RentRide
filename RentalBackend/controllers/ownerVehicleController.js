@@ -99,6 +99,15 @@ const getOwnerVehicles = async (req, res) => {
     try {
       // Validate required files
       // Check if the registration number is already used
+      const currentYear = new Date().getFullYear();
+      const parsedBuiltYear = parseInt(builtYear, 10);
+      if (isNaN(parsedBuiltYear)) {
+        return res.status(400).json({ message: 'Invalid built year. Please provide a valid year.' });
+      }
+      
+      if (parsedBuiltYear < 1886 || parsedBuiltYear > currentYear) {
+        return res.status(400).json({ message: `Built year must be between 1886 and ${currentYear}.` });
+      }
       const existingVehicle = await Vehicle.findOne({ registrationNumber });
       if (existingVehicle) {
         return res.status(400).json({ message: 'A vehicle with this registration number is already registered.' });

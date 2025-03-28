@@ -172,72 +172,62 @@ const EditVehicle = () => {
             type="text"
             name="name"
             value={formData.name || ""}
+            readOnly
             onChange={handleInputChange}
             className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
+          <p className="text-sm text-red-500 mt-1">*This field is uneditable</p>
         </div>
 
         <div>
           <label className="block font-semibold mb-1">Type</label>
-          <select
+          <input
             name="type"
-            value={formData.type || ""}
-            onChange={handleInputChange}
+            value={formData.type}
+            readOnly
             className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
-          >
-            <option value="Car">Car</option>
-            <option value="Bike">Bike</option>
-            <option value="SUV">SUV</option>
-            <option value="Truck">Truck</option>
-            <option value="Van">Van</option>
-          </select>
+          />
+          <p className="text-sm text-red-500 mt-1">*This field is uneditable</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block font-semibold mb-1">Category</label>
-            <select
+            <input
               name="category"
-              value={formData.category || ""}
-              onChange={handleInputChange}
+              value={formData.category}
+              readOnly
               className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
-            >
-              <option value="Two-Wheeler">Two-Wheeler</option>
-              <option value="Four-Wheeler">Four-Wheeler</option>
-            </select>
+            />
+            <p className="text-sm text-red-500 mt-1">*This field is uneditable</p>
           </div>
 
           <div>
             <label className="block font-semibold mb-1">Fuel</label>
-            <select
+            <input
               name="fuel"
-              value={formData.fuel || ""}
-              onChange={handleInputChange}
+              value={formData.fuel}
+              readOnly
               className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
-            >
-              <option value="Petrol">Petrol</option>
-              <option value="Diesel">Diesel</option>
-              <option value="Electric">Electric</option>
-            </select>
+            />
+            <p className="text-sm text-red-500 mt-1">*This field is uneditable</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block font-semibold mb-1">Transmission</label>
-            <select
+            <input
               name="transmission"
-              value={formData.transmission || ""}
-              onChange={handleInputChange}
+              value={formData.transmission}
+              readOnly
               className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Manual">Manual</option>
-              <option value="Automatic">Automatic</option>
-            </select>
+            />
+            <p className="text-sm text-red-500 mt-1">*This field is uneditable</p>
           </div>
 
           <div>
@@ -245,14 +235,27 @@ const EditVehicle = () => {
             <input
               type="text"
               name="brand"
-              value={formData.brand || ""}
-              onChange={handleInputChange}
+              value={formData.brand}
+              readOnly
               className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <p className="text-sm text-red-500 mt-1">*This field is uneditable</p>
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1">Built Year</label>
+            <input
+              type="number"
+              name="builtYear"
+              value={formData.builtYear}
+              readOnly
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="text-sm text-red-500 mt-1">*This field is uneditable</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block font-semibold mb-1">Built Year</label>
             <input
@@ -263,8 +266,9 @@ const EditVehicle = () => {
               className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+        </div> */}
 
-          <div>
+        <div>
             <label className="block font-semibold mb-1">Daily Price</label>
             <input
               type="number"
@@ -275,7 +279,6 @@ const EditVehicle = () => {
               required
             />
           </div>
-        </div>
 
         <div>
           <label className="block font-semibold mb-1">Features</label>
