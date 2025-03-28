@@ -24,6 +24,13 @@ exports.getAvailableVehicles = async (req, res) => {
       matchQuery["addOns.name"] = { $all: addOnList };
     }
 
+    // // Filter by add-ons if provided
+    // if (addOns) {
+    //   const addOnList = addOns.split(",");
+    //   // console.log(addOnList);
+    //   query["addOns.name"] = { $all: addOnList };
+    // }
+
     // Filter by rental date availability
     let rentalPeriodQuery = {};
     if (pickupDate && dropDate) {

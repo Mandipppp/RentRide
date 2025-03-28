@@ -256,7 +256,7 @@ const EditVehicle = () => {
           <div>
             <label className="block font-semibold mb-1">Built Year</label>
             <input
-              type="text"
+              type="number"
               name="builtYear"
               value={formData.builtYear || ""}
               onChange={handleInputChange}

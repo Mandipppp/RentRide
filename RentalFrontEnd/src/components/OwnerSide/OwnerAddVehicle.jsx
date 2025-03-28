@@ -159,7 +159,7 @@ const AddVehicleForm = () => {
     navigate("/ownervehicle");
     } catch (error) {
       console.error("Error adding vehicle:", error);
-      toast.error("Error adding vehicle. Please try again.");
+      toast.error(error.response.data.message || "Error adding vehicle. Please try again.");
     }
   };
 
@@ -173,6 +173,7 @@ const AddVehicleForm = () => {
 
   return (
     <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+      <ToastContainer />
       <div className="relative flex items-center justify-center mb-10">
         <button
           type="button"
@@ -288,7 +289,7 @@ const AddVehicleForm = () => {
               <div className="form-group">
                 <label htmlFor="builtYear" className="block text-lg font-medium text-gray-700">Built Year</label>
                 <input
-                  type="text"
+                  type="number"
                   name="builtYear"
                   id="builtYear"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
