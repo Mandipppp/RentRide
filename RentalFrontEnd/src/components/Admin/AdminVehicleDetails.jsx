@@ -229,7 +229,7 @@ const AdminVehicleDetails = () => {
                   }
                 />
                 <div className="flex justify-between">
-                  {status === "Pending" && (
+                  {(vehicle.status != "Deleted" && status === "Pending") && (
                     <>
                       <button
                         className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
@@ -346,7 +346,7 @@ const AdminVehicleDetails = () => {
           </div>
         </div>
   
-        {isDoneButtonDisabled && (
+        {(vehicle.status != "Deleted" && isDoneButtonDisabled) && (
           <div className="w-full max-w-4xl mt-6 flex justify-left">
             <button
               className={`bg-green-600 text-white px-6 py-2 rounded hover:bg-green-800 ${

@@ -12,7 +12,7 @@ router.put('/change-password', authenticate, changePassword);
 router.post("/contact-query", authenticate, submitContactForm);
 
 
-router.get("/vehicles", authenticate, getAvailableVehicles);
+router.get("/vehicles", getAvailableVehicles);
 router.get("/vehicles/:vehicleId", authenticate, getVehicleById);
 router.get("/getalladdons", getAllAddOns);
 

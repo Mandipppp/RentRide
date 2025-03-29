@@ -24,7 +24,7 @@ const VehicleSchema = new mongoose.Schema({
     },
   ],
   condition: { type: String, enum: ['Excellent', 'Good', 'Fair'], default: 'Good' },
-  status: { type: String, enum: ['Available', 'Booked', 'Under Maintenance'], default: 'Available' },
+  status: { type: String, enum: ['Available', 'Booked', 'Under Maintenance','Deleted'], default: 'Available' },
   imageUrls: {
     type: [String],
     validate: {

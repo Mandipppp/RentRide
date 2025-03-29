@@ -52,7 +52,8 @@ const getOwnerVehicles = async (req, res) => {
       }
   
       // Fetch vehicles associated with the ownerId
-      const vehicles = await Vehicle.find({ ownerId })
+      const vehicles = await Vehicle.find({ ownerId, status: { $ne: 'Deleted' } // Exclude vehicles with status 'Deleted'
+        })
         .populate({
           path: 'registrationCertificate.verifiedBy insuranceCertificate.verifiedBy',
           select: 'name email', // Include admin details
@@ -344,26 +345,29 @@ const getOwnerVehicles = async (req, res) => {
       await transporter.sendMail(mailOptions);
     }
   
-      // Collect all files to be deleted
-      const filesToDelete = [];
+      // // Collect all files to be deleted
+      // const filesToDelete = [];
   
-      if (vehicle.registrationCertificate && vehicle.registrationCertificate.file) {
-        filesToDelete.push({ path: vehicle.registrationCertificate.file });
-      }
+      // if (vehicle.registrationCertificate && vehicle.registrationCertificate.file) {
+      //   filesToDelete.push({ path: vehicle.registrationCertificate.file });
+      // }
   
-      if (vehicle.insuranceCertificate && vehicle.insuranceCertificate.file) {
-        filesToDelete.push({ path: vehicle.insuranceCertificate.file });
-      }
+      // if (vehicle.insuranceCertificate && vehicle.insuranceCertificate.file) {
+      //   filesToDelete.push({ path: vehicle.insuranceCertificate.file });
+      // }
   
-      if (vehicle.imageUrls && Array.isArray(vehicle.imageUrls)) {
-        vehicle.imageUrls.forEach(imageUrl => filesToDelete.push({ path: imageUrl }));
-      }
+      // if (vehicle.imageUrls && Array.isArray(vehicle.imageUrls)) {
+      //   vehicle.imageUrls.forEach(imageUrl => filesToDelete.push({ path: imageUrl }));
+      // }
   
-      // Delete the files from the filesystem
-      deleteFiles(filesToDelete);
+      // // Delete the files from the filesystem
+      // deleteFiles(filesToDelete);
   
-      // Delete the vehicle from the database
-      await Vehicle.deleteOne({ _id: vehicleId, ownerId });
+      // // Delete the vehicle from the database
+      // await Vehicle.deleteOne({ _id: vehicleId, ownerId });
+
+      vehicle.status = 'Deleted';
+      await vehicle.save();
   
       return res.status(200).json({
         success: true,

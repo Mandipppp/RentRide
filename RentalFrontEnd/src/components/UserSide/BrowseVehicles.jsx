@@ -43,6 +43,10 @@ export default function BrowseVehicles() {
 
   const fetchRequestedBookings = async () => {
     const token = reactLocalStorage.get("access_token");
+    if (!token) {
+      setRequestedVehicleIds([]); // No bookings if user isn't logged in
+      return;
+    }
 
     try {
       const response = await axios.get("http://localhost:3000/api/user/booking/getUsersBookings", {
