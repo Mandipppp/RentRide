@@ -97,6 +97,21 @@ const getOwnerVehicles = async (req, res) => {
     const { name, type, category, fuel, transmission, brand, builtYear, mileage, registrationNumber, description, dailyPrice, minRentalPeriod, maxRentalPeriod, features, addOns, condition, pickupLocation, latitude, longitude } = req.body;
   
     try {
+      // Check for required fields
+      const requiredFields = [
+          'name', 'type', 'category', 'fuel', 'transmission', 'brand', 
+          'builtYear', 'mileage', 'registrationNumber', 
+          'dailyPrice', 'minRentalPeriod', 'maxRentalPeriod', 'condition', 
+          'pickupLocation'
+      ];
+      
+      const missingFields = requiredFields.filter(field => !req.body[field]);
+      
+      if (missingFields.length > 0) {
+          return res.status(400).json({ 
+              message: `Missing required fields: ${missingFields.join(', ')}` 
+          });
+      }
       // Validate required files
       // Check if the registration number is already used
       const currentYear = new Date().getFullYear();

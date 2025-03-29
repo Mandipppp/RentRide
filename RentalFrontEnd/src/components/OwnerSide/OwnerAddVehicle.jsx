@@ -36,6 +36,7 @@ const AddVehicleForm = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [addOnsList, setAddOnsList] = useState([{ name: "", pricePerDay: "" }]);
+  const [featuresList, setFeaturesList] = useState([{ name: "" }]);
   const [showDialog, setShowDialog] = useState(false);
   const navigate = useNavigate();
 
@@ -48,23 +49,25 @@ const AddVehicleForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "features") {
-      // Convert comma-separated values into an array
-      const featuresArray = value.split(",")
-      .map((feature) => feature.trim())
-      // .filter(feature => feature !== '');
+    // if (name === "features") {
+    //   // Convert comma-separated values into an array
+    //   const featuresArray = value.split(",")
+    //   .map((feature) => feature.trim())
+    //   // .filter(feature => feature !== '');
       
-      setVehicleData({
-        ...vehicleData,
-        [name]: featuresArray,
-      });
-    } else {
+    //   setVehicleData({
+    //     ...vehicleData,
+    //     [name]: featuresArray,
+    //   });
+    // } else {
       setVehicleData({
         ...vehicleData,
         [name]: value,
       });
-    }
+    // }
   };
+
+
 
   const handleYearChange = (date) => {
     setVehicleData({
@@ -78,6 +81,13 @@ const AddVehicleForm = () => {
     const updatedAddOnsList = [...addOnsList];
     updatedAddOnsList[index] = { ...updatedAddOnsList[index], [name]: value };
     setAddOnsList(updatedAddOnsList);
+  };
+
+  const handleFeatureChange = (index, e) => {
+    const { value } = e.target;
+    const updatedFeaturesList = [...featuresList];
+    updatedFeaturesList[index] = { name: value };
+    setFeaturesList(updatedFeaturesList);
   };
 
   const handleFileChange = (e) => {
@@ -104,6 +114,17 @@ const AddVehicleForm = () => {
     setAddOnsList(updatedAddOnsList);
   };
 
+  // Add a new feature field
+  const handleAddFeature = () => {
+    setFeaturesList([...featuresList, { name: "" }]);
+  };
+
+  // Remove a feature field
+  const handleRemoveFeature = (index) => {
+    const updatedFeaturesList = featuresList.filter((_, i) => i !== index);
+    setFeaturesList(updatedFeaturesList);
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -115,12 +136,16 @@ const AddVehicleForm = () => {
 
     // vehicleData.features = JSON.stringify(vehicleData.features);
     // Ensure features is always an array before stringifying
-    const featuresToSubmit = Array.isArray(vehicleData.features) 
-      ? vehicleData.features 
-      : [];
+    // const featuresToSubmit = Array.isArray(vehicleData.features) 
+    //   ? vehicleData.features 
+    //   : [];
+
+    const featuresArray = featuresList
+      .map(feature => feature.name.trim())
+      .filter(name => name !== '');
     
     // Convert features to JSON
-    vehicleData.features = JSON.stringify(featuresToSubmit);
+    vehicleData.features = JSON.stringify(featuresArray);
 
     for (const key in vehicleData) {
       if (key !== "pictures") {
@@ -133,9 +158,9 @@ const AddVehicleForm = () => {
     }
 
     // Log the formData entries using for...of loop
-  //   for (let [key, value] of formData.entries()) {
-  //     console.log(`${key}:`, value);
-  // }
+    //   for (let [key, value] of formData.entries()) {
+    //     console.log(`${key}:`, value);
+    // }
 
     try {
       const token = reactLocalStorage.get("access_token");
@@ -177,6 +202,7 @@ const AddVehicleForm = () => {
       pictures: [],
     });
     setAddOnsList([{ name: "", pricePerDay: "" }]); // Reset add-ons list
+    setFeaturesList([{ name: "" }]);
 
     // Navigate to ownersvehicle page
     navigate("/ownervehicle");
@@ -432,7 +458,7 @@ const AddVehicleForm = () => {
               </div>
             </div>
 
-            <div className="form-group">
+            {/* <div className="form-group">
               <label htmlFor="features" className="block text-lg font-medium text-gray-700">Features</label>
               <textarea
                 name="features"
@@ -442,6 +468,38 @@ const AddVehicleForm = () => {
                 value={vehicleData.features}
                 onChange={handleChange}
               />
+            </div> */}
+
+              <div className="form-group">
+              <label htmlFor="features" className="block text-lg font-medium text-gray-700">Features</label>
+              <div>
+                {featuresList.map((feature, index) => (
+                  <div key={index} className="flex gap-4 mb-4">
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="Feature (e.g., Sunroof, GPS, etc.)"
+                      value={feature.name}
+                      onChange={(e) => handleFeatureChange(index, e)}
+                      className="w-3/4 px-4 py-2 border border-gray-300 rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFeature(index)}
+                      className="text-red-500"
+                    >
+                      - Remove
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={handleAddFeature}
+                  className="bg-green-500 text-white py-2 px-6 rounded-md font-semibold hover:bg-green-600 transition duration-300"
+                >
+                  + Add Feature
+                </button>
+              </div>
             </div>
 
             <div className="form-group">
