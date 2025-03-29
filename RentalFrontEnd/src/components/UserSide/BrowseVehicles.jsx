@@ -10,6 +10,7 @@ import { toast, ToastContainer } from 'react-toastify';
 export default function BrowseVehicles() {
   const [vehicles, setVehicles] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [allAddOns, setAllAddOns] = useState([]);
   const today = new Date().toISOString().split("T")[0];
   const navigate = useNavigate();
   const [requestedVehicleIds, setRequestedVehicleIds] = useState([]);
@@ -36,6 +37,10 @@ export default function BrowseVehicles() {
     fetchRequestedBookings();
   }, []);
 
+  useEffect(() => {
+    fetchAddOns(); // Fetch add-ons on load
+  }, []);
+
   const fetchRequestedBookings = async () => {
     const token = reactLocalStorage.get("access_token");
 
@@ -50,6 +55,19 @@ export default function BrowseVehicles() {
 
     } catch (err) {
       console.log(err.response?.data?.message || "Failed to fetch booking requests.");
+    }
+  };
+
+  const fetchAddOns = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/api/users/getalladdons");
+      const vehiclesData = response.data;
+      // console.log(vehiclesData);
+
+      setAllAddOns(Array.from(vehiclesData).sort()); // Convert Set to Array and Sort
+      // console.log(Array.from(vehiclesData).sort());
+    } catch (err) {
+      console.log(err.response?.data?.message || "Failed to fetch vehicles.");
     }
   };
 
@@ -160,7 +178,7 @@ export default function BrowseVehicles() {
           <div className="grid grid-cols-2 gap-4 mb-6">
           
 
-          <div className="border p-4 rounded-lg">
+          {/* <div className="border p-4 rounded-lg">
             <p className="font-semibold mb-2">Add-On</p>
             <div className="space-y-2">
               <label className="flex items-center space-x-3">
@@ -171,6 +189,17 @@ export default function BrowseVehicles() {
                 <input type="checkbox" name="Roof Rack/Carrier" checked = {filters.addOns.includes("Roof Rack/Carrier")} onChange={handleCheckboxChange} />
                 <span>Roof Rack/Carrier</span>
               </label>
+            </div>
+          </div> */}
+           <div className="border p-4 rounded-lg mt-4">
+            <p className="font-semibold mb-2">Add-Ons</p>
+            <div className="space-y-2">
+              {allAddOns.map((addOn) => (
+                <label key={addOn} className="flex items-center space-x-3">
+                  <input type="checkbox" name={addOn} checked={filters.addOns.includes(addOn)} onChange={handleCheckboxChange} />
+                  <span>{addOn.replace(/_/g, " ")}</span>
+                </label>
+              ))}
             </div>
           </div>
 

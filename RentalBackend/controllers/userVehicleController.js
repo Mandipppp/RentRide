@@ -17,11 +17,25 @@ exports.getAvailableVehicles = async (req, res) => {
     }
 
     // Filter by add-ons
+    // if (addOns) {
+    //   const addOnList = addOns.split(",").map(addOn => 
+    //     addOn.toLowerCase().replace(/[-\s]/g, "_")  // Convert to lowercase and replace spaces/hyphens with "_"
+    //   );
+    //   matchQuery["addOns.name"] = { $all: addOnList };
+    // }
+
     if (addOns) {
-      const addOnList = addOns.split(",").map(addOn => 
-        addOn.toLowerCase().replace(/[-\s]/g, "_")  // Convert to lowercase and replace spaces/hyphens with "_"
+      const addOnList = addOns.split(",").map(addOn =>
+        addOn.toLowerCase().replace(/[-\s]/g, "_") // Normalize user input
       );
-      matchQuery["addOns.name"] = { $all: addOnList };
+    
+      matchQuery["addOns"] = {
+        $all: addOnList.map(addOn => ({
+          $elemMatch: {
+            name: { $regex: new RegExp(`^${addOn.replace(/_/g, "[-_\\s]")}$`, "i") }
+          }
+        }))
+      };
     }
 
     // // Filter by add-ons if provided
@@ -116,5 +130,30 @@ exports.getVehicleById = async (req, res) => {
       res.status(200).json(vehicle);
   } catch (error) {
       res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get all unique add-ons from available vehicles
+exports.getAllAddOns = async (req, res) => {
+  try {
+    const vehicles = await Vehicle.find({}, "addOns");
+
+    let addOnsSet = new Set();
+
+    vehicles.forEach(vehicle => {
+      if (Array.isArray(vehicle.addOns)) {
+        vehicle.addOns.forEach(addOn => {
+          if (addOn && addOn.name && typeof addOn.name === "string") {
+            // Normalize add-on names
+            const normalizedAddOn = addOn.name.trim().toLowerCase().replace(/[-_\s]+/g, " ");
+            addOnsSet.add(normalizedAddOn);
+          }
+        });
+      }
+    });
+
+    res.status(200).json([...addOnsSet]);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

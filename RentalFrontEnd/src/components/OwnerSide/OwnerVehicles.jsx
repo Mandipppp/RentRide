@@ -184,7 +184,7 @@ const OwnerVehicles = () => {
                 <div className="flex space-x-4 items-center">
                   <div className="flex space-x-2 items-center">
                     <i className="fa-solid fa-couch"></i>
-                    <span>{vehicle.seatingCapacity || 2}</span>
+                    <span>{vehicle.seats || 'Nan'}</span>
                   </div>
 
                   <div className="flex space-x-2 items-center">
