@@ -42,8 +42,27 @@ const Login = () => {
           if (user.role === "admin") {
             navigate("/admindashboard");
           } else if (user.role === "renter") {
+
+            const pendingVehicleString = reactLocalStorage.get("pendingVehicle"); // Get raw string
+            let pendingVehicle = {};
+            try {
+              pendingVehicle = pendingVehicleString ? JSON.parse(pendingVehicleString) : {}; // Parse safely
+            } catch (error) {
+              console.error("Error parsing pendingVehicle:", error);
+            }
+
             setIsAuthenticated(true);
-            navigate("/home");
+            
+            if (pendingVehicle && pendingVehicle.vehicleId) {
+              reactLocalStorage.remove("pendingVehicle"); // Clear storage after use
+          
+              navigate(`/vehicleDetails/${pendingVehicle.vehicleId}`, {
+                state: { filters: pendingVehicle.filters, isRequested: false }
+              });
+            } else {
+              navigate("/home"); // Default redirect if no vehicle was pending
+            }
+            // navigate("/home");
           }
         } else if (owner) {
           if (owner.role === "owner") {

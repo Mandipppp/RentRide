@@ -15,6 +15,9 @@ export default function BrowseVehicles() {
   const navigate = useNavigate();
   const [requestedVehicleIds, setRequestedVehicleIds] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [selectedVehicleId, setSelectedVehicleId] = useState(null);
+
 
   // Initialize filters from URL params
   const [filters, setFilters] = useState({
@@ -118,6 +121,9 @@ export default function BrowseVehicles() {
   const handleSearch = async () => {
     setHasSearched(true);
     updateURLParams();
+
+    // localStorage.setItem("searchFilters", JSON.stringify(filters));
+
     const token = reactLocalStorage.get("access_token");
     // console.log("Filters: ", filters);
     if (!filters.pickupDate || !filters.dropDate) {
@@ -145,10 +151,27 @@ export default function BrowseVehicles() {
   };
 
   const handleVehicleClick = (vehicleId) => {
+    const token = reactLocalStorage.get("access_token");
+    if (!token) {
+      setSelectedVehicleId(vehicleId); // Store vehicle ID in case they log in
+      // Store vehicleId and filters state in local storage
+      reactLocalStorage.setObject("pendingVehicle", {
+        vehicleId: vehicleId,
+        filters: filters
+      });
+      setShowLoginModal(true); // Show the modal
+      return;
+    }
+    
     const isRequested = requestedVehicleIds.includes(vehicleId);
     navigate(`/vehicleDetails/${vehicleId}`, {
       state: { filters , isRequested}  // Pass the filters state along with navigation
     });
+  };
+
+  const handleContinueBrowsing = () => {
+    reactLocalStorage.remove("pendingVehicle"); // Clear any stored vehicle data
+    setShowLoginModal(false); // Close the modal
   };
   
 
@@ -275,6 +298,35 @@ export default function BrowseVehicles() {
       </div>
 
     </div>
+    {showLoginModal && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+        <h2 className="text-xl font-bold mb-4">Login Required</h2>
+        <p className="text-gray-600 mb-4">To proceed with booking, you need to log in.</p>
+        <div className="flex flex-col gap-3">
+          <button
+            className="bg-blue-500 text-white py-2 rounded hover:bg-green-600 transition"
+            onClick={() => navigate("/login")}
+          >
+            Log In
+          </button>
+          <button
+            className="bg-green-500 text-white py-2 rounded hover:bg-blue-600 transition"
+            onClick={() => navigate("/signup")}
+          >
+            Sign Up
+          </button>
+          <button
+            className="bg-gray-300 text-gray-800 py-2 rounded hover:bg-gray-400 transition"
+            onClick={handleContinueBrowsing}
+          >
+            Continue Browsing
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+
     </div>
   );
 }
