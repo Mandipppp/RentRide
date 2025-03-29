@@ -192,7 +192,7 @@ const EditVehicle = () => {
           <p className="text-sm text-red-500 mt-1">*This field is uneditable</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block font-semibold mb-1">Category</label>
             <input
@@ -213,6 +213,18 @@ const EditVehicle = () => {
               readOnly
               className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+            />
+            <p className="text-sm text-red-500 mt-1">*This field is uneditable</p>
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1">Seats</label>
+            <input
+              type="number"
+              name="seats"
+              value={formData.seats}
+              readOnly
+              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p className="text-sm text-red-500 mt-1">*This field is uneditable</p>
           </div>

@@ -17,6 +17,7 @@ const AddVehicleForm = () => {
     brand: "",
     builtYear: "",
     mileage: "",
+    seats: 2,
     registrationNumber: "",
     description: "",
     dailyPrice: "",
@@ -185,6 +186,7 @@ const AddVehicleForm = () => {
       brand: "",
       builtYear: "",
       mileage: "",
+      seats: 2,
       registrationNumber: "",
       description: "",
       dailyPrice: "",
@@ -334,7 +336,7 @@ const AddVehicleForm = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {/* <div className="form-group">
                 <label htmlFor="builtYear" className="block text-lg font-medium text-gray-700">Built Year</label>
                 <input
@@ -372,6 +374,21 @@ const AddVehicleForm = () => {
                   placeholder="Mileage"
                   value={vehicleData.mileage}
                   onChange={handleChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="seats" className="block text-lg font-medium text-gray-700">Seats</label>
+                <input
+                  type="number"
+                  name="seats"
+                  id="seats"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Seats"
+                  value={vehicleData.seats}
+                  onChange={handleChange}
+                  min={1}
+                  max={12}
                 />
               </div>
             </div>

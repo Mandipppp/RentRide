@@ -94,13 +94,13 @@ const getOwnerVehicles = async (req, res) => {
 
 
   const addVehicle = async (req, res) => {
-    const { name, type, category, fuel, transmission, brand, builtYear, mileage, registrationNumber, description, dailyPrice, minRentalPeriod, maxRentalPeriod, features, addOns, condition, pickupLocation, latitude, longitude } = req.body;
+    const { name, type, category, fuel, transmission, brand, builtYear, mileage, seats, registrationNumber, description, dailyPrice, minRentalPeriod, maxRentalPeriod, features, addOns, condition, pickupLocation, latitude, longitude } = req.body;
   
     try {
       // Check for required fields
       const requiredFields = [
           'name', 'type', 'category', 'fuel', 'transmission', 'brand', 
-          'builtYear', 'mileage', 'registrationNumber', 
+          'builtYear', 'mileage', 'seats', 'registrationNumber', 
           'dailyPrice', 'minRentalPeriod', 'maxRentalPeriod', 'condition', 
           'pickupLocation'
       ];
@@ -187,6 +187,7 @@ const getOwnerVehicles = async (req, res) => {
         brand,
         builtYear,
         mileage,
+        seats,
         registrationNumber,
         description,
         dailyPrice,
