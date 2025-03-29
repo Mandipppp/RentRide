@@ -226,6 +226,13 @@ export default function VehicleDetails() {
     });
   };
 
+  const handleBackClick = () => {
+    const queryParams = new URLSearchParams(filters).toString();
+    // console.log(queryParams);
+    const url = `/browsevehicles?${queryParams}`;
+    navigate(url);
+  }
+
   const handleBooking = async () => {
     if (!agreements.terms || !agreements.cancellationPolicy || !agreements.damagePolicy) {
       toast.error("Please accept all terms before continuing.");
@@ -302,7 +309,7 @@ export default function VehicleDetails() {
 
       <div className="flex items-center mb-6">
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBackClick}
           className="flex items-center text-gray-600 hover:text-gray-900"
         >
           <i className="fa-solid fa-arrow-left mr-2"></i>

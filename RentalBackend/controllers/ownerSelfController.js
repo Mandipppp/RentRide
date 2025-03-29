@@ -157,7 +157,10 @@ const changePassword = async (req, res) => {
       const ownerId = req.user.id;
   
       // Fetch total number of vehicles owned
-      const totalVehicles = await Vehicle.countDocuments({ ownerId });
+      const totalVehicles = await Vehicle.countDocuments({ 
+        ownerId,
+        status: { $ne: 'Deleted' }
+      });
   
       // Fetch total number of pending bookings
       const totalPendingBookings = await Booking.countDocuments({ ownerId, bookingStatus: 'Pending' });

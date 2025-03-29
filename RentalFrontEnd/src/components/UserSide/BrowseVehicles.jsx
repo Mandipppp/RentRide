@@ -146,6 +146,8 @@ export default function BrowseVehicles() {
       setVehicles(response.data);
       // console.log(response.data);
     } catch (err) {
+      setVehicles([]);
+      toast.error(err.response?.data?.message || "Failed to fetch vehicles.");
       console.log(err.response?.data?.message || "Failed to fetch vehicles.");
     }
   };
@@ -305,13 +307,13 @@ export default function BrowseVehicles() {
         <p className="text-gray-600 mb-4">To proceed with booking, you need to log in.</p>
         <div className="flex flex-col gap-3">
           <button
-            className="bg-blue-500 text-white py-2 rounded hover:bg-green-600 transition"
+            className="bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
             onClick={() => navigate("/login")}
           >
             Log In
           </button>
           <button
-            className="bg-green-500 text-white py-2 rounded hover:bg-blue-600 transition"
+            className="bg-green-500 text-white py-2 rounded hover:bg-green-600 transition"
             onClick={() => navigate("/signup")}
           >
             Sign Up
