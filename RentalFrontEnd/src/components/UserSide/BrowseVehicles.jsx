@@ -287,7 +287,7 @@ export default function BrowseVehicles() {
               <hr className="my-4" />
               <div className="flex justify-between">
                 <p className="font-semibold">{vehicle.name} <span className="text-gray-500">{vehicle.type}</span></p>
-                <p className="text-yellow-500 flex items-center">⭐ {vehicle.rating}</p>
+                <p className="text-black-500 flex items-center">⭐ {vehicle.averageRating || "New"}</p>
               </div>
               <div className="flex justify-between text-gray-600 mt-2">
                 <p><i className="fa-solid fa-gas-pump mr-2"></i> {vehicle.fuel}</p>

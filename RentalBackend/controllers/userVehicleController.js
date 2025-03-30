@@ -1,6 +1,6 @@
 const Vehicle = require('../models/vehicle');
 const Booking = require('../models/Booking');
-
+const Review = require('../models/review');
 
 exports.getAvailableVehicles = async (req, res) => {
   try {
@@ -108,6 +108,12 @@ exports.getAvailableVehicles = async (req, res) => {
       // Step 5: Apply rental period filter if needed
       { $match: rentalPeriodQuery }
     ]);
+
+    for (let vehicle of vehicles) {
+      const reviews = await Review.find({ vehicleId: vehicle._id, status: "Approved" });
+      vehicle.averageRating = reviews.length ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length) : null;
+    }
+    vehicles.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
 
     res.status(200).json(vehicles);
   } catch (error) {
