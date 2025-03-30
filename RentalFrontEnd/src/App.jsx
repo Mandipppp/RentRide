@@ -47,6 +47,8 @@ import PageView from "./components/UserSide/PageView";
 import AdminContactPage from "./components/Admin/AdminContactPage";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import AdminAdmins from "./components/Admin/AdminAdmins";
+import LocationInput from "./components/UserSide/LocationInput";
+import VehicleForm from "./components/UserSide/VehicleForm";
 
 
 
@@ -172,6 +174,8 @@ const App = () => {
 
       <Route path="/myBookings" element={<UserBookings />} />
       <Route path="/:slug" element={<PageView />} /> 
+      {/* testing */}
+      {/* <Route path="/loca" element={<VehicleForm />} />  */}
 
 
     {/* Payment */}

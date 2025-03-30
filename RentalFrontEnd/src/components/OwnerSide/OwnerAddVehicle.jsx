@@ -5,6 +5,7 @@ import axios from "axios";
 import { reactLocalStorage } from "reactjs-localstorage";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from 'react-toastify';
+import LocationInput from "../UserSide/LocationInput";
 
 
 const AddVehicleForm = () => {
@@ -39,6 +40,7 @@ const AddVehicleForm = () => {
   const [addOnsList, setAddOnsList] = useState([{ name: "", pricePerDay: "" }]);
   const [featuresList, setFeaturesList] = useState([{ name: "" }]);
   const [showDialog, setShowDialog] = useState(false);
+  const [location, setLocation] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -148,6 +150,15 @@ const AddVehicleForm = () => {
     // Convert features to JSON
     vehicleData.features = JSON.stringify(featuresArray);
 
+    if((location==null)){
+      toast.error("No Location Selected!!!");
+      return;
+    }
+    
+    vehicleData.pickupLocation = location.name || "";
+    vehicleData.latitude = location.lat || "";
+    vehicleData.longitude = location.lon || "";
+     
     for (const key in vehicleData) {
       if (key !== "pictures") {
         formData.append(key, vehicleData[key]);
@@ -577,7 +588,7 @@ const AddVehicleForm = () => {
 
             <div className="form-group">
               <label htmlFor="pickupLocation" className="block text-lg font-medium text-gray-700">Pickup Location</label>
-              <input
+              {/* <input
                 type="text"
                 name="pickupLocation"
                 id="pickupLocation"
@@ -585,7 +596,9 @@ const AddVehicleForm = () => {
                 placeholder="Pickup Location"
                 value={vehicleData.pickupLocation}
                 onChange={handleChange}
-              />
+              /> */}
+              <LocationInput onSelect={setLocation} />
+
             </div>
 
             {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
