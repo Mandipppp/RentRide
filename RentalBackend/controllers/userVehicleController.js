@@ -1,4 +1,6 @@
 const Vehicle = require('../models/vehicle');
+const Booking = require('../models/Booking');
+
 
 exports.getAvailableVehicles = async (req, res) => {
   try {
@@ -57,13 +59,19 @@ exports.getAvailableVehicles = async (req, res) => {
       }
 
       rentalPeriodQuery = {
-        $or: [
-          { bookings: { $not: { $elemMatch: { startDate: { $lt: drop }, endDate: { $gt: pickup } } } } },
-          { bookings: { $exists: false } }
-        ],
         minRentalPeriod: { $lte: rentalPeriod },
         maxRentalPeriod: { $gte: rentalPeriod }
       };
+
+      // Find vehicle IDs with conflicting bookings
+      const bookedVehicles = await Booking.find({
+        bookingStatus: { $in: ["Confirmed", "Active"] },
+        $or: [
+          { startDate: { $lt: drop }, endDate: { $gt: pickup } }
+        ]
+      }).distinct("vehicleId");
+      
+      matchQuery._id = { $nin: bookedVehicles };
     }
 
     // MongoDB Aggregation Pipeline
