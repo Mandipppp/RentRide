@@ -114,10 +114,12 @@ const scheduleCronJobs = () => {
        for (let user of usersWithUnreadMessages) {
         const chats = await Chat.find({
           renterId: user._id,
-        }).populate('messages'); // Populate messages
+        }).populate('messages')
+        .populate('bookingId', 'bookingStatus');// Populate messages
 
         let unreadMessagesFound = false;
         for (let chat of chats) {
+          if (!chat.bookingId || !relevantStatuses.includes(chat.bookingId.bookingStatus)) continue;
           // Check for unread messages
           for (let message of chat.messages) {
             if (!message.seen && message.senderId.toString() !== user._id.toString()) {

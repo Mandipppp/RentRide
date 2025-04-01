@@ -6,6 +6,9 @@ const Notification = require('../models/notification');
 
 const nodemailer = require('nodemailer');
 
+const Booking = require('../models/Booking');
+
+
 
 const getAllOwners = async (req, res) => {
   try {
@@ -284,6 +287,14 @@ const adminBlockOwner = async (req, res) => {
         bookingStatus: { $in: ['Pending', 'Accepted', 'RevisionRequired'] },
       });
 
+      const transporter = nodemailer.createTransport({
+        service: 'Gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+      
       if (affectedBookings.length > 0) {
         for (const booking of affectedBookings) {
           booking.bookingStatus = 'Cancelled';
@@ -408,14 +419,6 @@ const adminBlockOwner = async (req, res) => {
           </body>
         </html>
       `;
-
-      const transporter = nodemailer.createTransport({
-        service: 'Gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
 
       await transporter.sendMail({
         from: '"Account Support" <no-reply@example.com>',

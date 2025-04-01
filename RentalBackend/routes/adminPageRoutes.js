@@ -14,7 +14,7 @@ router.put('/editpage/:id', authenticate, checkAdmin, editPage);
 router.put('/editpageandnotify/:id', authenticate, checkAdmin, editAndNotify);
 
 router.delete('/deletepage/:id', authenticate, checkAdmin, deletePage);
-router.get('/getpagebyslug/:slug',authenticate, getPageBySlug);
+router.get('/getpagebyslug/:slug', getPageBySlug);
 
 router.get('/contact', getContact);
 router.put('/contact', authenticate, checkAdmin, updateContact);

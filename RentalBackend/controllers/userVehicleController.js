@@ -1,12 +1,15 @@
 const Vehicle = require('../models/vehicle');
 const Booking = require('../models/Booking');
 const Review = require('../models/review');
+const haversine = require("haversine-distance"); 
 
 exports.getAvailableVehicles = async (req, res) => {
   try {
-    const { pickAndDropLocation, pickupDate, dropDate, fuel, verified, addOns } = req.query;
+    const { pickAndDropLocation, latitude, longitude, pickupDate, dropDate, fuel, verified, addOns } = req.query;
 
     let matchQuery = { status: "Available" };
+
+    // console.log(latitude, longitude);
 
     // Filter by fuel type
     if (fuel) {
@@ -31,12 +34,15 @@ exports.getAvailableVehicles = async (req, res) => {
         addOn.toLowerCase().replace(/[-\s]/g, "_") // Normalize user input
       );
     
-      matchQuery["addOns"] = {
-        $all: addOnList.map(addOn => ({
-          $elemMatch: {
-            name: { $regex: new RegExp(`^${addOn.replace(/_/g, "[-_\\s]")}$`, "i") }
-          }
-        }))
+      // matchQuery["addOns"] = {
+      //   $all: addOnList.map(addOn => ({
+      //     $elemMatch: {
+      //       name: { $regex: new RegExp(`^${addOn.replace(/_/g, "[-_\\s]")}$`, "i") }
+      //     }
+      //   }))
+      // };
+      matchQuery["addOns.name"] = {
+        $in: addOnList.map(addOn => new RegExp(`^${addOn.replace(/_/g, "[-_\\s]")}$`, "i"))
       };
     }
 
@@ -75,7 +81,7 @@ exports.getAvailableVehicles = async (req, res) => {
     }
 
     // MongoDB Aggregation Pipeline
-    const vehicles = await Vehicle.aggregate([
+    let vehicles = await Vehicle.aggregate([
       // Step 1: Match Vehicles that are Available
       { $match: matchQuery },
 
@@ -109,11 +115,37 @@ exports.getAvailableVehicles = async (req, res) => {
       { $match: rentalPeriodQuery }
     ]);
 
+    // Calculate distance if latitude and longitude are provided
+    if (latitude && longitude) {
+      const userLocation = { latitude: parseFloat(latitude), longitude: parseFloat(longitude) };
+      
+      // Create a new array instead of modifying 'vehicles' directly
+      const sortedVehicles = vehicles.map(vehicle => {
+        if (vehicle.latitude && vehicle.longitude) {
+          const vehicleLocation = { latitude: vehicle.latitude, longitude: vehicle.longitude };
+          vehicle.distance = haversine(userLocation, vehicleLocation);
+        } else {
+          vehicle.distance = Infinity; // Place vehicles without location data at the end
+        }
+        return vehicle;
+      });
+    
+      // sortedVehicles.sort((a, b) => a.distance - b.distance);
+      vehicles = sortedVehicles; 
+    }
+
     for (let vehicle of vehicles) {
       const reviews = await Review.find({ vehicleId: vehicle._id, status: "Approved" });
       vehicle.averageRating = reviews.length ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length) : null;
     }
-    vehicles.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+    // vehicles.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+    // Sort vehicles by distance first, then by rating
+    vehicles.sort((a, b) => {
+      if (a.distance !== b.distance) {
+        return a.distance - b.distance; // Sort by nearest first
+      }
+      return (b.averageRating || 0) - (a.averageRating || 0); // Higher rated first
+    });
 
     res.status(200).json(vehicles);
   } catch (error) {

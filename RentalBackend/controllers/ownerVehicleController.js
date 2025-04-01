@@ -38,7 +38,7 @@ const getOwnerVehicles = async (req, res) => {
 
           // Fetch owner and KYC details separately
         const owner = await Owner.findById(ownerId)
-        .select('name email contactNumber kycId') // Include necessary owner details
+        .select('name email contactNumber kycId blockStatus blockReason') // Include necessary owner details
         .populate({
           path: 'kycId', // Populate KYC details
           select: 'overallStatus', // Select only the overallStatus from KYC
@@ -81,6 +81,8 @@ const getOwnerVehicles = async (req, res) => {
           email: owner.email,
           contactNumber: owner.contactNumber,
           kyc: owner.kycId,
+          blockStatus: owner.blockStatus,
+          blockReason: owner.blockReason,
         },
         vehicles,
       });

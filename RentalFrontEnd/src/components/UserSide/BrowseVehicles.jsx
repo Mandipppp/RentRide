@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { reactLocalStorage } from 'reactjs-localstorage';
 import Navigation from "./Navigation";
 import axios from "axios";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { toast, ToastContainer } from 'react-toastify';
+import LocationInput from "./LocationInput";
 
 
 
@@ -17,11 +18,85 @@ export default function BrowseVehicles() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
+  const [location, setLocation] = useState(null);
 
+
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  // const [selectedLocation, setSelectedLocation] = useState(null); // Track the selected location
+  const cache = new Map(); // Caching previous searches
+  
+  const fetchLocations = useCallback(async (input) => {
+          if (input.length < 3) return;
+  
+          if (cache.has(input)) {
+              setSuggestions(cache.get(input));
+              return;
+          }
+  
+          setLoading(true);
+          try {
+              const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${input}&countrycodes=np`);
+              const data = await res.json();
+              cache.set(input, data);
+              setSuggestions(data);
+          } catch (error) {
+              console.error("Error fetching locations:", error);
+          }
+          setLoading(false);
+      }, []);
+  
+      // Debounce effect (waits 300ms after user stops typing)
+      useEffect(() => {
+          const timer = setTimeout(() => {
+              if (query.length >= 3) fetchLocations(query);
+          }, 300);
+          return () => clearTimeout(timer);
+      }, [query, fetchLocations]);
+
+      const handleSelect = (place) => {
+        setSelectedLocation(place); // Set the selected location
+        setQuery(place.display_name); // Set the display name in the input box
+        setSuggestions([]); // Clear suggestions after selection
+        setLocation(place); // Notify parent about the selected location
+        // console.log(place);
+    };
+
+    const handleRemove = () => {
+      setSelectedLocation(null); // Remove the selected location
+      setQuery(""); // Clear the input field
+      setSuggestions([]); // Clear any existing suggestions
+      setLocation(null);
+      setFilters((prevFilters) => ({
+          ...prevFilters,
+          pickAndDropLocation: "",
+          latitude: "",
+          longitude: "",
+        }));
+  };
+  
+  // State to store user's geolocation (latitude, longitude)
+  const [geoLocation, setGeoLocation] = useState({
+    latitude: null,
+    longitude: null
+  });
+
+
+  // const [selectedLocation, setSelectedLocation] = useState({
+  //   display_name: searchParams.get("pickAndDropLocation") || null
+  // }); // Track the selected location
+
+  const [selectedLocation, setSelectedLocation] = useState(() => {
+    const pickAndDropLocation = searchParams.get("pickAndDropLocation");
+    return pickAndDropLocation ? { display_name: pickAndDropLocation } : null;
+  });
 
   // Initialize filters from URL params
   const [filters, setFilters] = useState({
     pickAndDropLocation: searchParams.get("pickAndDropLocation") || "",
+    latitude: searchParams.get("latitude") || "",
+    longitude: searchParams.get("longitude") || "",
     pickupDate: searchParams.get("pickupDate") || today,
     pickupTime: searchParams.get("pickupTime") || "",
     dropDate: searchParams.get("dropDate") || "",
@@ -30,6 +105,87 @@ export default function BrowseVehicles() {
     addOns: searchParams.get("addOns") ? searchParams.get("addOns").split(",") : [],
     fuel: searchParams.get("fuel") || "Petrol"
   });
+
+  // // Handle user's geolocation and set it to the filters or show an error
+  // const handleGetLocation = () => {
+  //   if (navigator.geolocation) {
+  //     navigator.geolocation.getCurrentPosition(
+  //       (position) => {
+  //         const { latitude, longitude } = position.coords;
+  //         setGeoLocation({ latitude, longitude });
+
+  //         // Optional: You can reverse geocode this into an address if needed.
+  //         // Here we just set the coordinates in the pickAndDropLocation field
+  //         setFilters((prevFilters) => ({
+  //           ...prevFilters,
+  //           pickAndDropLocation: `${latitude}, ${longitude}` // Set latitude and longitude
+  //         }));
+
+  //         toast.success("Location detected successfully!");
+  //       },
+  //       (error) => {
+  //         toast.error("Unable to retrieve your location.");
+  //       }
+  //     );
+  //   } else {
+  //     toast.error("Geolocation is not supported by your browser.");
+  //   }
+  // };
+
+  const handleGetLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setGeoLocation({ latitude, longitude });
+  
+          // Reverse geocode to get the address using Nominatim
+          const geocodeUrl = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
+  
+          // Fetch the address from Nominatim API
+          axios.get(geocodeUrl)
+            .then(response => {
+              const address = response.data.display_name;
+              // setFilters((prevFilters) => ({
+              //   ...prevFilters,
+              //   pickAndDropLocation: address, // Set the address in the location field
+              //   latitude: latitude,
+              //   longitude: longitude,
+              // }));
+              setSelectedLocation(response.data); // Set the selected location
+              setQuery(response.data.display_name); // Set the display name in the input box
+              setSuggestions([]); // Clear suggestions after selection
+              setLocation(response.data); 
+              // console.log(response.data);
+              toast.success("Location detected successfully!");
+            })
+            .catch(error => {
+              console.error("Geocoding error:", error);
+              toast.error("Unable to retrieve address.");
+            });
+        },
+        (error) => {
+          toast.error("Unable to retrieve your location.");
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by your browser.");
+    }
+  };
+
+  const handleManualLocation = () => {
+  
+    if(location){
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        pickAndDropLocation: location.display_name, // Set the address in the location field
+        latitude: location.lat,
+        longitude: location.lon,
+      }));
+      // console.log(location);
+    }
+  }
+  
 
   //fetch all the vehicles id that the user has requested
   useEffect(() => {
@@ -43,6 +199,10 @@ export default function BrowseVehicles() {
   useEffect(() => {
     fetchAddOns(); // Fetch add-ons on load
   }, []);
+
+  useEffect(() => {
+    handleManualLocation();
+  }, [location]);
 
   const fetchRequestedBookings = async () => {
     const token = reactLocalStorage.get("access_token");
@@ -82,6 +242,8 @@ export default function BrowseVehicles() {
   const updateURLParams = () => {
     setSearchParams({
       pickAndDropLocation: filters.pickAndDropLocation,
+      latitude: filters.latitude,
+      longitude: filters.longitude,
       pickupDate: filters.pickupDate,
       pickupTime: filters.pickupTime,
       dropDate: filters.dropDate,
@@ -93,6 +255,7 @@ export default function BrowseVehicles() {
   };
 
   const handleInputChange = (e) => {
+    // console.log("yesss");
     const { name, value } = e.target;
     setFilters((prevFilters) => {
       let updatedFilters = { ...prevFilters, [name]: value };
@@ -131,11 +294,18 @@ export default function BrowseVehicles() {
       return;
     }
 
+    if (!filters.pickAndDropLocation) {
+      toast.error("Please select the location before searching.");
+      return;
+    }
+
     try {
       const response = await axios.get("http://localhost:3000/api/users/vehicles", {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           pickAndDropLocation: filters.pickAndDropLocation,
+          latitude: filters.latitude,
+          longitude: filters.longitude,
           pickupDate: filters.pickupDate,
           dropDate: filters.dropDate,
           fuel: filters.fuel,
@@ -148,7 +318,7 @@ export default function BrowseVehicles() {
     } catch (err) {
       setVehicles([]);
       toast.error(err.response?.data?.message || "Failed to fetch vehicles.");
-      console.log(err.response?.data?.message || "Failed to fetch vehicles.");
+      console.log(err.response?.data?.error|| "Failed to fetch vehicles.");
     }
   };
 
@@ -185,7 +355,67 @@ export default function BrowseVehicles() {
       <div className="flex w-full p-6">
         {/* Search Panel */}
         <div className="w-1/3 border p-6 rounded-lg shadow-lg bg-white">
-          <input className="border p-3 rounded w-full mb-4" name="pickAndDropLocation" placeholder="Pick-up and return location" value={filters.pickAndDropLocation} onChange={handleInputChange} />
+          {/* <input className="border p-3 rounded w-full mb-4" name="pickAndDropLocation" placeholder="Pick-up and return location" value={filters.pickAndDropLocation} onChange={handleInputChange} /> */}
+          
+          <div className="flex items-center">
+            {/* <input
+              className="border p-3 rounded w-full mb-4"
+              name="pickAndDropLocation"
+              placeholder="Pick-up and return location"
+              value={filters.pickAndDropLocation}
+              onChange={handleInputChange}
+            /> */}
+
+<div className="w-full relative">
+          {selectedLocation ? (
+                <div className="flex items-center text-sm font-bold bg-blue-100 text-blue-800 px-6 py-4 rounded-full mb-2">
+                    <span>{selectedLocation.display_name}</span>
+                    <button
+                        onClick={handleRemove}
+                        className="ml-2 text-blue-600 hover:text-blue-800"
+                    >
+                        ✖
+                    </button>
+                </div>
+            ) : (
+                <input
+                    type="text"
+                    name="pickAndDropLocation"
+                    value={filters.pickAndDropLocation}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      handleInputChange(e);
+                    }}
+                    placeholder="Enter location"
+                    className="border p-3 rounded w-full mb-4"
+                />
+              )}
+            
+            {loading && <p className="text-gray-500 text-sm">Loading...</p>}
+            
+            {suggestions.length > 0 && !selectedLocation && (
+                <ul className="absolute w-full border bg-white mt-1 shadow rounded z-10">
+                    {suggestions.map((place) => (
+                        <li
+                            key={place.place_id}
+                            className="p-2 cursor-pointer hover:bg-gray-200"
+                            onClick={() => handleSelect(place)}
+                        >
+                            {place.display_name}
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+
+            <button
+              className="ml-2 mb-4 text-sm bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={handleGetLocation}
+            >
+              Use My Location
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 gap-4 mb-6">
             <div className="border p-3 rounded">
               <label className="block text-sm font-semibold">Pick-up Date</label>
@@ -254,7 +484,7 @@ export default function BrowseVehicles() {
           <i className="fa-solid fa-file-shield text-xl mr-2"></i>
           <span className="font-semibold">Verified</span>
         </div>
-          <button className="w-full bg-green-500 text-white p-3 rounded disabled:opacity-50" onClick={handleSearch} disabled={!filters.pickupDate || !filters.dropDate}>Search</button>
+          <button className="w-full bg-green-500 text-white p-3 rounded disabled:opacity-50" onClick={handleSearch} disabled={!filters.pickupDate || !filters.dropDate || !filters.pickAndDropLocation}>Search</button>
         </div>
 
       {/* Results Panel */}
@@ -278,6 +508,8 @@ export default function BrowseVehicles() {
                 Booking Requested
               </p>
             )}
+            { vehicle.distance && <p className="text-xl text-yellow-500 font-bold"> {(vehicle.distance/1000).toFixed(2)} <span className="text-sm font-normal">Km away</span></p>}
+
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-xl font-bold">Rs. {vehicle.dailyPrice} <span className="text-sm font-normal">/ day</span></p>
@@ -289,8 +521,9 @@ export default function BrowseVehicles() {
                 <p className="font-semibold">{vehicle.name} <span className="text-gray-500">{vehicle.type}</span></p>
                 <p className="text-black-500 flex items-center">⭐ {vehicle.averageRating || "New"}</p>
               </div>
-              <div className="flex justify-between text-gray-600 mt-2">
+              <div className="flex text-gray-600 mt-2">
                 <p><i className="fa-solid fa-gas-pump mr-2"></i> {vehicle.fuel}</p>
+                <p><i className="fa-solid fa-location-dot mr-2 ml-8"></i> {vehicle.pickupLocation || "Nan"}</p>
               </div>
             </div>
           );

@@ -219,7 +219,7 @@ const AdminDashboard = () => {
             <div className="mt-12">
               <h3 className="text-2xl font-semibold text-gray-700 mb-4">Quick Actions</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 justify-center">
-                <QuickActionButton title="Add Admin" icon={<FaUserPlus />} onClick={() => navigate("/admin/add")} />
+                <QuickActionButton title="Add Admin" icon={<FaUserPlus />} onClick={() => navigate("/adminadmins")} />
                 <QuickActionButton title="Add Page" icon={<FaUserPlus />} onClick={() => navigate("/adminaddpage")} />
                 
                 <QuickActionButton title="Edit Contact Details" icon={<FaUserPlus />} onClick={() => navigate("/admincontactpage")} />

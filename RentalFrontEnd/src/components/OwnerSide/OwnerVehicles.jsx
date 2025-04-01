@@ -35,7 +35,7 @@ const OwnerVehicles = () => {
         .then((response) => {
           setVehicles(response.data.vehicles || []);
           setOwner(response.data.owner || null);
-          // console.log("Fetched vehicles:", response.data.vehicle);
+          // console.log("Fetched vehicles:", response.data.owner);
           setLoading(false);
         })
         .catch((err) => {
@@ -133,12 +133,17 @@ const OwnerVehicles = () => {
       <div className="p-6 bg-gray-100 min-h-screen">
         <header className="flex justify-between items-center pb-6">
           <h1 className="text-2xl font-semibold">My Vehicles</h1>
+          {owner.blockStatus !== 'blocked' && (
           <Button variant='primary'>
             <Link to="/owneraddvehicle">
               <span className="text-lg">Add Vehicle</span>
               <i className="fa-solid fa-plus px-2"></i>
             </Link>
-          </Button>
+          </Button>)}
+          {owner.blockStatus === 'blocked' && (<p className="text-sm text-red-500">
+            *Your account is blocked. Please contact support for assistance.*<br />
+            Reason: {owner.blockReason}<br />
+          </p>)}
         </header>
 
         {/* KYC Status Message */}
