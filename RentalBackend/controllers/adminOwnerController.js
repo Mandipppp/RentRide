@@ -451,4 +451,129 @@ const adminBlockOwner = async (req, res) => {
   }
 };
 
-module.exports = { getAllOwners, getOwnerById, updateKyc, adminBlockOwner};
+const adminUnBlockOwner = async (req, res) => {
+  try {
+      const { ownerId } = req.params;
+
+      // Find the user by ID
+      const owner = await Owner.findById(ownerId);
+      if (!owner) {
+          return res.status(404).json({
+              success: false,
+              message: 'Owner not found.',
+          });
+      }
+      // Check if user is already blocked
+      if (owner.blockStatus === 'active') {
+        return res.status(400).json({ message: 'Owner is not blocked' });
+      }
+
+       // Update user block status
+       owner.blockStatus = 'active';
+
+       await owner.save();
+
+      const transporter = nodemailer.createTransport({
+        service: 'Gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+       // Send email notification
+      const ownerEmail = owner.email;
+      const ownerName = owner.name;
+      const emailSubject = 'Account unblocked by Admin';
+
+      const emailBody = `
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                color: #333;
+                background-color: #f4f4f4;
+                padding: 20px;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 20px;
+              }
+              .header h1 {
+                color: #FF0000;
+              }
+              .content {
+                font-size: 16px;
+              }
+              .footer {
+                margin-top: 30px;
+                font-size: 12px;
+                color: #777;
+                text-align: center;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Account Unblocked</h1>
+              </div>
+              <div class="content">
+                <p>Dear <strong>${ownerName}</strong>,</p>
+                
+                <p>Your account has been <strong>unblocked</strong> by the admin.</p>
+                <p>If you have any questions or need assistance, please feel free to reach out to our support team.</p>
+                <p>We appreciate your understanding and cooperation.</p>
+                <p>We are glad to have you back!</p>                
+                
+                <p>Best regards,</p>
+                <p>The Support Team</p>
+              </div>
+              <div class="footer">
+                <p>&copy; 2025 RentRide. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      await transporter.sendMail({
+        from: '"Account Support" <no-reply@example.com>',
+        to: ownerEmail,
+        subject: emailSubject,
+        html: emailBody,
+      });
+
+      // Create in-app notification
+      const notification = new Notification({
+        recipientId: ownerId,
+        recipientModel: 'Owner',
+        message: `Your account has been unblocked.`,
+        type: 'system',
+      });
+
+      await notification.save();
+
+      return res.status(200).json({
+          success: true,
+          message: `Owner has been unblocked.`,
+          data: {
+              ownerId: owner._id,
+          },
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+module.exports = { getAllOwners, getOwnerById, updateKyc, adminBlockOwner, adminUnBlockOwner};

@@ -71,6 +71,7 @@ const AdminUsers = () => {
       })
       .then((res) => {
         setUsers(res.data.data);
+        // console.log("Users data:", res.data.data);
       })
       .catch((error) => {
         if (error.response && error.response.status === 403) {
@@ -113,8 +114,8 @@ const AdminUsers = () => {
     }
   };
 
-  const openBlockModal = (userId) => {
-    setUserToBlock(userId);
+  const openBlockModal = (user) => {
+    setUserToBlock(user);
     setShowBlockModal(true);
     setDropdownVisible(false);
   };
@@ -126,18 +127,18 @@ const AdminUsers = () => {
   };
 
   const confirmBlockUser = () => {
-    if (!blockReason.trim()) {
+    if (!blockReason.trim() && userToBlock.blockStatus==="active") {
       toast.error("Please provide a reason for blocking.");
       return;
     }
 
-    // console.log("Id: ", userToBlock);
+    // console.log("Id: ", userToBlock._id);
     // console.log("Reason: ", blockReason);
 
-
-    axios
+    if (userToBlock.blockStatus==="active") {
+      axios
       .put(
-        `http://localhost:3000/api/admin/blockuser/${userToBlock}`,
+        `http://localhost:3000/api/admin/blockuser/${userToBlock._id}`,
         { reason: blockReason },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -150,8 +151,27 @@ const AdminUsers = () => {
       })
       .catch((error) => {
         console.error("Error blocking user:", error);
-        toast.error("Failed to block user.");
+        toast.error(error.response.data.message || "Failed to block user.");
       });
+    }else { 
+      axios
+      .put(
+        `http://localhost:3000/api/admin/unblockuser/${userToBlock._id}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      )
+      .then(() => {
+        toast.success("User unblocked successfully.");
+        getDetails(accessToken);
+        closeBlockModal();
+      })
+      .catch((error) => {
+        console.error("Error unblocking user:", error);
+        toast.error(error.response.data.message || "Failed to unblock user.");
+      });
+    }
   };
 
   const handleBlockUser = (userId) => {
@@ -196,6 +216,7 @@ const AdminUsers = () => {
             <th className="py-3 px-4 text-gray-600 font-medium">Name</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Contact</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Email</th>
+            <th className="py-3 px-4 text-gray-600 font-medium">Blocked Status</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Created At</th>
             <th className="py-3 px-4"></th>
           </tr>
@@ -217,6 +238,21 @@ const AdminUsers = () => {
                   {user.contactNumber || "No Contact Number"}
                 </td>
                 <td className="py-3 px-4">{user.email}</td>
+                <td
+                  className={`py-3 px-4 font-medium ${
+                    user.blockStatus === "active"
+                      ? "text-green-500"
+                      : user.blockStatus === "blocked"
+                      ? "text-red-500"
+                      : "text-yellow-500"
+                  }`}
+                >
+                  {user.blockStatus === "active"
+                    ? "Active"
+                    : user.blockStatus === "blocked"
+                    ? "Bocked"
+                    : "Denied"}
+                </td>
                 <td className="py-3 px-4">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
@@ -244,9 +280,9 @@ const AdminUsers = () => {
                       <ul className="py-2">
                         <li
                           className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
-                          onClick={() => openBlockModal(user._id)}
+                          onClick={() => openBlockModal(user)}
                         >
-                          Block User
+                          {user.blockStatus==="active" ? "Block User" : "Unblock User"}
                         </li>
                         <li
                           className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
@@ -282,9 +318,9 @@ const AdminUsers = () => {
       {showBlockModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-700 bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-xl font-bold mb-4">Block User</h3>
-            <input type="text" value={blockReason} onChange={(e) => setBlockReason(e.target.value)} placeholder="Enter reason..." className="w-full p-2 border rounded-lg mb-4"/>
-            <button className="bg-red-500 text-white px-4 py-2 rounded-lg mr-2" onClick={confirmBlockUser}>Confirm Blocking</button>
+            <h3 className="text-xl font-bold mb-4">{userToBlock.blockStatus==="active" ? "Block User" : "Unblock User"}</h3>
+            {userToBlock.blockStatus==="active" && <input type="text" value={blockReason} onChange={(e) => setBlockReason(e.target.value)} placeholder="Enter reason..." className="w-full p-2 border rounded-lg mb-4"/>}
+            <button className="bg-red-500 text-white px-4 py-2 rounded-lg mr-2" onClick={confirmBlockUser}>{userToBlock.blockStatus==="active" ? "Confirm Blocking" : "Confirm Unblock"}</button>
             <button className="bg-gray-300 px-4 py-2 rounded-lg" onClick={closeBlockModal}>Cancel</button>
           </div>
         </div>

@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getAllOwners, getOwnerById, updateKyc, adminBlockOwner} = require('../controllers/adminOwnerController');
+const { getAllOwners, getOwnerById, updateKyc, adminBlockOwner, adminUnBlockOwner} = require('../controllers/adminOwnerController');
 const { authenticate, checkAdmin } = require('../middlewares/authMiddleware');
-const { getAllUsers, getUserById, adminBlockUser } = require('../controllers/adminUserController');
+const { getAllUsers, getUserById, adminBlockUser, adminUnBlockUser } = require('../controllers/adminUserController');
 const { addAdmin, setupPassword, getDashboardStats, sendAdminNotification, getAllAdmins } = require('../controllers/adminAdminController');
 const { getAllVehicles, getVehicleById, verifyVehicle } = require('../controllers/adminVehicleController');
 const { getAllContacts, updateContactStatus } = require('../controllers/adminContactController');
@@ -15,7 +15,10 @@ router.get('/getOwners',authenticate, checkAdmin, getAllOwners);
 router.get('/getUsers',authenticate, checkAdmin, getAllUsers);
 router.get('/getAdmins',authenticate, checkAdmin, getAllAdmins);
 router.put('/blockuser/:userId', authenticate, checkAdmin, adminBlockUser);
+router.put('/unblockuser/:userId', authenticate, checkAdmin, adminUnBlockUser);
 router.put('/blockowner/:ownerId', authenticate, checkAdmin, adminBlockOwner);
+router.put('/unblockowner/:ownerId', authenticate, checkAdmin, adminUnBlockOwner);
+
 
 
 

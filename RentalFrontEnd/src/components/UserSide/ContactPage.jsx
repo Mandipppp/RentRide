@@ -52,11 +52,11 @@ export default function ContactPage() {
     e.preventDefault();
     setLoading(true);
     const token = reactLocalStorage.get("access_token");
-    if (!token) {
-        toast.error("Unauthorized. Please log in.");
-        navigate("/login");
-        return;
-    }
+    // if (!token) {
+    //     toast.error("Unauthorized. Please log in.");
+    //     navigate("/login");
+    //     return;
+    // }
 
     try {
       const response = await axios.post('http://localhost:3000/api/users/contact-query', formData, {

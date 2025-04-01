@@ -9,7 +9,7 @@ router.get("/me", authenticate, getProfile);
 router.put('/me', authenticate, updateUser);
 router.put('/change-password', authenticate, changePassword);
 
-router.post("/contact-query", authenticate, submitContactForm);
+router.post("/contact-query", submitContactForm);
 
 
 router.get("/vehicles", getAvailableVehicles);
