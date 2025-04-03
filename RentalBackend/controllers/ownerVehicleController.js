@@ -100,6 +100,19 @@ const getOwnerVehicles = async (req, res) => {
     const { name, type, category, fuel, transmission, brand, builtYear, mileage, seats, registrationNumber, description, dailyPrice, minRentalPeriod, maxRentalPeriod, features, addOns, condition, pickupLocation, latitude, longitude } = req.body;
   
     try {
+      // First check if the owner is blocked
+      const owner = await Owner.findById(req.user.id);
+      if (!owner) {
+        return res.status(404).json({ message: 'Owner not found.' });
+      }
+
+      // Check if owner is blocked
+      if (owner.blockStatus === 'blocked') {
+        return res.status(403).json({ 
+          message: 'Your account is currently blocked. You cannot add new vehicles.' 
+        });
+      }
+      
       // Check for required fields
       const requiredFields = [
           'name', 'type', 'category', 'fuel', 'transmission', 'brand', 

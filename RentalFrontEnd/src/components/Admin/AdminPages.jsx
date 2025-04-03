@@ -78,7 +78,7 @@ const AdminPages = () => {
       getDetails(accessToken);
     } catch (error) {
       console.error("Error deleting page:", error);
-      toast.error("Error deleting page. Please try again.");
+      toast.error(error.response.data.message || "Error deleting page. Please try again.");
     }
   };
 

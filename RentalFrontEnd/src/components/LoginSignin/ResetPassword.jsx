@@ -31,7 +31,7 @@ const ResetPassword = () => {
       return;
     }
      // Validate password strength
-    const passwordErrors = validatePassword(formData.password);
+    const passwordErrors = validatePassword(password);
     if (passwordErrors.length > 0) {
       passwordErrors.forEach((error) => {
         toast.error(`${error}`);  // Each error is shown in a separate toast

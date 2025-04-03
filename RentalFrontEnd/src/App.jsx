@@ -49,6 +49,7 @@ import AdminDashboard from "./components/Admin/AdminDashboard";
 import AdminAdmins from "./components/Admin/AdminAdmins";
 import LocationInput from "./components/UserSide/LocationInput";
 import VehicleForm from "./components/UserSide/VehicleForm";
+import OwnerVehicleReviews from "./components/OwnerSide/OwnerVehicleReviews";
 
 
 
@@ -157,6 +158,7 @@ const App = () => {
         <Route path="/ownerprofile" element={<OwnerProfilePage />} />
         <Route path="/owneraddvehicle" element={<OwnerAddVehicle />} />
         <Route path="/ownervehicle" element={<OwnerVehicles />} />
+        <Route path="/owner/vehicle/:vehicleId/reviews" element={<OwnerVehicleReviews />} />
         <Route path="/ownervehicle/:vehicleId" element={<OwnerVehicleDetails />} />
         <Route path="/ownervehicledocuments/:vehicleId" element={<OwnerVehicleDocuments />} />
         <Route path="/ownerbookings" element={<OwnerBookings />} />

@@ -35,7 +35,7 @@ const OwnerVehicles = () => {
         .then((response) => {
           setVehicles(response.data.vehicles || []);
           setOwner(response.data.owner || null);
-          // console.log("Fetched vehicles:", response.data.owner);
+          // console.log("Fetched vehicles:", response.data.vehicles);
           setLoading(false);
         })
         .catch((err) => {
@@ -220,6 +220,10 @@ const OwnerVehicles = () => {
                       <Button variant="success" onClick={() => handleEnableVehicle(vehicle._id)}>
                         Enable Vehicle
                       </Button>)}
+                      {/* Add View Reviews Button */}
+                      <Button variant="warning" onClick={() => navigate(`/owner/vehicle/${vehicle._id}/reviews`)}>
+                        View Reviews
+                      </Button>
                   </div>
                 </CardFooter>
               </div>

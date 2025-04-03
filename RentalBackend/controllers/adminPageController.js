@@ -271,7 +271,8 @@ exports.deletePage = async (req, res) => {
       const { id } = req.params;
   
       // Find the page by id
-      const page = await Page.findByIdAndDelete(id);
+      // const page = await Page.findByIdAndDelete(id);
+      const page = await Page.findById(id);
   
       if (!page) {
         return res.status(404).json({
@@ -279,6 +280,24 @@ exports.deletePage = async (req, res) => {
           message: 'Page not found.',
         });
       }
+
+      // List of protected pages that cannot be deleted
+      const protectedSlugs = [
+        'cancellation-policy',
+        'privacy-policy',
+        'terms-and-conditions',
+        'about-us'
+      ];
+
+      // Check if the page is protected
+      if (protectedSlugs.includes(page.slug)) {
+        return res.status(403).json({
+          success: false,
+          message: 'This page cannot be deleted as it is a required system page.',
+        });
+      }
+
+      await Page.findByIdAndDelete(id);
   
       // Send success response
       res.status(200).json({

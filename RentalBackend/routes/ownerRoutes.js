@@ -5,6 +5,7 @@ const { getOwnerVehicles, updateVehicle, addVehicle, deleteVehicle, disableVehic
 const { getVehicleById } = require('../controllers/adminVehicleController');
 const uploadOwner = require('../middlewares/uploadMiddleware');
 const multer = require('multer');
+const { getOwnerReviews } = require('../controllers/userReviewController');
 const router = express.Router();
 
 router.get("/me", authenticate, getOwnerProfile);
@@ -22,6 +23,7 @@ router.put(
 router.put('/change-password', authenticate, changePassword);
 
 router.get('/myvehicles', authenticate, getOwnerVehicles);
+router.get('/vehicle/:vehicleId/reviews', getOwnerReviews);
 router.get('/vehicle/:vehicleId', authenticate, getVehicleById);
 
 router.put(

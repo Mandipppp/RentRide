@@ -88,3 +88,34 @@ exports.getReviews = async (req, res) => {
     res.status(500).json({ message: 'Error fetching reviews' });
   }
 }
+
+exports.getOwnerReviews = async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+
+    // Fetch only approved reviews for calculating the average rating
+    const approvedReviews = await Review.find({ 
+      vehicleId, 
+      status: 'Approved' // Only fetch approved reviews
+    })
+      .populate('userId', 'name') // Populate user details
+      .sort({ createdAt: -1 }); // Sort by most recent
+
+    // Fetch all reviews (approved and unapproved) for the owner to view
+    const allReviews = await Review.find({ 
+      vehicleId 
+    })
+      .populate('userId', 'name') // Populate user details
+      .sort({ createdAt: -1 }); // Sort by most recent
+
+    // Calculate the average rating based only on approved reviews
+    const totalRatings = approvedReviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = approvedReviews.length > 0 ? (totalRatings / approvedReviews.length).toFixed(1) : null;
+
+    // Return both the unfiltered reviews and the average rating
+    res.status(200).json({ reviews: allReviews, averageRating });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching reviews' });
+  }
+};

@@ -48,7 +48,7 @@ const AdminPayments = () => {
       })
       .then((res) => {
         setPayments(res.data.data);
-        console.log(res.data.data);
+        // console.log(res.data.data);
       })
       .catch((error) => {
         console.error("Error fetching payment details:", error);
