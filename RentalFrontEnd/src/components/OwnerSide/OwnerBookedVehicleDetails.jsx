@@ -153,7 +153,14 @@ export default function OwnerBookedVehicleDetails() {
           const numDays = calculateDaysDifference(booking.startDate, booking.endDate);
   
           // Calculate base vehicle cost
-          const onlyVehicleCost = booking.vehicleId.dailyPrice * numDays;
+          // const onlyVehicleCost = booking.vehicleId.dailyPrice * numDays;
+          let onlyVehicleCost = 0;
+          if(booking.status=="Pending"){
+          // Calculate base vehicle cost
+            onlyVehicleCost = booking.vehicleId.dailyPrice * numDays;
+          }else{
+            onlyVehicleCost = booking.amountDue + booking.amountPaid - booking.approvedAddOns.reduce((acc, addon) => acc + addon.totalPrice, 0);
+          }
   
           // Set total cost
           setBaseCost(onlyVehicleCost);

@@ -237,8 +237,13 @@ const handleSubmitReview = async () => {
           // Calculate number of days
           const numDays = calculateDaysDifference(booking.startDate, booking.endDate);
   
+          let onlyVehicleCost = 0;
+          if(booking.status=="Pending"){
           // Calculate base vehicle cost
-          const onlyVehicleCost = booking.vehicleId.dailyPrice * numDays;
+            onlyVehicleCost = booking.vehicleId.dailyPrice * numDays;
+          }else{
+            onlyVehicleCost = booking.amountDue + booking.amountPaid - booking.approvedAddOns.reduce((acc, addon) => acc + addon.totalPrice, 0);
+          }
   
           // Set total cost
           setBaseCost(onlyVehicleCost);
