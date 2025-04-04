@@ -168,8 +168,20 @@ const OwnerVehicles = () => {
               <div>
                 <h2 className="text-lg font-bold">{vehicle.dailyPrice} NPR / day</h2>
               </div>
-              <span className={`text-sm font-semibold px-3 py-1 rounded ${vehicle.isVerified ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
-                {vehicle.isVerified && vehicle.isInsured ? 'Vehicle Verified' : 'Pending Verification'}
+              <span 
+                className={`text-sm font-semibold px-3 py-1 rounded ${
+                  vehicle.insuranceCertificate.status === "Rejected" || vehicle.registrationCertificate.status === "Rejected"
+                    ? 'bg-red-100 text-red-600'
+                    : vehicle.insuranceCertificate.status === "Verified" && vehicle.registrationCertificate.status === "Verified"
+                    ? 'bg-green-100 text-green-600'
+                    : 'bg-yellow-100 text-yellow-600'
+                }`}
+              >
+                {vehicle.insuranceCertificate.status === "Rejected" || vehicle.registrationCertificate.status === "Rejected"
+                  ? 'Documents Rejected'
+                  : vehicle.insuranceCertificate.status === "Verified" && vehicle.registrationCertificate.status === "Verified"
+                  ? 'Vehicle Verified'
+                  : 'Verification Pending'}
               </span>
             </CardHeader>
 

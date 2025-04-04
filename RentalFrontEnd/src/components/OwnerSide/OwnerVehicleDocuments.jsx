@@ -16,6 +16,10 @@ function OwnerVehicleDocuments() {
     registrationCertificate: { status: "", comments: "" },
     insuranceCertificate: { status: "", comments: "" },
   });
+  const [previewImages, setPreviewImages] = useState({
+    registrationCertificate: null,
+    insuranceCertificate: null
+  });
   
   const navigate = useNavigate();
 
@@ -33,6 +37,7 @@ function OwnerVehicleDocuments() {
         .then((response) => {
           const vehicleDatas = response.data.data;
           setvehicleData(vehicleDatas);
+          // console.log(vehicleDatas);
         })
         .catch((err) => {
           setError("Failed to fetch vehicle data.");
@@ -74,9 +79,42 @@ function OwnerVehicleDocuments() {
     const { id, value, files } = e.target;
     if (files) {
       setFormData({ ...formData, [id]: files[0] });
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreviewImages(prev => ({
+          ...prev,
+          [id]: reader.result
+        }));
+      };
+      reader.readAsDataURL(files[0]);
     } else {
       setFormData({ ...formData, [id]: value });
     }
+  };
+
+  const canSubmit = () => {
+    const regRejected = remData.registrationCertificate.status === "Rejected";
+    const insRejected = remData.insuranceCertificate.status === "Rejected";
+    const regUploaded = formData.registrationCertificate instanceof File;
+    const insUploaded = formData.insuranceCertificate instanceof File;
+  
+    // If both rejected, both must be uploaded
+    if (regRejected && insRejected) {
+      return regUploaded && insUploaded;
+    }
+    
+    // If only registration is rejected, it must be uploaded
+    if (regRejected) {
+      return regUploaded;
+    }
+    
+    // If only insurance is rejected, it must be uploaded
+    if (insRejected) {
+      return insUploaded;
+    }
+  
+    return false;
   };
 
   const handleSubmit = (e) => {
@@ -90,20 +128,35 @@ function OwnerVehicleDocuments() {
     }
   
     const updatePayload = new FormData();
+    let missingDocs = [];
 
-    if (remData.registrationCertificate.status === "Rejected" && formData.registrationCertificate instanceof File) {
-      updatePayload.append("registationCert", formData.registrationCertificate);
+    if (remData.registrationCertificate.status === "Rejected") {
+      if (formData.registrationCertificate instanceof File) {
+        updatePayload.append("registrationCert", formData.registrationCertificate);
+      } else {
+        missingDocs.push("Registration Certificate");
+      }
     }
-    if (remData.insuranceCertificate.status === "Rejected" && formData.insuranceCertificate instanceof File) {
-      updatePayload.append("insuranceCert", formData.insuranceCertificate);
+
+    if (remData.insuranceCertificate.status === "Rejected") {
+      if (formData.insuranceCertificate instanceof File) {
+        updatePayload.append("insuranceCert", formData.insuranceCertificate);
+      } else {
+        missingDocs.push("Insurance Certificate");
+      }
     }
-  
+
+    if (missingDocs.length > 0) {
+      toast.error(`Please upload all rejected documents: ${missingDocs.join(", ")}`);
+      return;
+    }
+
     if ([...updatePayload.keys()].length === 0) {
       toast.info("No changes made.");
       return;
     }
   
-    console.log([...updatePayload.entries()]); // Debugging payload
+    // console.log([...updatePayload.entries()]); // Debugging payload
   
     axios
       .put(`http://localhost:3000/api/owner/updatevehicle/${vehicleId}`, updatePayload, {
@@ -113,12 +166,12 @@ function OwnerVehicleDocuments() {
         },
       })
       .then((response) => {
-        setvehicleData(response.data);
+        setvehicleData(response.data.updatedVehicle);
         toast.success("Vehicle updated successfully!");
       })
       .catch((err) => {
         console.error(err);
-        toast.error("Failed to update vehicle. Please try again.");
+        toast.error(err.response?.data?.message || "Failed to update vehicle. Please try again.");
       });
   };
   
@@ -170,13 +223,21 @@ function OwnerVehicleDocuments() {
                 </span>
               )}
               </label>
-              {formData.registrationCertificate && (
+              {/* {formData.registrationCertificate && (
                 <img
                   src={`http://localhost:3000/${formData.registrationCertificate}`}
                   alt="Registration Certificate"
                   className="w-60 h-44 border mt-2"
                 />
+              )} */}
+              {(previewImages.registrationCertificate || formData.registrationCertificate) && (
+                <img
+                  src={previewImages.registrationCertificate || `http://localhost:3000/${formData.registrationCertificate}`}
+                  alt="Registration Certificate"
+                  className="w-60 h-44 border mt-2 object-contain"
+                />
               )}
+
               {remData.registrationCertificate.status === "Rejected" && (
               <input
                 type="file"
@@ -204,11 +265,18 @@ function OwnerVehicleDocuments() {
                 </span>
               )}
               </label>
-              {formData.insuranceCertificate && (
+              {/* {formData.insuranceCertificate && (
                 <img
                   src={`http://localhost:3000/${formData.insuranceCertificate}`}
                   alt="Citizenship Front"
                   className="w-60 h-44 border mt-2"
+                />
+              )} */}
+              {(previewImages.insuranceCertificate || formData.insuranceCertificate) && (
+                <img
+                  src={previewImages.insuranceCertificate || `http://localhost:3000/${formData.insuranceCertificate}`}
+                  alt="Insurance Certificate"
+                  className="w-60 h-44 border mt-2 object-contain"
                 />
               )}
               {remData.insuranceCertificate.status === "Rejected" && (
@@ -222,13 +290,20 @@ function OwnerVehicleDocuments() {
             </div>
           </div>
         
-          {vehicleData?.registrationCertificate?.status === "Rejected" ||  vehicleData?.insuranceCertificate?.status === "Rejected" && (
-        <button
-          type="submit"
-          className="w-full bg-green-500 text-white rounded-md py-2 hover:bg-green-600"
-        >
-          Update
-        </button>)}
+          {(remData.registrationCertificate.status === "Rejected" || 
+            remData.insuranceCertificate.status === "Rejected") && (
+            <button
+              type="submit"
+              className={`w-full text-white rounded-md py-2 ${
+                canSubmit()
+                  ? 'bg-green-500 hover:bg-green-600'
+                  : 'bg-gray-400 cursor-not-allowed'
+              }`}
+              disabled={!canSubmit()}
+            >
+              {canSubmit() ? "Update Documents" : "Upload All Rejected Documents"}
+            </button>
+          )}
       </form>
     </section>
   );

@@ -12,6 +12,7 @@ const AdminVehicleDetails = () => {
     const [vehicle, setVehicle] = useState(null);
     const [loading, setLoading] = useState(true);
     const vehicleId = id;
+    const [isSubmitting, setIsSubmitting] = useState(false);
   
     const [verificationStatus, setVerificationStatus] = useState({
       registrationCertificate: false,
@@ -85,6 +86,7 @@ const AdminVehicleDetails = () => {
         toast.warn("No changes made.");
         return;
       }
+      setIsSubmitting(true);
   
       try {
         // Prepare the payload dynamically based on available updates
@@ -116,10 +118,12 @@ const AdminVehicleDetails = () => {
         // Reload the page after a successful response
         setTimeout(() => {
           window.location.reload();
-        }, 2000);
+        }, 1000);
       } catch (error) {
         console.error("Error updating Vehicle:", error.response?.data || error.message);
         toast.error("Failed to update Vehicle. Please try again.");
+      } finally {
+        setIsSubmitting(false);
       }
     };
   
@@ -348,16 +352,26 @@ const AdminVehicleDetails = () => {
   
         {(vehicle.status != "Deleted" && isDoneButtonDisabled) && (
           <div className="w-full max-w-4xl mt-6 flex justify-left">
-            <button
-              className={`bg-green-600 text-white px-6 py-2 rounded hover:bg-green-800 ${
-                !allPendingSectionsVisited ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              disabled={!allPendingSectionsVisited}
-              onClick={handleSubmit}
-            >
-              DONE
-            </button>
-          </div>
+          <button
+            className={`bg-green-600 text-white px-6 py-2 rounded hover:bg-green-800 
+              ${!allPendingSectionsVisited ? "opacity-50 cursor-not-allowed" : ""}
+              ${isSubmitting ? "cursor-not-allowed opacity-75" : ""}`}
+            disabled={!allPendingSectionsVisited || isSubmitting}
+            onClick={handleSubmit}
+          >
+            {isSubmitting ? (
+              <div className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </div>
+            ) : (
+              "DONE"
+            )}
+          </button>
+        </div>
         )}
   
         {isModalOpen && (
