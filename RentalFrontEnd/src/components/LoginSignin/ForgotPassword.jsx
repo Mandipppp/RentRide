@@ -5,20 +5,30 @@ import "react-toastify/dist/ReactToastify.css";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState("");
   const [countdown, setCountdown] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
-    setEmail(e.target.value);
+    const { name, value } = e.target;
+    if (name === "email") {
+      setEmail(value);
+    } else if (name === "role") {
+      setRole(value);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!role) {
+      toast.error("Please select your role");
+      return;
+    }
     setLoading(true);
 
 
     try {
-      await axios.post("http://localhost:3000/api/auth/forgot-password", { email });
+      await axios.post("http://localhost:3000/api/auth/forgot-password", { email, role });
       toast.success("Password reset link has been sent to your email.");
       setCountdown(60);
     } catch (error) {
@@ -55,6 +65,44 @@ const ForgotPassword = () => {
               onChange={handleInputChange}
               required
             />
+          </div>
+          <div className="mt-4">
+            <label className="block text-gray-700 mb-2">Select your role:</label>
+            <div className="flex space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="role"
+                  value="renter"
+                  checked={role === "renter"}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                />
+                Renter
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="role"
+                  value="owner"
+                  checked={role === "owner"}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                />
+                Owner
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="role"
+                  value="admin"
+                  checked={role === "admin"}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                />
+                Admin
+              </label>
+            </div>
           </div>
           {countdown === 0 ? (
             <button

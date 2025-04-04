@@ -128,6 +128,76 @@ const getOwnerVehicles = async (req, res) => {
               message: `Missing required fields: ${missingFields.join(', ')}` 
           });
       }
+
+
+      // Validate numerical fields
+      const numericalFields = {
+        dailyPrice: parseFloat(dailyPrice),
+        mileage: parseFloat(mileage),
+        seats: parseInt(seats),
+        minRentalPeriod: parseInt(minRentalPeriod),
+        maxRentalPeriod: parseInt(maxRentalPeriod)
+      };
+
+      for (const [field, value] of Object.entries(numericalFields)) {
+        if (isNaN(value) || value <= 0) {
+          return res.status(400).json({
+            message: `Invalid ${field}. Must be a positive number.`
+          });
+        }
+      }
+
+      // Validate rental period
+      if (numericalFields.minRentalPeriod >= numericalFields.maxRentalPeriod) {
+        return res.status(400).json({
+          message: 'Minimum rental period must be less than maximum rental period.'
+        });
+      }
+
+      // Validate add-ons
+    let parsedAddOns = [];
+    if (req.body.addOns) {
+      try {
+        parsedAddOns = JSON.parse(addOns);
+        
+        // Validate each add-on
+        for (const addon of parsedAddOns) {
+          if (!addon.name || typeof addon.name !== 'string') {
+            return res.status(400).json({
+              message: 'Each add-on must have a valid name.'
+            });
+          }
+          
+          if (!addon.pricePerDay || isNaN(parseFloat(addon.pricePerDay)) || parseFloat(addon.pricePerDay) <= 0) {
+            return res.status(400).json({
+              message: `Add-on "${addon.name}" must have a valid price per day.`
+            });
+          }
+        }
+      } catch (error) {
+        return res.status(400).json({
+          message: 'Invalid add-ons format. Must be a valid JSON array.'
+        });
+      }
+    }
+
+    // Validate features
+    let parsedFeatures = [];
+    if (req.body.features) {
+      try {
+        parsedFeatures = JSON.parse(features);
+        if (!Array.isArray(parsedFeatures) || !parsedFeatures.every(feature => typeof feature === 'string')) {
+          return res.status(400).json({
+            message: 'Features must be an array of strings.'
+          });
+        }
+      } catch (error) {
+        return res.status(400).json({
+          message: 'Invalid features format. Must be a valid JSON array.'
+        });
+      }
+    }
+
       // Validate required files
       // Check if the registration number is already used
       const currentYear = new Date().getFullYear();
@@ -178,7 +248,7 @@ const getOwnerVehicles = async (req, res) => {
       const imageUrls = req.files.pictures.map(picture => picture.path);
   
       // Parse addOns and features
-      const parsedAddOns = addOns ? JSON.parse(addOns) : [];
+      // const parsedAddOns = addOns ? JSON.parse(addOns) : [];
       // Parse and normalize add-ons
       // let parsedAddOns = [];
       // try {
@@ -190,7 +260,7 @@ const getOwnerVehicles = async (req, res) => {
       // } catch (error) {
       //     return res.status(400).json({ message: 'Invalid add-ons format.' });
       // }
-      const parsedFeatures = features ? JSON.parse(features) : [];
+      // const parsedFeatures = features ? JSON.parse(features) : [];
   
       // Create the vehicle
       const newVehicle = new Vehicle({
@@ -685,17 +755,25 @@ const getOwnerVehicles = async (req, res) => {
       
         // Update addOns prices
         let updatedAddOns = [];
-        if (updatedVehicle.addOns && booking.addOns) {
-          updatedAddOns = booking.addOns.map((addOn) => {
-            const matchingAddOn = updatedVehicle.addOns.find((vAddOn) => vAddOn.name === addOn.name);
+        let removedAddOns = [];
+        if (booking.addOns && booking.addOns.length > 0) {
+          booking.addOns.forEach((bookingAddOn) => {
+            // Check if the add-on still exists in the updated vehicle
+            const matchingAddOn = updatedVehicle.addOns.find(
+              (vAddOn) => vAddOn.name === bookingAddOn.name
+            );
+      
             if (matchingAddOn) {
-              return {
+              // Add-on still exists, update its price
+              updatedAddOns.push({
                 name: matchingAddOn.name,
                 pricePerDay: matchingAddOn.pricePerDay,
                 totalPrice: matchingAddOn.pricePerDay * booking.totalDays,
-              };
+              });
+            } else {
+              // Add-on has been removed
+              removedAddOns.push(bookingAddOn.name);
             }
-            return addOn;
           });
         }
         // Sum up the new add-on prices
@@ -715,11 +793,17 @@ const getOwnerVehicles = async (req, res) => {
           { new: true }
         );
 
+        // Create notification message including removed add-ons info
+  let notificationMessage = `The price for your pending booking has been updated. Your new total cost is Rs. ${updatedAmountDue}.`;
+  if (removedAddOns.length > 0) {
+    notificationMessage += ` The following add-ons are no longer available: ${removedAddOns.join(', ')}.`;
+  }
+
         // Create a notification for the user
       await Notification.create({
         recipientId: booking.renterId,
         recipientModel: "User",
-        message: `The price for your pending booking has changed. Your new total cost is Rs. ${updatedAmountDue}.`,
+        message: notificationMessage,
         type: "booking",
         status: "unread",
         priority: "high",
@@ -731,7 +815,7 @@ const getOwnerVehicles = async (req, res) => {
        const mailOptions = {
         from: process.env.EMAIL_USER,
         to: user.email,
-        subject: `Booking Price Update Notification for Vehicle: ${vehicle.name}`,
+        subject: `Booking Update For: ${vehicle.name}`,
         html: `
           <html>
             <head>
@@ -753,9 +837,22 @@ const getOwnerVehicles = async (req, res) => {
                 </div>
                 <div class="content">
                   <p>Dear <strong>${user.name}</strong>,</p>
-                  <p>The price for your pending booking has been updated. Your new total cost is Rs. ${updatedAmountDue}.</p>
-                  <p>Please review your booking in your account.</p>
+                  <p>Your booking details have been updated:</p>
+                  <div class="price-change">
+                    <p>New Total Cost: Rs. ${updatedAmountDue}</p>
+                  </div>
                 </div>
+                ${removedAddOns.length > 0 ? `
+                  <div class="removed-addons">
+                    <p>The following add-ons are no longer available:</p>
+                    <ul>
+                      ${removedAddOns.map(addon => `<li>${addon}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+                
+                <p>If you wish to continue with the booking, no action is required.</p>
+                <p>If you would like to cancel your booking due to these changes, you can do so from your booking dashboard.</p>
                 <div class="footer">
                   <p>&copy; 2025 RentRide. All rights reserved.</p>
                 </div>

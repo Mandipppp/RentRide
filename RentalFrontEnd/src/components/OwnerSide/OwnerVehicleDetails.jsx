@@ -16,6 +16,8 @@ const EditVehicle = () => {
   const [error, setError] = useState(null);
   const [token, setToken] = useState("");
   const [features, setFeatures] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [newUploads, setNewUploads] = useState([]);
 
   useEffect(() => {
     const access_token = reactLocalStorage.get("access_token");
@@ -39,6 +41,7 @@ const EditVehicle = () => {
           setFormData(data);
           setAddOns(data.addOns || []);
           setFeatures(data.features || []);
+          setImagePreviews(data.imageUrls || []);
         } catch (err) {
           setError("Failed to fetch vehicle details.");
         }
@@ -53,8 +56,22 @@ const EditVehicle = () => {
   };
 
   const handleFileChange = (e) => {
-    const { name } = e.target;
+    const { name, files } = e.target;
     setFormData({ ...formData, [name]: e.target.files });
+
+      // Generate image previews
+    const previewUrls = [];
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        previewUrls.push(reader.result);
+        if (previewUrls.length === files.length) {
+          setImagePreviews(previewUrls);
+          setNewUploads(prev => [...prev, ...Array(files.length).fill(true)]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleAddOnChange = (index, field, value) => {
@@ -139,6 +156,8 @@ const EditVehicle = () => {
       );
       toast.success("Vehicle details updated successfully!");
       setVehicleData(response.data.updatedVehicle);
+      setImagePreviews(response.data.updatedVehicle.imageUrls || []);
+      setNewUploads([]);
     } catch (err) {
       toast.error(
         err.response?.data?.message || "Failed to update vehicle details."
@@ -373,9 +392,20 @@ const EditVehicle = () => {
             type="file"
             name="pictures"
             multiple
+            accept="image/*"
             onChange={handleFileChange}
             className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+            {imagePreviews.map((image, index) => (
+              <img
+                key={index}
+                src={newUploads[index] ? image : `http://localhost:3000/${image}`}
+                alt={`Preview ${index}`}
+                className="w-full h-auto rounded shadow"
+              />
+            ))}
+          </div>
         </div>
 
         <button

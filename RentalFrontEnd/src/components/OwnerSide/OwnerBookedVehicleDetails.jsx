@@ -842,7 +842,7 @@ export default function OwnerBookedVehicleDetails() {
             </button>
           )}
 
-        {contractUrl && (
+        {(contractUrl && (booking.bookingStatus === "Confirmed" || booking.bookingStatus === "Active")) && (
             <button 
               onClick={() => window.open(contractUrl, "_blank")} 
               className="w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-lg"

@@ -33,6 +33,11 @@ export default function UserBookedVehicleDetails() {
   const [reviews, setReviews] = useState([]);
   const [isReviewed, setIsReviewed] = useState(false);
 
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isRequestingRefund, setIsRequestingRefund] = useState(false);
+
   
 
   const [totalCost, setTotalCost] = useState(0);
@@ -87,6 +92,7 @@ export default function UserBookedVehicleDetails() {
 
 const handleSubmitReview = async () => {
   if(token && booking){
+    setIsSubmittingReview(true);
     try {
       const response = await axios.post('http://localhost:3000/api/user/review/post-review', 
         {
@@ -103,7 +109,9 @@ const handleSubmitReview = async () => {
     }catch (err) {
       console.error("Review post Failed", err);
       toast.error(err.response?.data?.message || "Something went wrong.");
-    } 
+    } finally {
+      setIsSubmittingReview(false);
+    }
   }
 };
 
@@ -117,6 +125,7 @@ const handleSubmitReview = async () => {
       return;
     }
     if (token) {
+      setIsRequestingRefund(true);
       try {
         const response = await axios.put(`http://localhost:3000/api/user/booking/request-refund/${bookingId}`,
         {
@@ -136,7 +145,9 @@ const handleSubmitReview = async () => {
       } catch (err) {
           console.error("Refund request failed:", err);
           toast.error(err.response?.data?.message || "Something went wrong.");
-      } 
+      } finally {
+        setIsRequestingRefund(false);
+      }
     }
   };
   
@@ -473,6 +484,7 @@ const handleSubmitReview = async () => {
       toast.error("Please accept all terms before continuing.");
       return;
     }
+    setIsCancelling(true);
 
     setIsCancelModelOpen(false);
     try {
@@ -492,6 +504,8 @@ const handleSubmitReview = async () => {
     } catch (error) {
       console.error("Cancellation failed:", error.response?.data || error.message);
       toast.error("Failed to cancel booking. Please try again.");
+    } finally {
+      setIsCancelling(false);
     }
   }
 
@@ -544,7 +558,7 @@ const handleSubmitReview = async () => {
     if (!booking) return;
     try {
       const amountToPay = parseFloat((booking.amountDue * 100).toFixed(2));
-      console.log("pay:",amountToPay);
+      // console.log("pay:",amountToPay);
       const response = await axios.post("http://localhost:3000/api/auth/payment/initiate", {
         amount: amountToPay, // Amount in paisa
         purchase_order_id: bookingId,
@@ -669,13 +683,24 @@ const handleSubmitReview = async () => {
         />
       </div>
 
-        {/* Submit Button */}
+        {/* Review Submit Button */}
         <div className="mt-6 flex justify-end">
           <button
             className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-md shadow-md transform transition duration-300 hover:scale-105"
             onClick={handleSubmitReview}
+            disabled={isSubmittingReview}
           >
-            Submit Review
+            {isSubmittingReview ? (
+            <div className="flex items-center justify-center">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Submitting...
+            </div>
+          ) : (
+            "Submit Review"
+          )}
           </button>
         </div>
       </div>}
@@ -1057,8 +1082,19 @@ const handleSubmitReview = async () => {
                             <button 
                                 className="bg-black text-white px-4 py-2 rounded-lg"
                                 onClick={handleRefundRequest}
+                                disabled={isRequestingRefund}
                             >
-                                Request Refund
+                                {isRequestingRefund ? (
+                                  <div className="flex items-center justify-center">
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Processing...
+                                  </div>
+                                ) : (
+                                  "Request Refund"
+                                )}
                             </button>
                         </div>
                     </div>
@@ -1110,8 +1146,22 @@ const handleSubmitReview = async () => {
             </div>}
 
             {(booking.bookingStatus != "Active" && booking.bookingStatus != "Completed" && booking.bookingStatus != "Cancelled") && <div>
-              <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={handleCancelBooking}>
-                Cancel Booking
+              <Button 
+                className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" 
+                onClick={handleCancelBooking}
+                disabled={isCancelling}
+                >
+                {isCancelling ? (
+                  <div className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Cancelling...
+                  </div>
+                ) : (
+                  "Cancel Booking"
+                )}
             </Button>
               </div>}
           </div>

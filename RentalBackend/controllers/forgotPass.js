@@ -6,15 +6,36 @@ const bcrypt = require("bcrypt");
 
 
 exports.requestPasswordReset = async (req, res) => {
-  const { email } = req.body;
+  const { email, role } = req.body;
+  // console.log("Requesting password reset for email:", email, "Role:", role);
 
   try {
     // Find user or owner by email
-    let user = await User.findOne({ email });
-    let owner = await Owner.findOne({ email });
+    if(!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    if(!role) {
+      return res.status(400).json({ message: "Role is required" });
+    }
+
+    let user = null;
+    let owner = null;
+
+    if(role == 'renter') {
+      user = await User.findOne({ email, role: 'renter' });
+    }
+
+    if(role == 'admin') {
+      user = await User.findOne({ email, role: 'admin' });
+    }
+
+    if(role == 'owner') {
+      owner = await Owner.findOne({ email });
+    }
 
     if (!user && !owner) {
-      return res.status(404).json({ message: "User or Owner not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // Determine if it's a user or an owner
