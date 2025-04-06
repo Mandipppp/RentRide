@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 
 const OwnerVehicles = () => {
   const [vehicles, setVehicles] = useState([]); // State to store the vehicles
+  const [reviews, setReviews] = useState([]); // State to store the reviews 
   const [owner, setOwner] = useState(null); // Separate state for owner details
   const [loading, setLoading] = useState(true); // State to track loading status
   const [error, setError] = useState(null); // State to track errors
@@ -45,6 +46,28 @@ const OwnerVehicles = () => {
     };
 
     fetchVehicles();
+  }, []);
+
+  useEffect(() => {
+    // Function to fetch the reviews
+    const fetchReviews = () => {
+      const token = reactLocalStorage.get("access_token");
+      axios
+        .get("http://localhost:3000/api/owner/myreviews", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((response) => {
+          setReviews(response.data.data|| []);
+          // console.log("Fetched reviews:", response.data.data);
+        })
+        .catch((err) => {
+          console.error('Error fetching reviews:', err);
+          // toast.error(err.response?.data?.message || 'Failed to fetch reviews.'); 
+        });
+    };
+    fetchReviews();
   }, []);
 
   // Function to handle vehicle deletion
@@ -120,6 +143,11 @@ const OwnerVehicles = () => {
 
   const handleDocumentsClick = (vehicleId) => {
     navigate(`/ownervehicledocuments/${vehicleId}`); // Navigate to the user's details page
+  };
+
+  const getVehicleRating = (vehicleId, reviews) => {
+    const review = reviews.find(review => review.vehicleId === vehicleId);
+    return review ? review.averageRating : 0;
   };
 
   if (loading) {
@@ -213,7 +241,11 @@ const OwnerVehicles = () => {
                 <CardFooter className='flex items-center'>
                   <div className="flex items-center space-x-1 text-yellow-500">
                     <i className="fa-solid fa-star"></i>
-                    <span className="text-lg font-bold">{vehicle.rating || 'N/A'}</span>
+                    <span className="text-lg font-bold">
+                      {getVehicleRating(vehicle._id, reviews) > 0 
+                        ? getVehicleRating(vehicle._id, reviews).toFixed(1) 
+                        : 'No reviews yet'}
+                    </span>
                   </div>
                   <div className="mt-0 flex space-x-4 justify-end md:ml-auto">
                     <Button variant="secondary" onClick={() => handleDocumentsClick(vehicle._id)}>Edit Vehicle Documents</Button>

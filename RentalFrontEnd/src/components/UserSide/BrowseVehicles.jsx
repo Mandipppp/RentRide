@@ -508,7 +508,7 @@ export default function BrowseVehicles() {
                 Booking Requested
               </p>
             )}
-            { vehicle.distance && <p className="text-xl text-yellow-500 font-bold"> {(vehicle.distance/1000).toFixed(2)} <span className="text-sm font-normal">Km away</span></p>}
+            { (vehicle.distance!==null) && <p className="text-xl text-yellow-500 font-bold"> {(vehicle.distance/1000).toFixed(2)} <span className="text-sm font-normal">Km away</span></p>}
 
               <div className="flex justify-between items-center">
                 <div>

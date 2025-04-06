@@ -5,11 +5,12 @@ const { getOwnerVehicles, updateVehicle, addVehicle, deleteVehicle, disableVehic
 const { getVehicleById } = require('../controllers/adminVehicleController');
 const uploadOwner = require('../middlewares/uploadMiddleware');
 const multer = require('multer');
-const { getOwnerReviews } = require('../controllers/userReviewController');
+const { getOwnerReviews, getAllOwnerReviews } = require('../controllers/userReviewController');
 const router = express.Router();
 
 router.get("/me", authenticate, getOwnerProfile);
 router.get("/getmystats", authenticate, getOwnerStats);
+router.get("/myreviews", authenticate, getAllOwnerReviews);
 router.put(
     '/me',
     authenticate,

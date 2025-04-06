@@ -27,8 +27,8 @@ exports.getOwnerBookings = async (req, res) => {
       confirmed: bookings.filter(b => b.bookingStatus === "Confirmed"),
       active: bookings.filter(b => b.bookingStatus === "Active"),
       completed: bookings.filter(b => b.bookingStatus === "Completed"),
-      cancelled: bookings.filter(b => (b.bookingStatus === "Cancelled" && (b.paymentStatus === "Pending" || b.paymentStatus === "Refunded"))),
-      refunds: bookings.filter(b => (b.bookingStatus === "Cancelled" && (b.paymentStatus === "Partial" || b.paymentStatus === "Full"))),
+      cancelled: bookings.filter(b => (b.bookingStatus === "Cancelled" && (b.paymentStatus === "Pending" || b.paymentStatus === "Refunded" || b.paymentMethod === "Cash"))),
+      refunds: bookings.filter(b => (b.bookingStatus === "Cancelled" && (b.paymentStatus === "Partial" || b.paymentStatus === "Full") && b.paymentMethod !== "Cash")),
     };
 
     if (!bookings.length) {

@@ -635,6 +635,7 @@ const AddVehicleForm = () => {
                 type="file"
                 name="registrationCert"
                 id="registrationCert"
+                accept="image/*"
                 onChange={handleFileChange}
                 className="w-full border border-gray-300 p-2 rounded-md"
                 required
@@ -647,6 +648,7 @@ const AddVehicleForm = () => {
                 type="file"
                 name="insuranceCert"
                 id="insuranceCert"
+                accept="image/*"
                 onChange={handleFileChange}
                 className="w-full border border-gray-300 p-2 rounded-md"
                 required
@@ -660,6 +662,7 @@ const AddVehicleForm = () => {
                 name="pictures"
                 id="pictures"
                 onChange={handleFileChange}
+                accept="image/*"
                 className="w-full border border-gray-300 p-2 rounded-md"
                 multiple
                 required

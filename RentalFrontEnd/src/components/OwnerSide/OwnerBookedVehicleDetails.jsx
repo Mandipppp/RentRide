@@ -28,6 +28,12 @@ export default function OwnerBookedVehicleDetails() {
   const [searchParams] = useSearchParams();
   const [receiptUrl, setReceiptUrl] = useState(null);
   const [contractUrl, setContractUrl] = useState(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showCashPaymentDialog, setShowCashPaymentDialog] = useState(false);
+  const [showConfirmBookingDialog, setShowConfirmBookingDialog] = useState(false);
+  const [showAcceptDialog, setShowAcceptDialog] = useState(false);
+  const [showStartRentalDialog, setShowStartRentalDialog] = useState(false);
+  const [showEndRentalDialog, setShowEndRentalDialog] = useState(false);
   
   
   const [totalCost, setTotalCost] = useState(0);
@@ -316,6 +322,10 @@ export default function OwnerBookedVehicleDetails() {
     );
   };
 
+  const showAcceptConfirmation = () => {
+    setShowAcceptDialog(true);
+  };
+
   const handleAcceptBooking = async () => {
     try {
       const response = await axios.put('http://localhost:3000/api/owner/booking/acceptBooking', {
@@ -328,10 +338,15 @@ export default function OwnerBookedVehicleDetails() {
       toast.success("Booking accepted successfully");
       // console.log('Booking updated successfully:', response.data);
       setBooking(response.data.booking);
+      setShowAcceptDialog(false);
     } catch (error) {
       console.error('Error accepting booking:', error.response?.data || error.message);
       toast.error("Error accepting booking.");
     }
+  };
+
+  const showConfirmBookingConfirmation = () => {
+    setShowConfirmBookingDialog(true);
   };
 
   const handleConfirmBooking = async () => {
@@ -346,10 +361,15 @@ export default function OwnerBookedVehicleDetails() {
       toast.success("Booking confirmed successfully");
       // console.log('Booking updated successfully:', response.data);
       setBooking(response.data.booking);
+      setShowConfirmBookingDialog(false);
     } catch (error) {
       console.error('Error accepting booking:', error.response?.data || error.message);
       toast.error("Error confirming booking.");
     }
+  };
+
+  const showStartRentalConfirmation = () => {
+    setShowStartRentalDialog(true);
   };
 
   const handleStartRental = async () => {
@@ -363,11 +383,16 @@ export default function OwnerBookedVehicleDetails() {
       toast.success("Rental has started.");
       // console.log('Starting rental:', response.data);
       setBooking(response.data.booking);
+      setShowStartRentalDialog(false);
 
     } catch (error) {
       console.error('Error starting rental:', error.response?.data || error.message);
       toast.error(error.response?.data?.message || "Error starting rental.");
     }
+  };
+
+  const showCashPaymentConfirmation = () => {
+    setShowCashPaymentDialog(true);
   };
 
   const handleCashPayment = async () => {
@@ -381,10 +406,15 @@ export default function OwnerBookedVehicleDetails() {
       toast.success("Selected Cash as mode of payment.");
       // console.log('Starting rental:', response.data);
       setBooking(response.data.booking);
+      setShowCashPaymentDialog(false);
     } catch (error) {
       console.error('Error starting rental:', error.response?.data || error.message);
       toast.error(error.response?.data?.message || "Error setting mode of payment to cash.");
     }
+  };
+
+  const showEndRentalConfirmation = () => {
+    setShowEndRentalDialog(true);
   };
 
   const handleCloseRental = async () => {
@@ -398,11 +428,15 @@ export default function OwnerBookedVehicleDetails() {
       toast.success("Rental has closed.");
       // console.log('Closed rental:', response.data);
       setBooking(response.data.booking);
-
+      setShowEndRentalDialog(false);
     } catch (error) {
       console.error('Error closing rental:', error.response?.data || error.message);
       toast.error(error.response?.data?.message || "Error closing rental.");
     }
+  };
+
+  const showCancelConfirmation = () => {
+    setShowCancelDialog(true);
   };
 
   const handleCancelBooking = async () => {
@@ -416,6 +450,7 @@ export default function OwnerBookedVehicleDetails() {
       toast.success("Booking cancelled successfully");
       // console.log('Booking updated successfully:', response.data);
       setBooking(response.data.booking);
+      setShowCancelDialog(false);
     } catch (error) {
       console.error('Error cancelling booking:', error.response?.data || error.message);
       toast.error("Error cancelling booking.");
@@ -732,7 +767,7 @@ export default function OwnerBookedVehicleDetails() {
             {/* Bill Section */}
             <div className="bg-gray-50 p-6 shadow-md rounded-lg mt-6">
               <h3 className="font-semibold text-lg">Vehicle Cost</h3>
-              <p className="mt-2 flex justify-between "><span>{calculateDaysDifference(booking.startDate, booking.endDate)} Days - {booking.vehicleId.dailyPrice} NPR/day</span> <span>Rs {baseCost}</span></p>
+              <p className="mt-2 flex justify-between "><span>{calculateDaysDifference(booking.startDate, booking.endDate)} Days - {booking.bookingStatus==="Pending" ? booking.vehicleId.dailyPrice : baseCost/calculateDaysDifference(booking.startDate, booking.endDate)} NPR/day</span> <span>Rs {baseCost}</span></p>
               
               <h3 className="font-semibold text-lg mt-4">Add Ons</h3>
               {selectedAddOns.length > 0 ? (selectedAddOns.map((addon, index) => (
@@ -768,10 +803,10 @@ export default function OwnerBookedVehicleDetails() {
           
             {booking.bookingStatus==="Pending" && ( 
               <div>
-                <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleAcceptBooking()}>
+                <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={showAcceptConfirmation}>
                     Accept Booking
                 </Button>
-                <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleCancelBooking()}>
+                <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={showCancelConfirmation}>
                     Decline Booking
                 </Button>
               </div>
@@ -779,10 +814,10 @@ export default function OwnerBookedVehicleDetails() {
 
 {booking.bookingStatus==="Accepted" && ( 
               <div>
-                <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleConfirmBooking()}>
+                <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={showConfirmBookingConfirmation}>
                     Direct Confirm Booking
                 </Button>
-                <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleCancelBooking()}>
+                <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={showCancelConfirmation}>
                     Decline Booking
                 </Button>
               </div>
@@ -796,7 +831,7 @@ export default function OwnerBookedVehicleDetails() {
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-green-600 hover:bg-green-700"
               }`}
-                onClick={()=>handleStartRental()}
+                onClick={showStartRentalConfirmation}
                 disabled={isButtonDisabled}>
                     Start Rental
                 </button>
@@ -806,14 +841,14 @@ export default function OwnerBookedVehicleDetails() {
                     *You can only start the rental within one day after the start date.
                   </p>
                 )}
-                <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleCancelBooking()}>
+                <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onClick={showCancelConfirmation}>
                     Decline Booking
                 </Button>
               </div>
           )}
 
         {((booking.bookingStatus==="Confirmed" || booking.bookingStatus==="Active") && (booking.paymentStatus==="Pending")) && (
-          <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={()=>handleCashPayment()}>
+          <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" onClick={showCashPaymentConfirmation}>
             Set Payment to CASH
           </Button>
         )} 
@@ -826,7 +861,7 @@ export default function OwnerBookedVehicleDetails() {
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-green-600 hover:bg-green-700"
                 }`}
-                onClick={()=>handleCloseRental()}
+                onClick={showEndRentalConfirmation}
                 disabled={isCloseRental}>
                     Close Rental
                 </button>
@@ -885,6 +920,259 @@ export default function OwnerBookedVehicleDetails() {
 
        
       </div>
+      {showCancelDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-100 max-w-[90%] shadow-xl">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Confirm Cancellation
+            </h3>
+            
+            <div className="bg-yellow-50 p-4 rounded-md mb-4">
+              <p className="text-yellow-700">
+                <i className="fas fa-exclamation-triangle mr-2"></i>
+                Are you sure you want to cancel this booking?
+              </p>
+              <p className="text-sm text-yellow-600 mt-2">
+                This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowCancelDialog(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                No, Keep Booking
+              </button>
+              <button
+                onClick={handleCancelBooking}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Yes, Cancel Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCashPaymentDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-100 max-w-[90%] shadow-xl">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Confirm Payment Mode
+            </h3>
+            
+            <div className="bg-yellow-50 p-4 rounded-md mb-4">
+              <p className="text-yellow-700">
+                <i className="fas fa-money-bill mr-2"></i>
+                Are you sure you want to set the payment mode to cash?
+              </p>
+              <p className="text-sm text-yellow-600 mt-2">
+                This means you will collect the payment in cash from the renter.
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowCashPaymentDialog(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCashPayment}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              >
+                Confirm Cash Payment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showConfirmBookingDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-100 max-w-[90%] shadow-xl">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Confirm Direct Booking
+            </h3>
+            
+            <div className="bg-yellow-50 p-4 rounded-md mb-4">
+              <p className="text-yellow-700">
+                <i className="fas fa-exclamation-triangle mr-2"></i>
+                Are you sure you want to directly confirm this booking?
+              </p>
+              <p className="text-sm text-yellow-600 mt-2">
+                This will skip the payment verification process and confirm the booking immediately.
+              </p>
+            </div>
+
+            <div className="flex flex-col space-y-2 mb-4">
+              <p className="text-gray-700 font-medium">Booking Details:</p>
+              <p className="text-sm text-gray-600">Total Amount: Rs {totalCost}</p>
+              <p className="text-sm text-gray-600">Duration: {calculateDaysDifference(booking.startDate, booking.endDate)} days</p>
+              {selectedAddOns.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600">Selected Add-ons:</p>
+                  <ul className="text-sm text-gray-600 list-disc list-inside">
+                    {selectedAddOns.map((addon, index) => (
+                      <li key={index}>{addon.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowConfirmBookingDialog(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmBooking}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              >
+                Confirm Direct Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAcceptDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-100 max-w-[90%] shadow-xl">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Confirm Booking Acceptance
+            </h3>
+            
+            <div className="bg-yellow-50 p-4 rounded-md mb-4">
+              <p className="text-yellow-700">
+                <i className="fas fa-check-circle mr-2"></i>
+                Are you sure you want to accept this booking?
+              </p>
+              <p className="text-sm text-yellow-600 mt-2">
+                The renter will be notified and can proceed with payment.
+              </p>
+            </div>
+
+            <div className="flex flex-col space-y-2 mb-4">
+              <p className="text-gray-700 font-medium">Booking Details:</p>
+              <p className="text-sm text-gray-600">Total Amount: Rs {totalCost}</p>
+              <p className="text-sm text-gray-600">Duration: {calculateDaysDifference(booking.startDate, booking.endDate)} days</p>
+              {selectedAddOns.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600">Approved Add-ons:</p>
+                  <ul className="text-sm text-gray-600 list-disc list-inside">
+                    {selectedAddOns.map((addon, index) => (
+                      <li key={index}>{addon.name} - Rs {addon.pricePerDay}/day</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowAcceptDialog(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAcceptBooking}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              >
+                Confirm Acceptance
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add these with your other modal dialogs */}
+      {showStartRentalDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-100 max-w-[90%] shadow-xl">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Confirm Start Rental
+            </h3>
+            
+            <div className="bg-yellow-50 p-4 rounded-md mb-4">
+              <p className="text-yellow-700">
+                <i className="fas fa-car mr-2"></i>
+                Are you sure you want to start this rental?
+              </p>
+              <p className="text-sm text-yellow-600 mt-2">
+                Please ensure you have:
+                <ul className="list-disc list-inside mt-2">
+                  <li>Verified the renter's identity</li>
+                  <li>Checked the vehicle condition</li>
+                  <li>Reviewed all terms with the renter</li>
+                </ul>
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowStartRentalDialog(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleStartRental}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              >
+                Start Rental
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEndRentalDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-100 max-w-[90%] shadow-xl">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Confirm End Rental
+            </h3>
+            
+            <div className="bg-yellow-50 p-4 rounded-md mb-4">
+              <p className="text-yellow-700">
+                <i className="fas fa-flag-checkered mr-2"></i>
+                Are you sure you want to end this rental?
+              </p>
+              <p className="text-sm text-yellow-600 mt-2">
+                Please ensure you have:
+                <ul className="list-disc list-inside mt-2">
+                  <li>Inspected the vehicle for damages</li>
+                  <li>Verified the fuel level</li>
+                  <li>Collected all payments</li>
+                  <li>Received the vehicle keys</li>
+                </ul>
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowEndRentalDialog(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCloseRental}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              >
+                End Rental
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -970,7 +970,7 @@ const handleSubmitReview = async () => {
             {/* Bill Section */}
             <div className="bg-gray-50 p-6 shadow-md rounded-lg mt-6">
               <h3 className="font-semibold text-lg">Vehicle Cost</h3>
-              <p className="mt-2 flex justify-between "><span>{calculateDaysDifference(booking.startDate, booking.endDate)} Days - {booking.vehicleId.dailyPrice} NPR/day</span> <span>Rs {baseCost}</span></p>
+              <p className="mt-2 flex justify-between "><span>{calculateDaysDifference(booking.startDate, booking.endDate)} Days - {booking.bookingStatus==="Pending" ? booking.vehicleId.dailyPrice : baseCost/calculateDaysDifference(booking.startDate, booking.endDate)} NPR/day</span> <span>Rs {baseCost}</span></p>
               
               <h3 className="font-semibold text-lg mt-4">Add Ons</h3>
               {selectedAddOns.length > 0 ? (selectedAddOns.map((addon, index) => (

@@ -1,4 +1,5 @@
 const Review = require('../models/review');
+const Vehicle = require('../models/vehicle');
 const Booking = require('../models/Booking'); // Import the Booking model
 
 // POST method to allow users to post a review
@@ -117,5 +118,58 @@ exports.getOwnerReviews = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching reviews' });
+  }
+};
+
+exports.getAllOwnerReviews = async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+
+    // Get all active vehicles for the owner
+    const ownerVehicles = await Vehicle.find({ 
+      ownerId, 
+      status: { $ne: 'Deleted' } 
+    });
+
+    if (!ownerVehicles || ownerVehicles.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No vehicles found for this owner'
+      });
+    }
+
+    // Get average rating for each vehicle
+    const vehicleRatings = await Promise.all(ownerVehicles.map(async (vehicle) => {
+      const approvedReviews = await Review.find({
+        vehicleId: vehicle._id,
+        status: 'Approved'
+      });
+
+      const totalRatings = approvedReviews.reduce((sum, review) => sum + review.rating, 0);
+      const averageRating = approvedReviews.length > 0 
+        ? (totalRatings / approvedReviews.length).toFixed(1) 
+        : 0;
+
+      return {
+        vehicleId: vehicle._id,
+        vehicleName: vehicle.name,
+        registrationNumber: vehicle.registrationNumber,
+        totalReviews: approvedReviews.length,
+        averageRating: parseFloat(averageRating)
+      };
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: vehicleRatings
+    });
+
+  } catch (error) {
+    console.error('Error fetching vehicle ratings:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching vehicle ratings',
+      error: error.message
+    });
   }
 };
