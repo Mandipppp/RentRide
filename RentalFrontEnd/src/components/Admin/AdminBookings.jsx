@@ -97,7 +97,7 @@ const AdminBookings = () => {
   };
 
   const handleBookingClick = (bookingId) => {
-    navigate(`/adminbookings/${bookingId}`);
+    navigate(`/adminbooking/${bookingId}`);
   };
 
   return (
@@ -186,7 +186,9 @@ const AdminBookings = () => {
                 <td className="py-3 px-4">{new Date(booking.endDate).toLocaleDateString()}</td>
                 <td className={`py-3 px-4 font-medium text-${
                   booking.bookingStatus === "Pending" ? "yellow" :
-                  booking.bookingStatus === "Confirmed" ? "green" : "red"
+                  booking.bookingStatus === "Confirmed" ? "green" :
+                  booking.bookingStatus === "Completed" ? "blue" :
+                  booking.bookingStatus === "Active" ? "green" : "red"
                 }-500`}>
                   {booking.bookingStatus}
                 </td>

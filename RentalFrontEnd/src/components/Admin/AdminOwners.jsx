@@ -173,10 +173,6 @@ const AdminOwners = () => {
       console.log(`Blocking user with ID: ${userId}`);
     };
   
-    const handleSendResetPassword = (userId) => {
-      console.log(`Sending reset password link to user with ID: ${userId}`);
-    };
-  
     const handleCopyId = (userId) => {
       navigator.clipboard.writeText(userId).then(() => {
         toast.success("User ID copied to clipboard!");
@@ -301,12 +297,6 @@ const AdminOwners = () => {
                           onClick={() => openBlockModal(owner)}
                         >
                           {owner.blockStatus==="active" ? "Block Owner" : "Unblock Owner"}
-                        </li>
-                        <li
-                          className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
-                          onClick={() => handleSendResetPassword(owner._id)}
-                        >
-                          Send Reset Password Link
                         </li>
                         <li
                           className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"

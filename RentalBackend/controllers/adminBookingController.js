@@ -94,3 +94,54 @@ exports.getAllBookings = async (req, res) => {
     }
   };
   
+
+exports.getBooking = async (req, res) => {
+  try {
+      const { bookingId } = req.params;
+
+      // Check if bookingId is valid
+      if (!bookingId) {
+          return res.status(400).json({
+              success: false,
+              message: 'Booking ID is required'
+          });
+      }
+
+      // Fetch the booking with populated fields
+      const booking = await Booking.findById(bookingId)
+          .populate({
+              path: 'renterId',
+              select: 'name email contactNumber'
+          })
+          .populate({
+              path: 'ownerId',
+              select: 'name email contactNumber'
+          })
+          .populate({
+              path: 'vehicleId',
+              select: 'name registrationNumber type category price images'
+          });
+
+      // Check if booking exists
+      if (!booking) {
+          return res.status(404).json({
+              success: false,
+              message: 'Booking not found'
+          });
+      }
+
+      // Return the booking details
+      return res.status(200).json({
+          success: true,
+          data: booking
+      });
+
+  } catch (error) {
+      console.error('Error fetching booking details:', error.message);
+      return res.status(500).json({
+          success: false,
+          message: 'Server error. Please try again later.',
+          error: error.message
+      });
+  }
+};

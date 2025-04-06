@@ -50,6 +50,7 @@ import AdminAdmins from "./components/Admin/AdminAdmins";
 import LocationInput from "./components/UserSide/LocationInput";
 import VehicleForm from "./components/UserSide/VehicleForm";
 import OwnerVehicleReviews from "./components/OwnerSide/OwnerVehicleReviews";
+import AdminBookingDetails from "./components/Admin/AdminBookingDetails";
 
 
 
@@ -132,6 +133,7 @@ const App = () => {
         <Route path="/adminvehicles/:id" element={<AdminVehicleDetails />} />
 
         <Route path="/adminbooking" element={<AdminBookings />} />
+        <Route path="/adminbooking/:bookingId" element={<AdminBookingDetails />} />
         <Route path="/adminpayment" element={<AdminPayments />} />
         <Route path="/adminreviews" element={<AdminReviews />} />
         <Route path="/adminpages" element={<AdminPages />} />
