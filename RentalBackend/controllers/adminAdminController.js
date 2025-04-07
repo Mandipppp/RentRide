@@ -7,6 +7,7 @@ const Contact = require('../models/contact');
 const Vehicle = require('../models/vehicle');
 const Notification = require('../models/notification');
 const KYC = require('../models/kyc');
+const Review = require('../models/review');
 
 
 const bcrypt = require('bcrypt');
@@ -437,9 +438,14 @@ exports.setupPassword = async (req, res) => {
     try {
       // Get pending vehicle document verifications
       const pendingVehicles = await Vehicle.countDocuments({
-        $or: [
-          { 'registrationCertificate.status': 'Pending' },
-          { 'insuranceCertificate.status': 'Pending' }
+        $and: [
+          {
+            $or: [
+              { 'registrationCertificate.status': 'Pending' },
+              { 'insuranceCertificate.status': 'Pending' }
+            ]
+          },
+          { status: { $ne: 'Deleted' } }  // Exclude deleted vehicles
         ]
       });
   
@@ -456,6 +462,10 @@ exports.setupPassword = async (req, res) => {
       const pendingQueries = await Contact.countDocuments({
         status: 'Pending'
       });
+
+      const pendingReviews = await Review.countDocuments({
+        status: 'Pending'
+      });
   
       res.status(200).json({
         success: true,
@@ -463,7 +473,8 @@ exports.setupPassword = async (req, res) => {
           pendingVehicles,
           pendingKYC,
           pendingQueries,
-          totalPending: pendingVehicles + pendingKYC + pendingQueries
+          pendingReviews,
+          totalPending: pendingVehicles + pendingKYC + pendingQueries + pendingReviews
         }
       });
   

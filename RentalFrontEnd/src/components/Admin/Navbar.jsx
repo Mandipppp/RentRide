@@ -22,6 +22,7 @@ const Navbar = () => {
     pendingKYC: 0,
     pendingVehicles: 0,
     pendingQueries: 0,
+    pendingReviews: 0,
     totalPending: 0
   });
 
@@ -176,7 +177,8 @@ const Navbar = () => {
       badgeColor: "bg-red-500" },
     { name: "Booking", path: "/adminbooking" },
     { name: "Payments", path: "/adminpayment" },
-    { name: "Reviews", path: "/adminreviews" },
+    { name: "Reviews", path: "/adminreviews", badge: pendingCounts.pendingReviews > 0 ? pendingCounts.pendingReviews : null,
+      badgeColor: "bg-red-500" },
     { name: "Pages", path: "/adminpages" },
     { name: "Contact Us", path: "/admincontactpage" },
     { name: "Queries", path: "/admincontactqueries", badge: pendingCounts.pendingQueries > 0 ? pendingCounts.pendingQueries : null,

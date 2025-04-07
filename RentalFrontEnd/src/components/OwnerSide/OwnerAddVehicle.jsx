@@ -52,22 +52,30 @@ const AddVehicleForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // if (name === "features") {
-    //   // Convert comma-separated values into an array
-    //   const featuresArray = value.split(",")
-    //   .map((feature) => feature.trim())
-    //   // .filter(feature => feature !== '');
-      
-    //   setVehicleData({
-    //     ...vehicleData,
-    //     [name]: featuresArray,
-    //   });
-    // } else {
-      setVehicleData({
-        ...vehicleData,
+    
+    // setVehicleData({
+    //   ...vehicleData,
+    //   [name]: value,
+    // });
+
+    if (name === 'type') {
+      // Determine category based on vehicle type
+      const category = ['Car', 'SUV', 'Truck', 'Van'].includes(value) 
+        ? 'Four-Wheeler' 
+        : 'Two-Wheeler';
+        
+      setVehicleData(prev => ({
+        ...prev,
         [name]: value,
-      });
-    // }
+        category: category // Auto-set the category
+      }));
+    } else {
+      setVehicleData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+    
   };
 
 
@@ -286,7 +294,7 @@ const AddVehicleForm = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="form-group">
+              {/* <div className="form-group">
                 <label htmlFor="category" className="block text-lg font-medium text-gray-700">Category</label>
                 <select
                   name="category"
@@ -299,8 +307,14 @@ const AddVehicleForm = () => {
                   <option value="Two-Wheeler">Two-Wheeler</option>
                   <option value="Four-Wheeler">Four-Wheeler</option>
                 </select>
+              </div> */}
+              <div className="form-group">
+                <label className="block text-lg font-medium text-gray-700">Category</label>
+                <div className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50">
+                  {vehicleData.category}
+                </div>
               </div>
-
+              
               <div className="form-group">
                 <label htmlFor="fuel" className="block text-lg font-medium text-gray-700">Fuel Type</label>
                 <select
