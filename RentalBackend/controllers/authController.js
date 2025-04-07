@@ -6,6 +6,21 @@ const KYC = require('../models/kyc');
 
 const nodemailer = require("nodemailer");
 
+const validateEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validatePassword = (password) => {
+  // At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  return passwordRegex.test(password);
+};
+
+const validatePhone = (phone) => {
+  const phoneRegex = /^[0-9]{10}$/;
+  return phoneRegex.test(phone);
+};
 
 // Generate a random token for email verification
 const generateVerificationToken = (email, type) => {
@@ -118,6 +133,41 @@ exports.registerUser = async (req, res) => {
   const { name, contactNumber, email, password, role } = req.body;
 
   try {
+    if (!name || !email || !password) {
+      return res.status(400).json({ 
+        error: 'All fields are required' 
+      });
+    }
+
+    // Validate name
+    if (name.length < 2 || name.length > 50) {
+      return res.status(400).json({ 
+        error: 'Name must be between 2 and 50 characters' 
+      });
+    }
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({ 
+        error: 'Please enter a valid email address' 
+      });
+    }
+
+    // Check if email already exists
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({ 
+        error: 'Email already registered' 
+      });
+    }
+
+    // Validate password strength
+    if (!validatePassword(password)) {
+      return res.status(400).json({ 
+        error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character' 
+      });
+    }
+
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       name,
@@ -138,24 +188,77 @@ exports.registerOwner = async (req, res) => {
   const { name, email, password, contactNumber, walletId } = req.body;
 
   try {
+    if (!name || !email || !password || !contactNumber || !walletId) {
+      return res.status(400).json({ message: 'All fields are required.' });
+    }
+
+    // Name validation
+    if (name.length < 2 || name.length > 50) {
+      return res.status(400).json({ message: 'Name must be between 2 and 50 characters.' });
+    }
+    if (!/^[a-zA-Z\s]*$/.test(name)) {
+      return res.status(400).json({ message: 'Name can only contain letters and spaces.' });
+    }
+    if (!validateEmail(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address.' });
+    }
+
+    // Contact number validation
+    if (!validatePhone(contactNumber)) {
+      return res.status(400).json({ message: 'Please enter a valid 10-digit phone number.' });
+    }
+
+    // Wallet ID validation
+    if (!validatePhone(walletId)) {
+      return res.status(400).json({ message: 'Wallet ID must be exactly 10 digits.' });
+    }
+
+    // Password validation
+    if (!validatePassword(password)) {
+      return res.status(400).json({ 
+        message: 'Password must contain at least 8 characters, including uppercase, lowercase, number and special character.' 
+      });
+    }
+
     // Validate required files
     if (!req.files.profilePicture || !req.files.citizenshipFront || !req.files.citizenshipBack) {
       return res.status(400).json({ message: 'All document files are required.' });
     }
     
-    // Check file size for profile picture
-    if (req.files.profilePicture[0].size > 5 * 1024 * 1024) { // 5MB limit
-      return res.status(400).json({ message: 'Upload image less than 5MB' });
-    }
+    // // Check file size for profile picture
+    // if (req.files.profilePicture[0].size > 5 * 1024 * 1024) { // 5MB limit
+    //   return res.status(400).json({ message: 'Upload image less than 5MB' });
+    // }
 
-    // Check file size for citizenship front
-    if (req.files.citizenshipFront[0].size > 5 * 1024 * 1024) { // 5MB limit
-      return res.status(400).json({ message: 'Upload image less than 5MB' });
-    }
+    // // Check file size for citizenship front
+    // if (req.files.citizenshipFront[0].size > 5 * 1024 * 1024) { // 5MB limit
+    //   return res.status(400).json({ message: 'Upload image less than 5MB' });
+    // }
 
-    // Check file size for citizenship back
-    if (req.files.citizenshipBack[0].size > 5 * 1024 * 1024) { // 5MB limit
-      return res.status(400).json({ message: 'Upload image less than 5MB' });
+    // // Check file size for citizenship back
+    // if (req.files.citizenshipBack[0].size > 5 * 1024 * 1024) { // 5MB limit
+    //   return res.status(400).json({ message: 'Upload image less than 5MB' });
+    // }
+
+    // File type validation
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    const files = [
+      { name: 'Profile Picture', file: req.files.profilePicture[0] },
+      { name: 'Citizenship Front', file: req.files.citizenshipFront[0] },
+      { name: 'Citizenship Back', file: req.files.citizenshipBack[0] }
+    ];
+
+    for (const file of files) {
+      if (!allowedTypes.includes(file.file.mimetype)) {
+        return res.status(400).json({ 
+          message: `${file.name} must be a JPG, JPEG, or PNG file.` 
+        });
+      }
+      if (file.file.size > 5 * 1024 * 1024) {
+        return res.status(400).json({ 
+          message: `${file.name} must be less than 5MB.` 
+        });
+      }
     }
 
     const profilePicture = req.files.profilePicture[0].path;
@@ -238,8 +341,14 @@ exports.login = async (req, res) => {
     // Attempt to find the user by email in both User and Owner models
     let user;
 
-    if (role === "renter" || role === "admin") {
-      user = await User.findOne({ email, role }); // Match both email & role
+    if (role === "renter") {
+      user = await User.findOne({ email, role }); // Match renter role
+    } else if (role === "admin") {
+      // Check for both admin and superadmin roles when admin is selected
+      user = await User.findOne({
+        email,
+        role: { $in: ['admin', 'superadmin'] }
+      });
     } else if (role === "owner") {
       user = await Owner.findOne({ email, role }); // Check in Owner collection
     }

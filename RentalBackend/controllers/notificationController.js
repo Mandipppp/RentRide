@@ -9,7 +9,7 @@ exports.getNotifications = async (req, res) => {
 
     // Determine the model name dynamically based on the role
     let recipientModel;
-    if (recipient.role === 'renter' || recipient.role === 'admin') {
+    if (recipient.role === 'renter' || recipient.role === 'admin' || recipient.role === 'superadmin') {
       recipientModel = 'User';
     } else if (recipient.role === 'owner') {
       recipientModel = 'Owner';

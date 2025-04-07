@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getAllOwners, getOwnerById, updateKyc, adminBlockOwner, adminUnBlockOwner} = require('../controllers/adminOwnerController');
-const { authenticate, checkAdmin } = require('../middlewares/authMiddleware');
+const { authenticate, checkAdmin, checkSuperAdmin } = require('../middlewares/authMiddleware');
 const { getAllUsers, getUserById, adminBlockUser, adminUnBlockUser } = require('../controllers/adminUserController');
 const { addAdmin, setupPassword, getDashboardStats, sendAdminNotification, getAllAdmins } = require('../controllers/adminAdminController');
 const { getAllVehicles, getVehicleById, verifyVehicle } = require('../controllers/adminVehicleController');
@@ -29,7 +29,7 @@ router.get('/getVehicles', authenticate, checkAdmin, getAllVehicles);
 router.get('/owner/:id', authenticate, checkAdmin, getOwnerById);
 router.get('/renter/:id', authenticate, checkAdmin, getUserById);
 
-router.post('/add-admin', authenticate, checkAdmin, addAdmin);
+router.post('/add-admin', authenticate, checkSuperAdmin, addAdmin);
 router.post('/setup-password/:token', setupPassword);
 
 router.post('/kyc/:ownerId',authenticate, checkAdmin, updateKyc);

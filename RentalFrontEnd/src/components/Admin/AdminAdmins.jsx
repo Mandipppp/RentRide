@@ -18,6 +18,36 @@ const AdminAdmins = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newAdmin, setNewAdmin] = useState({ name: "", email: "" });
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [errors, setErrors] = useState({ name: '', email: '' });
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState('');
+
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = { name: '', email: '' };
+    
+    // Name validation
+    if (!newAdmin.name.trim()) {
+      newErrors.name = 'Name is required';
+      isValid = false;
+    } else if (newAdmin.name.length < 2) {
+      newErrors.name = 'Name must be at least 2 characters long';
+      isValid = false;
+    }
+  
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!newAdmin.email.trim()) {
+      newErrors.email = 'Email is required';
+      isValid = false;
+    } else if (!emailRegex.test(newAdmin.email)) {
+      newErrors.email = 'Please enter a valid email address';
+      isValid = false;
+    }
+  
+    setErrors(newErrors);
+    return isValid;
+  };
 
   useEffect(() => {
     const token = reactLocalStorage.get("access_token");
@@ -53,7 +83,9 @@ const AdminAdmins = () => {
         },
       })
       .then((res) => {
+        // console.log("Fetched Admins:", res.data);
         setAdmins(res.data.data);
+        setCurrentUserRole(res.data.currentAdmin.role); // Set current user role
       })
       .catch((error) => {
         if (error.response && error.response.status === 403) {
@@ -112,11 +144,28 @@ const AdminAdmins = () => {
   };
 
   const handleConfirmAddAdmin = () => {
-    setShowAddForm(false);
-    setShowConfirmation(true);
+    if (validateForm()) {
+      setShowAddForm(false);
+      setShowConfirmation(true);
+    }
+  };
+
+  const getRoleBadge = (role) => {
+    const roleStyles = {
+      admin: "bg-blue-100 text-blue-800 border border-blue-200",
+      superadmin: "bg-purple-100 text-purple-800 border border-purple-200",
+      renter: "bg-green-100 text-green-800 border border-green-200"
+    };
+
+    return (
+      <span className={`px-3 py-1 rounded-full text-sm font-medium ${roleStyles[role] || "bg-gray-100 text-gray-800"}`}>
+        {role === "admin" ? "Admin" : role === "superadmin" ? "Super Admin" : "User"}
+      </span>
+    );
   };
 
   const handleSubmit = () => {
+    setIsLoading(true);
     axios.post("http://localhost:3000/api/admin/add-admin", newAdmin, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
@@ -127,7 +176,10 @@ const AdminAdmins = () => {
       setNewAdmin({ name: "", email: "" });
       getDetails(accessToken);
     })
-    .catch(() => toast.error("Failed to add admin"));
+    .catch(() => toast.error("Failed to add admin"))
+    .finally(() => {
+      setIsLoading(false);
+    });
   };
 
   return (
@@ -137,12 +189,14 @@ const AdminAdmins = () => {
       
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-4xl font-bold">Admins</h2>
+        {currentUserRole === "superadmin" && (
         <button
           onClick={handleAddAdmin}
           className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150"
         >
           Add Admin
         </button>
+        )}
       </div>
       
       <div className="relative mb-4">
@@ -160,34 +214,90 @@ const AdminAdmins = () => {
 
       {showAddForm && (
         <div className="bg-gray-100 p-4 rounded-lg mb-4">
-          <input
-            type="text"
-            name="name"
-            placeholder="Admin Name"
-            value={newAdmin.name}
-            onChange={handleInputChange}
-            className="w-full mb-2 py-2 px-4 border rounded"
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Admin Email"
-            value={newAdmin.email}
-            onChange={handleInputChange}
-            className="w-full mb-2 py-2 px-4 border rounded"
-          />
+          <div className="mb-4">
+            <input
+              type="text"
+              name="name"
+              placeholder="Admin Name"
+              value={newAdmin.name}
+              onChange={handleInputChange}
+              className={`w-full py-2 px-4 border rounded ${
+                errors.name ? 'border-red-500' : 'border-gray-300'
+              }`}
+              required
+            />
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+            )}
+          </div>
+
+          <div className="mb-4">
+            <input
+              type="email"
+              name="email"
+              placeholder="Admin Email"
+              value={newAdmin.email}
+              onChange={handleInputChange}
+              className={`w-full py-2 px-4 border rounded ${
+                errors.email ? 'border-red-500' : 'border-gray-300'
+              }`}
+              required
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            )}
+          </div>
+
           <div className="flex justify-end">
-            <button onClick={handleCancel} className="bg-gray-400 text-white px-4 py-2 rounded mr-2">Cancel</button>
-            <button onClick={handleConfirmAddAdmin} className="bg-green-500 text-white px-4 py-2 rounded">Add Admin</button>
+            <button 
+              onClick={handleCancel} 
+              className="bg-gray-400 text-white px-4 py-2 rounded mr-2"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleConfirmAddAdmin} 
+              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+            >
+              Add Admin
+            </button>
           </div>
         </div>
       )}
 
-{showConfirmation && (
+    {showConfirmation && (
         <div className="bg-gray-100 p-4 rounded-lg mb-4 text-center">
           <p className="mb-4">Do you confirm to add another admin?</p>
-          <button onClick={handleSubmit} className="bg-blue-500 text-white px-4 py-2 rounded mr-2">Confirm</button>
-          <button onClick={() => setShowConfirmation(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
+          <div className="flex justify-center gap-2"> 
+          <button 
+            onClick={handleSubmit} 
+            disabled={isLoading}
+            className={`bg-blue-500 text-white px-4 py-2 rounded mr-2 flex items-center justify-center min-w-[100px] ${
+              isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-blue-600'
+            }`}
+          >
+            {isLoading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Adding...
+              </>
+            ) : (
+              'Confirm'
+            )}
+          </button>
+          <button 
+            onClick={() => setShowConfirmation(false)} 
+            disabled={isLoading}
+            className={`bg-gray-400 text-white px-4 py-2 rounded ${
+              isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-gray-500'
+            }`}
+          >
+            Cancel
+          </button>
+          </div>
         </div>
       )}
 
@@ -198,6 +308,7 @@ const AdminAdmins = () => {
             <th className="py-3 px-4 text-gray-600 font-medium">ID</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Name</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Contact</th>
+            <th className="py-3 px-4 text-gray-600 font-medium">Role</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Email</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Created At</th>
             <th className="py-3 px-4"></th>
@@ -217,6 +328,9 @@ const AdminAdmins = () => {
                 </td>
                 <td className="py-3 px-4">
                   {user.contactNumber || "No Contact Number"}
+                </td>
+                <td className="py-3 px-4 flex items-center">
+                  {getRoleBadge(user.role)}
                 </td>
                 <td className="py-3 px-4">{user.email}</td>
                 <td className="py-3 px-4">

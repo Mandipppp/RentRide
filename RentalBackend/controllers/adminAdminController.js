@@ -26,7 +26,7 @@ exports.addAdmin = async (req, res) => {
 
   try {
     // Check if an admin with the given email already exists
-    const existingAdmin = await User.findOne({ email, role: 'admin' });
+    const existingAdmin = await User.findOne({ email, role: { $in: ['admin', 'superadmin'] } });
     if (existingAdmin) {
       return res.status(400).json({ message: 'Admin already exists' });
     }
@@ -123,7 +123,7 @@ exports.setupPassword = async (req, res) => {
   exports.getDashboardStats = async (req, res) => {
 
     try {
-      const adminsCount = await User.countDocuments({ role: "admin" });
+      const adminsCount = await User.countDocuments({ role: { $in: ["admin", "superadmin"] } });
       const rentersCount = await User.countDocuments({ role: "renter" });
       const ownersCount = await Owner.countDocuments();
       const vehiclesCount = await Vehicle.countDocuments();
@@ -174,7 +174,7 @@ exports.setupPassword = async (req, res) => {
             recipients = (await User.find({ role: 'renter' })).map(u => ({ ...u.toObject(), model: 'User' }));
             break;
         case 'admins':
-            recipients = (await User.find({ role: 'admin' })).map(u => ({ ...u.toObject(), model: 'User' }));
+            recipients = (await User.find({ role: { $in: ['admin', 'superadmin'] } })).map(u => ({ ...u.toObject(), model: 'User' }));
             break;
         default:
             return res.status(400).json({
@@ -244,9 +244,10 @@ exports.setupPassword = async (req, res) => {
     try {
       // Extract query parameters
       const { name, email } = req.query;
+      const currentAdmin = req.user;
   
       // Build the filter object dynamically
-      const filter = {role: 'admin'};
+      const filter = {role: { $in: ['admin', 'superadmin'] }};
       if (name || email) {
         filter.$or = [];
         if (name) {
@@ -272,6 +273,12 @@ exports.setupPassword = async (req, res) => {
       return res.status(200).json({
         success: true,
         data: users,
+        currentAdmin: {
+          id: currentAdmin._id,
+          name: currentAdmin.name,
+          email: currentAdmin.email,
+          role: currentAdmin.role
+        }
       });
     } catch (error) {
       // Handle any errors

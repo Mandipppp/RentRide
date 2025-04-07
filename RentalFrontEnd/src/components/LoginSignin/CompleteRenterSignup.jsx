@@ -28,6 +28,21 @@ const CompleteRenterSignup = () => {
     return errors;
   };
 
+  const validatePhoneNumber = (number) => {
+    const phoneRegex = /^[0-9]{10}$/;  // Exactly 10 digits
+    if (!phoneRegex.test(number)) {
+      return "Contact number must be exactly 10 digits";
+    }
+    return "";
+  };
+
+  const validateName = (name) => {
+    if (name.length < 2) return "Name must be at least 2 characters long";
+    if (name.length > 50) return "Name must be less than 50 characters";
+    if (!/^[a-zA-Z\s]*$/.test(name)) return "Name can only contain letters and spaces";
+    return "";
+  };
+
   useEffect(() => {
     // Verify the token when the component loads
     const verifyToken = async () => {
@@ -47,11 +62,39 @@ const CompleteRenterSignup = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    if (name === 'contactNumber') {
+      // Only allow numbers and limit to 10 digits
+      const sanitizedValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+      setFormData({ ...formData, [name]: sanitizedValue });
+    } // Name validation
+    else if (name === 'name') {
+      // Only allow letters and spaces
+      const sanitizedValue = value.replace(/[^a-zA-Z\s]/g, '');
+      setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
+    }
+    else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    setError("");
+    
+    const nameError = validateName(formData.name);
+    if (nameError) {
+      toast.error(nameError);
+      return;
+    }
+
+    // Validate contact number
+    if(formData.contactNumber) {
+      const phoneError = validatePhoneNumber(formData.contactNumber);
+      if (phoneError) {
+        toast.error(phoneError);
+        return;
+      }
+    }
 
     // Check if passwords match
     if (formData.password !== formData.confirmPassword) {
@@ -72,6 +115,7 @@ const CompleteRenterSignup = () => {
 
     // Prepare data without confirmPassword
     const { confirmPassword, ...dataToSubmit } = formData;
+    // console.log("Data to submit:", formData);
 
     try {
       const response = await axios.post("http://localhost:3000/api/auth/registerUser", dataToSubmit);
@@ -102,60 +146,132 @@ const CompleteRenterSignup = () => {
         <form onSubmit={handleSignup} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Name</label>
-            <input
-              type="text"
-              name="name"
-              className="w-full px-4 py-2 mt-2 border-b-4 border-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Your Name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-            />
+            <div className="relative">
+              <input
+                type="text"
+                name="name"
+                className={`w-full px-4 py-2 mt-2 border-b-4 ${
+                  formData.name && !validateName(formData.name) 
+                    ? 'border-green-700' 
+                    : 'border-gray-300'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                placeholder="Enter your full name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+              />
+              {formData.name && !validateName(formData.name) && (
+                <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-green-600">
+                  <i className="fas fa-check-circle"></i>
+                </span>
+              )}
+            </div>
+            {formData.name && validateName(formData.name) && (
+              <p className="text-red-500 text-sm mt-1">{validateName(formData.name)}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
+            <div className="relative">
             <input
               type="email"
               name="email"
               className="w-full px-4 py-2 mt-2 border-b-4 border-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Email"
               value={formData.email}
+              disabled
               readOnly
             />
+            <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500">
+              <i className="fas fa-lock"></i>
+            </span>
+            </div>
+            <p className="text-gray-500 text-xs mt-1">Email verified and cannot be changed</p>
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Password</label>
-            <input
-              type="password"
-              name="password"
-              className="w-full px-4 py-2 mt-2 border-b-4 border-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleInputChange}
-              required
-            />
+            <div className="relative">
+              <input
+                type="password"
+                name="password"
+                className={`w-full px-4 py-2 mt-2 border-b-4 ${
+                  formData.password && validatePassword(formData.password).length === 0
+                    ? 'border-green-700'
+                    : 'border-gray-300'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+              />
+              {formData.password && validatePassword(formData.password).length === 0 && (
+                <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-green-600">
+                  <i className="fas fa-check-circle"></i>
+                </span>
+              )}
+            </div>
+            <ul className="text-xs text-gray-500 mt-1 list-disc pl-5">
+              <li className={formData.password?.length >= 8 ? "text-green-600" : ""}>At least 8 characters</li>
+              <li className={/[A-Z]/.test(formData.password) ? "text-green-600" : ""}>One uppercase letter</li>
+              <li className={/[a-z]/.test(formData.password) ? "text-green-600" : ""}>One lowercase letter</li>
+              <li className={/\d/.test(formData.password) ? "text-green-600" : ""}>One number</li>
+              <li className={/[@$!%*?&]/.test(formData.password) ? "text-green-600" : ""}>One special character</li>
+            </ul>
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              className="w-full px-4 py-2 mt-2 border-b-4 border-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Confirm Password"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              required
-            />
+            <div className="relative">
+              <input
+                type="password"
+                name="confirmPassword"
+                className={`w-full px-4 py-2 mt-2 border-b-4 ${
+                  formData.confirmPassword && formData.password === formData.confirmPassword
+                    ? 'border-green-700'
+                    : 'border-gray-300'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                required
+              />
+              {formData.confirmPassword && formData.password === formData.confirmPassword && (
+                <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-green-600">
+                  <i className="fas fa-check-circle"></i>
+                </span>
+              )}
+            </div>
+            {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+              <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
+            )}
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Contact Number</label>
-            <input
-              type="text"
-              name="contactNumber"
-              className="w-full px-4 py-2 mt-2 border-b-4 border-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Contact Number"
-              value={formData.contactNumber}
-              onChange={handleInputChange}
-            />
+            <div className="relative">
+              <input
+                type="text"
+                name="contactNumber"
+                className={`w-full px-4 py-2 mt-2 border-b-4 ${
+                  formData.contactNumber && !validatePhoneNumber(formData.contactNumber)
+                    ? 'border-green-700'
+                    : 'border-gray-300'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                placeholder="10-digit Contact Number"
+                value={formData.contactNumber}
+                onChange={handleInputChange}
+                maxLength="10"
+              />
+              {formData.contactNumber && !validatePhoneNumber(formData.contactNumber) && (
+                <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-green-600">
+                  <i className="fas fa-check-circle"></i>
+                </span>
+              )}
+            </div>
+            {formData.contactNumber && validatePhoneNumber(formData.contactNumber) && (
+              <p className="text-red-500 text-sm mt-1">{validatePhoneNumber(formData.contactNumber)}</p>
+            )}
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button

@@ -27,7 +27,7 @@ exports.requestPasswordReset = async (req, res) => {
     }
 
     if(role == 'admin') {
-      user = await User.findOne({ email, role: 'admin' });
+      user = await User.findOne({ email, role: { $in: ['admin', 'superadmin'] } });
     }
 
     if(role == 'owner') {

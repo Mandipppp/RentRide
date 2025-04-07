@@ -20,6 +20,27 @@ function OwnerKYCDetails() {
   
   const navigate = useNavigate();
 
+  const getImageUrl = (image) => {
+    if (image instanceof File) {
+      return URL.createObjectURL(image);
+    }
+    return `http://localhost:3000/${image}`;
+  };
+
+  const hasUpdatedRejectedDocuments = () => {
+    // Check if any rejected document has been updated with a new file
+    if (remData.profilePicture.status === "rejected" && !(formData.profilePicture instanceof File)) {
+      return false;
+    }
+    if (remData.citizenshipFront.status === "rejected" && !(formData.citizenshipFront instanceof File)) {
+      return false;
+    }
+    if (remData.citizenshipBack.status === "rejected" && !(formData.citizenshipBack instanceof File)) {
+      return false;
+    }
+    return true;
+  };
+
   useEffect(() => {
     const token = reactLocalStorage.get("access_token");
     if (!token) {
@@ -78,6 +99,9 @@ function OwnerKYCDetails() {
   const handleChange = (e) => {
     const { id, value, files } = e.target;
     if (files) {
+      if (formData[id] instanceof File) {
+        URL.revokeObjectURL(getImageUrl(formData[id]));
+      }
       setFormData({ ...formData, [id]: files[0] });
     } else {
       setFormData({ ...formData, [id]: value });
@@ -86,6 +110,11 @@ function OwnerKYCDetails() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (!hasUpdatedRejectedDocuments()) {
+      toast.error("Please update all rejected documents before submitting");
+      return;
+    }
   
     const token = reactLocalStorage.get("access_token");
     if (!token) {
@@ -173,7 +202,7 @@ function OwnerKYCDetails() {
               </label>
               {formData.profilePicture && (
                 <img
-                  src={`http://localhost:3000/${formData.profilePicture}`}
+                  src={getImageUrl(formData.profilePicture)}
                   alt="Profile"
                   className="w-32 h-32 rounded-full border mt-2"
                 />
@@ -207,7 +236,7 @@ function OwnerKYCDetails() {
               </label>
               {formData.citizenshipFront && (
                 <img
-                  src={`http://localhost:3000/${formData.citizenshipFront}`}
+                  src={getImageUrl(formData.citizenshipFront)}
                   alt="Citizenship Front"
                   className="w-48 h-32 border mt-2"
                 />
@@ -243,7 +272,7 @@ function OwnerKYCDetails() {
               </label>
               {formData.citizenshipBack && (
                 <img
-                  src={`http://localhost:3000/${formData.citizenshipBack}`}
+                  src={getImageUrl(formData.citizenshipBack)}
                   alt="Citizenship Back"
                   className="w-48 h-32 border mt-2"
                 />
@@ -260,13 +289,26 @@ function OwnerKYCDetails() {
             </div>
           </div>
         
-          {userData.kycStatus == "rejected" && (
-        <button
-          type="submit"
-          className="w-full bg-green-500 text-white rounded-md py-2 hover:bg-green-600"
-        >
-          Update
-        </button>)}
+          {userData.kycStatus === "rejected" && (
+            <div>
+              <button
+                type="submit"
+                disabled={!hasUpdatedRejectedDocuments()}
+                className={`w-full ${
+                  hasUpdatedRejectedDocuments()
+                    ? 'bg-green-500 hover:bg-green-600'
+                    : 'bg-gray-400 cursor-not-allowed'
+                } text-white rounded-md py-2 transition-colors duration-200`}
+              >
+                Update
+              </button>
+              {!hasUpdatedRejectedDocuments() && (
+                <p className="text-red-500 text-sm mt-2 text-center">
+                  Please update all rejected documents before submitting
+                </p>
+              )}
+            </div>
+          )}
       </form>
     </section>
   );

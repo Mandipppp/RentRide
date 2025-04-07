@@ -39,7 +39,7 @@ const Login = () => {
         reactLocalStorage.set("access_token", token);
         // reactLocalStorage.set("role", user.role);
         if (user) {
-          if (user.role === "admin") {
+          if (user.role === "admin" || user.role === "superadmin") {
             navigate("/admindashboard");
           } else if (user.role === "renter") {
 
