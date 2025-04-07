@@ -3,7 +3,7 @@ const router = express.Router();
 const { getAllOwners, getOwnerById, updateKyc, adminBlockOwner, adminUnBlockOwner} = require('../controllers/adminOwnerController');
 const { authenticate, checkAdmin, checkSuperAdmin } = require('../middlewares/authMiddleware');
 const { getAllUsers, getUserById, adminBlockUser, adminUnBlockUser } = require('../controllers/adminUserController');
-const { addAdmin, setupPassword, getDashboardStats, sendAdminNotification, getAllAdmins } = require('../controllers/adminAdminController');
+const { addAdmin, setupPassword, getDashboardStats, sendAdminNotification, getAllAdmins, toggleAdminBlock, getPendingCounts } = require('../controllers/adminAdminController');
 const { getAllVehicles, getVehicleById, verifyVehicle } = require('../controllers/adminVehicleController');
 const { getAllContacts, updateContactStatus } = require('../controllers/adminContactController');
 const { getAllBookings, getBooking } = require('../controllers/adminBookingController');
@@ -30,7 +30,9 @@ router.get('/owner/:id', authenticate, checkAdmin, getOwnerById);
 router.get('/renter/:id', authenticate, checkAdmin, getUserById);
 
 router.post('/add-admin', authenticate, checkSuperAdmin, addAdmin);
+router.patch('/:adminId/toggle-block', authenticate, checkSuperAdmin, toggleAdminBlock);
 router.post('/setup-password/:token', setupPassword);
+router.get('/pending-counts', authenticate, checkAdmin, getPendingCounts);
 
 router.post('/kyc/:ownerId',authenticate, checkAdmin, updateKyc);
 

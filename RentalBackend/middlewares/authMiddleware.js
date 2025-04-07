@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/user');
 
 exports.authenticate = (req, res, next) => {
   const token = req.headers.authorization?.replace("Bearer ", "");
@@ -22,9 +23,31 @@ exports.authorize = (roles) => (req, res, next) => {
 };
 
 // Check if the user is an admin
-exports.checkAdmin = (req, res, next) => {
+exports.checkAdmin = async(req, res, next) => {
   if (req.user.role !== 'admin' && req.user.role !== 'superadmin') {
     return res.status(403).json({ message: 'Access forbidden: Admins only' });
+  }
+  // Fetch complete user data to check block status
+  const adminUser = await User.findById(req.user.id);
+  if (!adminUser) {
+    return res.status(404).json({ 
+      success: false,
+      message: 'Admin account not found' 
+    });
+  }
+
+  // Check block status
+  if (adminUser.blockStatus !== 'active') {
+    const message = adminUser.blockStatus === 'pending_block' 
+      ? 'Your account is pending block review' 
+      : 'Your account has been blocked';
+    
+    return res.status(403).json({
+      success: false,
+      message: `Access forbidden: ${message}`,
+      blockReason: adminUser.blockReason || 'No reason provided',
+      blockedAt: adminUser.blockedAt
+    });
   }
   next();
 };

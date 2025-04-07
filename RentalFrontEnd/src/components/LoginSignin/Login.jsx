@@ -34,13 +34,18 @@ const Login = () => {
     axios
       .post("http://localhost:3000/api/auth/login", loginData)
       .then((res) => {
-        toast.success("Login successful!");
+        // toast.success("Login successful!");
         const { token, user, owner } = res.data;
         reactLocalStorage.set("access_token", token);
         // reactLocalStorage.set("role", user.role);
         if (user) {
           if (user.role === "admin" || user.role === "superadmin") {
-            navigate("/admindashboard");
+            if(user.blockStatus === "active") {
+              navigate("/admindashboard");
+            }else{
+              toast.error("Your admin access has been revoked. Please contact the super admin.");
+              setError("Your admin access has been revoked. Please contact the super admin.");
+            }
           } else if (user.role === "renter") {
 
             const pendingVehicleString = reactLocalStorage.get("pendingVehicle"); // Get raw string

@@ -22,6 +22,51 @@ const AdminAdmins = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState('');
 
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState(null);
+  const [blockReason, setBlockReason] = useState('');
+
+  const handleBlockClick = (admin, e) => {
+    e.stopPropagation();
+    setSelectedAdmin(admin);
+    setShowBlockModal(true);
+    setDropdownVisible(false);
+  };
+
+  const handleBlockSubmit = async () => {
+    if (!blockReason.trim() && selectedAdmin.blockStatus !== 'blocked') {
+      toast.error('Please provide a reason for blocking');
+      return;
+    }
+  
+    try {
+      await axios.patch(
+        `http://localhost:3000/api/admin/${selectedAdmin._id}/toggle-block`,
+        {
+          action: selectedAdmin.blockStatus === 'blocked' ? 'unblock' : 'block',
+          reason: blockReason
+        },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }
+      );
+  
+      toast.success(
+        `Admin successfully ${
+          selectedAdmin.blockStatus === 'blocked' ? 'unblocked' : 'blocked'
+        }`
+      );
+      setShowBlockModal(false);
+      setBlockReason('');
+      setSelectedAdmin(null);
+      getDetails(accessToken); // Refresh the admin list
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || 'Failed to update admin status'
+      );
+    }
+  };
+  
   const validateForm = () => {
     let isValid = true;
     const newErrors = { name: '', email: '' };
@@ -310,6 +355,7 @@ const AdminAdmins = () => {
             <th className="py-3 px-4 text-gray-600 font-medium">Contact</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Role</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Email</th>
+            <th className="py-3 px-4 text-gray-600 font-medium">Status</th>
             <th className="py-3 px-4 text-gray-600 font-medium">Created At</th>
             <th className="py-3 px-4"></th>
           </tr>
@@ -320,7 +366,6 @@ const AdminAdmins = () => {
               <tr
                 key={user._id}
                 className="border-b hover:bg-gray-50 transition duration-150 cursor-pointer"
-                onClick={() => handleUserClick(user._id)}
               >
                 <td className="py-3 px-4">{index + 1}</td>
                 <td className="py-3 px-4 flex items-center">
@@ -333,6 +378,23 @@ const AdminAdmins = () => {
                   {getRoleBadge(user.role)}
                 </td>
                 <td className="py-3 px-4">{user.email}</td>
+                <td className="py-3 px-4">
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      user.blockStatus === 'blocked'
+                        ? 'bg-red-100 text-red-800'
+                        : user.blockStatus === 'pending_block'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-green-100 text-green-800'
+                    }`}
+                  >
+                    {user.blockStatus === 'blocked'
+                      ? 'Blocked'
+                      : user.blockStatus === 'pending_block'
+                      ? 'Pending Block'
+                      : 'Active'}
+                  </span>
+                </td>
                 <td className="py-3 px-4">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
@@ -351,7 +413,7 @@ const AdminAdmins = () => {
                   {dropdownVisible && activeUserId === user._id && (
                     <div
                       ref={dropdownRef}
-                      className="absolute bg-white border border-gray-300 mt-2 w-58 rounded-lg shadow-lg"
+                      className="absolute bg-white border border-gray-300 mt-2 w-58 rounded-lg shadow-lg z-50"
                       style={{
                         left: `${dropdownPosition.left}px`,
                         top: `${dropdownPosition.top}px`,
@@ -364,6 +426,22 @@ const AdminAdmins = () => {
                         >
                           Copy ID
                         </li>
+                        {currentUserRole === 'superadmin' && user.role !== 'superadmin' && (
+                          <li
+                            className="px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                            onClick={(e) => handleBlockClick(user, e)}
+                          >
+                            {user.blockStatus === 'blocked' ? (
+                              <>
+                                Unblock Admin
+                              </>
+                            ) : (
+                              <>
+                                Block Admin
+                              </>
+                            )}
+                          </li>
+                        )}
                       </ul>
                     </div>
                   )}
@@ -382,6 +460,54 @@ const AdminAdmins = () => {
           )}
         </tbody>
       </table>
+      {showBlockModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h3 className="text-lg font-semibold mb-4">
+              {selectedAdmin?.blockStatus === 'blocked'
+                ? 'Unblock Admin'
+                : 'Block Admin'}
+            </h3>
+            {selectedAdmin?.blockStatus !== 'blocked' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for blocking
+                </label>
+                <textarea
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows="3"
+                  value={blockReason}
+                  onChange={(e) => setBlockReason(e.target.value)}
+                  placeholder="Please provide a reason..."
+                  required
+                />
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                onClick={() => {
+                  setShowBlockModal(false);
+                  setBlockReason('');
+                  setSelectedAdmin(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className={`px-4 py-2 rounded text-white ${
+                  selectedAdmin?.blockStatus === 'blocked'
+                    ? 'bg-green-500 hover:bg-green-600'
+                    : 'bg-red-500 hover:bg-red-600'
+                }`}
+                onClick={handleBlockSubmit}
+              >
+                {selectedAdmin?.blockStatus === 'blocked' ? 'Unblock' : 'Block'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

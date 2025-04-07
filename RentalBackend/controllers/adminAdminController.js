@@ -6,6 +6,7 @@ const Booking = require('../models/Booking');
 const Contact = require('../models/contact');
 const Vehicle = require('../models/vehicle');
 const Notification = require('../models/notification');
+const KYC = require('../models/kyc');
 
 
 const bcrypt = require('bcrypt');
@@ -286,6 +287,191 @@ exports.setupPassword = async (req, res) => {
       return res.status(500).json({
         success: false,
         message: 'Server error. Please try again later.',
+      });
+    }
+  };
+
+  exports.toggleAdminBlock = async (req, res) => {
+    try {
+      const { adminId } = req.params;
+      const { action, reason } = req.body;
+      const superAdmin = req.user;
+  
+      // Verify superadmin role
+      if (superAdmin.role !== 'superadmin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Only superadmins can block/unblock admins'
+        });
+      }
+  
+      // Find the admin to be blocked/unblocked
+      const admin = await User.findById(adminId);
+  
+      if (!admin) {
+        return res.status(404).json({
+          success: false,
+          message: 'Admin not found'
+        });
+      }
+  
+      // Prevent blocking superadmins
+      if (admin.role === 'superadmin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Cannot block a superadmin'
+        });
+      }
+  
+      // Prevent self-blocking
+      if (admin._id === superAdmin._id) {
+        return res.status(403).json({
+          success: false,
+          message: 'Cannot block yourself'
+        });
+      }
+  
+      // Update block status based on action
+      if (action === 'block') {
+        if (!reason) {
+          return res.status(400).json({
+            success: false,
+            message: 'Block reason is required'
+          });
+        }
+  
+        admin.blockStatus = 'blocked';
+        admin.blockReason = reason;
+        admin.blockedAt = new Date();
+        admin.blockInitiatedAt = new Date();
+  
+        // Create notification for blocked admin
+        const notification = new Notification({
+          recipientId: admin._id,
+          recipientModel: 'User',
+          message: `Your admin access has been blocked. Reason: ${reason}`,
+          type: 'system',
+          priority: 'high'
+        });
+  
+        await notification.save();
+  
+      } else if (action === 'unblock') {
+        admin.blockStatus = 'active';
+        admin.blockReason = null;
+        admin.blockedAt = null;
+        admin.blockInitiatedAt = null;
+  
+        // Create notification for unblocked admin
+        const notification = new Notification({
+          recipientId: admin._id,
+          recipientModel: 'User',
+          message: 'Your admin access has been restored',
+          type: 'system',
+          priority: 'high'
+        });
+  
+        await notification.save();
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid action. Use "block" or "unblock"'
+        });
+      }
+  
+      await admin.save();
+  
+      // Send email notification
+      const transporter = nodemailer.createTransport({
+        service: 'Gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+  
+      const emailSubject = action === 'block' ? 'Admin Access Blocked' : 'Admin Access Restored';
+      const emailMessage = action === 'block' 
+        ? `Your admin access has been blocked. Reason: ${reason}`
+        : 'Your admin access has been restored';
+  
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: admin.email,
+        subject: emailSubject,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="color: ${action === 'block' ? '#dc3545' : '#28a745'}">
+              ${emailSubject}
+            </h2>
+            <p>${emailMessage}</p>
+            <p>If you have any questions, please contact the super admin.</p>
+          </div>
+        `
+      });
+  
+      return res.status(200).json({
+        success: true,
+        message: `Admin successfully ${action === 'block' ? 'blocked' : 'unblocked'}`,
+        data: {
+          adminId: admin._id,
+          name: admin.name,
+          email: admin.email,
+          blockStatus: admin.blockStatus,
+          blockReason: admin.blockReason,
+          blockedAt: admin.blockedAt
+        }
+      });
+  
+    } catch (error) {
+      console.error('Error in toggleAdminBlock:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Server error while updating admin status'
+      });
+    }
+  };
+
+
+  exports.getPendingCounts = async (req, res) => {
+    try {
+      // Get pending vehicle document verifications
+      const pendingVehicles = await Vehicle.countDocuments({
+        $or: [
+          { 'registrationCertificate.status': 'Pending' },
+          { 'insuranceCertificate.status': 'Pending' }
+        ]
+      });
+  
+      // Get pending KYC count
+      const pendingKYC = await KYC.countDocuments({
+        $or: [
+          { 'documents.profilePicture.status': 'pending' },
+          { 'documents.citizenshipFront.status': 'pending' },
+          { 'documents.citizenshipBack.status': 'pending' }
+        ]
+      });
+  
+      // Get pending queries count
+      const pendingQueries = await Contact.countDocuments({
+        status: 'Pending'
+      });
+  
+      res.status(200).json({
+        success: true,
+        data: {
+          pendingVehicles,
+          pendingKYC,
+          pendingQueries,
+          totalPending: pendingVehicles + pendingKYC + pendingQueries
+        }
+      });
+  
+    } catch (error) {
+      console.error('Error fetching pending counts:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching pending counts'
       });
     }
   };

@@ -18,6 +18,13 @@ const Navbar = () => {
   const userMenuTimeout = useRef(null);
   const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [pendingCounts, setPendingCounts] = useState({
+    pendingKYC: 0,
+    pendingVehicles: 0,
+    pendingQueries: 0,
+    totalPending: 0
+  });
+
   
 
   
@@ -49,6 +56,29 @@ const Navbar = () => {
 
     fetchNotifications();
   }, [token]);
+
+  useEffect(() => {
+    const fetchPendingCounts = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/api/admin/pending-counts', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log(response.data.data);
+        setPendingCounts(response.data.data);
+      } catch (error) {
+        console.error('Error fetching pending counts:', error);
+      }
+    };
+
+    // Fetch initially and then every 5 minutes
+    fetchPendingCounts();
+    const interval = setInterval(fetchPendingCounts, 300000);
+
+    return () => clearInterval(interval);
+  }, [token]);
+
 
   useEffect(() => {
     socket.on("newNotification", (notification) => {
@@ -140,14 +170,17 @@ const Navbar = () => {
   const menuItems = [
     { name: "Dashboard", path: "/admindashboard" },
     { name: "Users", path: "/adminusers" },
-    { name: "Owners", path: "/adminowners" },
-    { name: "Vehicles", path: "/adminvehicles" },
+    { name: "Owners", path: "/adminowners", badge: pendingCounts.pendingKYC > 0 ? pendingCounts.pendingKYC : null,
+      badgeColor: "bg-red-500" },
+    { name: "Vehicles", path: "/adminvehicles", badge: pendingCounts.pendingVehicles > 0 ? pendingCounts.pendingVehicles : null,
+      badgeColor: "bg-red-500" },
     { name: "Booking", path: "/adminbooking" },
     { name: "Payments", path: "/adminpayment" },
     { name: "Reviews", path: "/adminreviews" },
     { name: "Pages", path: "/adminpages" },
     { name: "Contact Us", path: "/admincontactpage" },
-    { name: "Queries", path: "/admincontactqueries" },
+    { name: "Queries", path: "/admincontactqueries", badge: pendingCounts.pendingQueries > 0 ? pendingCounts.pendingQueries : null,
+      badgeColor: "bg-red-500" },
     { name: "Admins", path: "/adminadmins" },
   ];
 
@@ -163,13 +196,18 @@ const Navbar = () => {
             <Link
               key={item.name}
               to={item.path}
-              className={`${
+              className={`relative ${
                 location.pathname === item.path
                   ? "text-blue-500 font-bold" // Active style
                   : "text-gray-600 hover:text-blue-500"
               } transition duration-200`}
             >
               {item.name}
+              {item.badge && (
+            <span className={`absolute -top-2 -right-2 ${item.badgeColor} text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center`}>
+              {item.badge}
+            </span>
+          )}
             </Link>
           ))}
         </div>
