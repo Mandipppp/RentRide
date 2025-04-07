@@ -204,7 +204,7 @@ const CompleteOwnerSignup = () => {
 
     // Prepare data without confirmPassword
     const { confirmPassword, ...dataToSubmit } = formData;
-
+    dataToSubmit.token = token;
     axios
       .post("http://localhost:3000/api/auth/registerOwner", dataToSubmit, {headers: { "Content-Type": "multipart/form-data" }})
       .then((res) => {
@@ -216,14 +216,23 @@ const CompleteOwnerSignup = () => {
       })
       .catch((err) => {
         if (err.response) {
-          toast.error(err.response.data.message || "Signup failed. Please try again.");
-          setError(err.response.data.message);
-        } else if (err.request) {
-          toast.error("Server is not responding. Please try again later.");
+          const errorMessage = err.response.data.message || err.response.data.error;
+          toast.error(errorMessage);
+          
+          // If token has expired, redirect to signup
+          if (err.response.data.tokenExpired) {
+            toast.error("Your session has expired. Please restart the registration process.");
+            setTimeout(() => {
+              navigate("/signup");
+            }, 2000);
+            return;
+          }
+          
+          setError(errorMessage);
         } else {
           toast.error("An error occurred. Please try again.");
+          console.error(err);
         }
-        console.error("Error during signup:", err);
       });
   };
 

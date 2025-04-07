@@ -115,6 +115,7 @@ const CompleteRenterSignup = () => {
 
     // Prepare data without confirmPassword
     const { confirmPassword, ...dataToSubmit } = formData;
+    dataToSubmit.token = token;
     // console.log("Data to submit:", formData);
 
     try {
@@ -125,8 +126,19 @@ const CompleteRenterSignup = () => {
       }, 1000);
     } catch (err) {
       if (err.response) {
-        toast.error(err.response.data.message || "Something went wrong.");
-        setError(err.response.data.message);
+        const errorMessage = err.response.data.message || err.response.data.error;
+        toast.error(errorMessage);
+        
+        // If token has expired, redirect to signup
+        if (err.response.data.tokenExpired) {
+          toast.error("Your session has expired. Please restart the registration process.");
+          setTimeout(() => {
+            navigate("/signup");
+          }, 2000);
+          return;
+        }
+        
+        setError(errorMessage);
       } else {
         toast.error("An error occurred. Please try again.");
         console.error(err);

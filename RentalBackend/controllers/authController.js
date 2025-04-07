@@ -87,6 +87,9 @@ exports.registerEmail = async (req, res) => {
   try {
     // Determine the model based on the type
     const Model = type === 'owner' ? Owner : User;
+    if (validateEmail(email) === false) {
+      return res.status(400).json({ message: 'Please enter a valid email address' });
+    }
 
     // Check if the email already exists in the respective collection
     const existingUser = await Model.findOne({ email });
@@ -101,6 +104,18 @@ exports.registerEmail = async (req, res) => {
     res.status(200).json({ message: 'Verification email sent!' });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const verifyToken = (token) => {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return { valid: true, decoded };
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return { valid: false, error: 'Token has expired' };
+    }
+    return { valid: false, error: 'Invalid token' };
   }
 };
 
@@ -130,9 +145,25 @@ exports.verifyEmail = async (req, res) => {
 };
 
 exports.registerUser = async (req, res) => {
-  const { name, contactNumber, email, password, role } = req.body;
+  const { name, contactNumber, email, password, role, token } = req.body;
 
   try {
+    // Verify token first
+    const tokenValidation = verifyToken(token);
+    if (!tokenValidation.valid) {
+      return res.status(401).json({ 
+        error: 'Your session has expired. Please restart the registration process.',
+        tokenExpired: true
+      });
+    }
+
+    // Verify email matches the one in token
+    if (tokenValidation.decoded.email !== email) {
+      return res.status(401).json({ 
+        error: 'Email mismatch. Please use the same email used for verification.' 
+      });
+    }
+
     if (!name || !email || !password) {
       return res.status(400).json({ 
         error: 'All fields are required' 
@@ -185,9 +216,24 @@ exports.registerUser = async (req, res) => {
 };
 
 exports.registerOwner = async (req, res) => {
-  const { name, email, password, contactNumber, walletId } = req.body;
+  const { name, email, password, contactNumber, walletId, token } = req.body;
 
   try {
+    const tokenValidation = verifyToken(token);
+    if (!tokenValidation.valid) {
+      return res.status(401).json({ 
+        error: 'Your session has expired. Please restart the registration process.',
+        tokenExpired: true
+      });
+    }
+
+    // Verify email matches the one in token
+    if (tokenValidation.decoded.email !== email) {
+      return res.status(401).json({ 
+        error: 'Email mismatch. Please use the same email used for verification.' 
+      });
+    }
+    
     if (!name || !email || !password || !contactNumber || !walletId) {
       return res.status(400).json({ message: 'All fields are required.' });
     }
