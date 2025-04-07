@@ -12,7 +12,26 @@ function OwnerProfileDetails() {
     email: "",
     phone: "",
   });
+  const [errors, setErrors] = useState({
+    name: "",
+    phone: "",
+  });
   const navigate = useNavigate();
+
+  const validateName = (name) => {
+    if (!name) return "Name is required";
+    if (name.length < 2) return "Name must be at least 2 characters long";
+    if (name.length > 50) return "Name must be less than 50 characters";
+    if (!/^[a-zA-Z\s]*$/.test(name)) return "Name can only contain letters and spaces";
+    return "";
+  };
+  
+  const validatePhone = (phone) => {
+    if (!phone) return "Phone number is required";
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(phone)) return "Phone number must be exactly 10 digits";
+    return "";
+  };
 
   useEffect(() => {
     const token = reactLocalStorage.get("access_token");
@@ -54,21 +73,53 @@ function OwnerProfileDetails() {
   }
 
   const handleChange = (e) => {
-    const { id, value, files } = e.target;
-    if (files) {
-      setFormData({ ...formData, [id]: files[0] });
-    } else {
-      setFormData({ ...formData, [id]: value });
+    // const { id, value, files } = e.target;
+    // if (files) {
+    //   setFormData({ ...formData, [id]: files[0] });
+    // } else {
+    //   setFormData({ ...formData, [id]: value });
+    // }
+    const { id, value } = e.target;
+  
+    if (id === 'name') {
+      // Only allow letters and spaces
+      const sanitizedValue = value.replace(/[^a-zA-Z\s]/g, '');
+      setFormData(prev => ({ ...prev, [id]: sanitizedValue }));
+      setErrors(prev => ({ ...prev, [id]: validateName(sanitizedValue) }));
+    } 
+    else if (id === 'phone') {
+      // Only allow numbers and limit to 10 digits
+      const sanitizedValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+      setFormData(prev => ({ ...prev, [id]: sanitizedValue }));
+      setErrors(prev => ({ ...prev, [id]: validatePhone(sanitizedValue) }));
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-  
+
+    const nameError = validateName(formData.name);
+    const phoneError = validatePhone(formData.phone);
+    setErrors({
+      name: nameError,
+      phone: phoneError,
+    });
+
+    // Check if there are any errors
+    if (nameError || phoneError) {
+      toast.error("Please fix the errors before submitting");
+      return;
+    }
     const token = reactLocalStorage.get("access_token");
     if (!token) {
       toast.error("Unauthorized. Please log in.");
       navigate("/login");
+      return;
+    }
+
+    // Check if any changes were made
+    if (formData.name === userData.name && formData.phone === userData.contactNumber) {
+      toast.info("No changes made.");
       return;
     }
   
@@ -85,7 +136,7 @@ function OwnerProfileDetails() {
       return;
     }
   
-    console.log([...updatePayload.entries()]); // Debugging payload
+    // console.log([...updatePayload.entries()]); // Debugging payload
   
     axios
       .put("http://localhost:3000/api/owner/me", updatePayload, {
@@ -135,8 +186,17 @@ function OwnerProfileDetails() {
             value={formData.name}
             onChange={handleChange}
             placeholder="Name"
-            className="w-full border border-gray-300 rounded-md px-4 py-2 mt-2 focus:outline-none focus:ring focus:ring-blue-300"
+            className={`w-full border rounded-md px-4 py-2 mt-2 focus:outline-none focus:ring ${
+              errors.name 
+                ? 'border-red-500 focus:ring-red-300' 
+                : formData.name 
+                  ? 'border-green-500 focus:ring-green-300' 
+                  : 'border-gray-300 focus:ring-blue-300'
+            }`}
           />
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+            )}
         </div>
 
         <div>
@@ -149,13 +209,28 @@ function OwnerProfileDetails() {
             value={formData.phone}
             onChange={handleChange}
             placeholder="Phone"
-            className="w-full border border-gray-300 rounded-md px-4 py-2 mt-2 focus:outline-none focus:ring focus:ring-blue-300"
+            maxLength="10"
+            className={`w-full border rounded-md px-4 py-2 mt-2 focus:outline-none focus:ring ${
+              errors.phone 
+                ? 'border-red-500 focus:ring-red-300' 
+                : formData.phone 
+                  ? 'border-green-500 focus:ring-green-300' 
+                  : 'border-gray-300 focus:ring-blue-300'
+            }`}
           />
+           {errors.phone && (
+            <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+          )}
         </div>
 
         <button
           type="submit"
-          className="w-full bg-green-500 text-white rounded-md py-2 hover:bg-green-600"
+          disabled={!!errors.name || !!errors.phone}
+          className={`w-full py-2 px-4 rounded-md ${
+            errors.name || errors.phone
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-green-500 hover:bg-green-600'
+          } text-white transition-colors`}
         >
           Update
         </button>

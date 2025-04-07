@@ -8,7 +8,15 @@ function OwnerWalletDetails() {
   const [walletId, setWalletId] = useState("");
   const [currentWalletId, setCurrentWalletId] = useState("");
   const [error, setError] = useState("");
+  const [walletError, setWalletError] = useState("");
   const navigate = useNavigate();
+
+  const validateWalletId = (walletId) => {
+    if (!walletId) return "Wallet ID is required";
+    const walletRegex = /^[0-9]{10}$/;
+    if (!walletRegex.test(walletId)) return "Wallet ID must be exactly 10 digits";
+    return "";
+  };
 
   useEffect(() => {
     const token = reactLocalStorage.get("access_token");
@@ -22,7 +30,7 @@ function OwnerWalletDetails() {
           },
         })
         .then((response) => {
-          console.log(response.data)
+          // console.log(response.data)
           setWalletId(response.data.walletId || "");
           setCurrentWalletId(response.data.walletId || "");
         })
@@ -42,11 +50,23 @@ function OwnerWalletDetails() {
   }
 
   const handleWalletIdChange = (e) => {
-    setWalletId(e.target.value);
+    const value = e.target.value;
+    // Only allow numbers and limit to 10 digits
+    const sanitizedValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+    setWalletId(sanitizedValue);
+    setWalletError(validateWalletId(sanitizedValue));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Validate wallet ID
+    const error = validateWalletId(walletId);
+    if (error) {
+      toast.error(error);
+      setWalletError(error);
+      return;
+    }
 
     const token = reactLocalStorage.get("access_token");
     if (!token) {
@@ -89,20 +109,49 @@ function OwnerWalletDetails() {
           <label htmlFor="walletId" className="block text-gray-700 font-medium">
             Wallet ID
           </label>
-          <input
-            type="text"
-            id="walletId"
-            value={walletId}
-            onChange={handleWalletIdChange}
-            placeholder="Wallet ID"
-            className="w-full border border-gray-300 rounded-md px-4 py-2 mt-2 focus:outline-none focus:ring focus:ring-blue-300"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              id="walletId"
+              value={walletId}
+              onChange={handleWalletIdChange}
+              placeholder="Enter 10-digit Wallet ID"
+              maxLength="10"
+              className={`w-full border rounded-md px-4 py-2 mt-2 focus:outline-none focus:ring ${
+                walletError 
+                  ? 'border-red-500 focus:ring-red-300' 
+                  : walletId && !walletError
+                    ? 'border-green-500 focus:ring-green-300'
+                    : 'border-gray-300 focus:ring-blue-300'
+              }`}
+            />
+            {walletId && (
+              <span 
+                className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${
+                  walletError ? 'text-red-500' : 'text-green-500'
+                }`}
+              >
+                <i className={`fas ${walletError ? 'fa-exclamation-circle' : 'fa-check-circle'}`}></i>
+              </span>
+            )}
+          </div>
+          {walletError && (
+            <p className="text-red-500 text-sm mt-1">{walletError}</p>
+          )}
+          <p className="text-gray-500 text-xs mt-1">
+            Must be exactly 10 digits
+          </p>
         </div>
         <button
           type="submit"
-          className="w-full bg-green-500 text-white rounded-md py-2 hover:bg-green-600"
+          disabled={!!walletError || !walletId || walletId === currentWalletId}
+          className={`w-full py-2 px-4 rounded-md transition-colors ${
+            walletError || !walletId || walletId === currentWalletId
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-green-500 hover:bg-green-600'
+          } text-white`}
         >
-          Update Wallet ID
+          {walletId === currentWalletId ? "No Changes to Update" : "Update Wallet ID"}
         </button>
       </form>
     </section>
