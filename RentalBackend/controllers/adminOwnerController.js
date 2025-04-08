@@ -42,10 +42,33 @@ const getAllOwners = async (req, res) => {
       });
     }
 
+    // Sort owners based on KYC verification status
+    const sortedOwners = owners.sort((a, b) => {
+      // Check if KYC exists and has pending status
+      const aHasPending = a.kycId && (
+        a.kycId.documents.profilePicture.status === 'pending' ||
+        a.kycId.documents.citizenshipFront.status === 'pending' ||
+        a.kycId.documents.citizenshipBack.status === 'pending'
+      );
+      
+      const bHasPending = b.kycId && (
+        b.kycId.documents.profilePicture.status === 'pending' ||
+        b.kycId.documents.citizenshipFront.status === 'pending' ||
+        b.kycId.documents.citizenshipBack.status === 'pending'
+      );
+
+      // Sort by pending status first
+      if (aHasPending && !bHasPending) return -1;
+      if (!aHasPending && bHasPending) return 1;
+
+      // If both have same pending status, sort by creation date (newest first)
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+
     // Respond with the owners data
     return res.status(200).json({
       success: true,
-      data: owners,
+      data: sortedOwners,
     });
   } catch (error) {
     // Handle any errors

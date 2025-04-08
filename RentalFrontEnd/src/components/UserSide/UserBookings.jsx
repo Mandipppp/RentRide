@@ -78,6 +78,7 @@ const UserBookings = () => {
         
                 return categorizedBookings;
               });
+            toast.info(`Booking updated: ${updatedBooking.bookingStatus}`);
            });
    
            return () => {

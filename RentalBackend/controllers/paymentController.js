@@ -532,9 +532,9 @@ const showReciept = async (req, res) => {
         doc.moveDown();
 
         // Add-ons (if any)
-        if (booking.addOns.length > 0) {
+        if (booking.approvedAddOns.length > 0) {
             doc.fontSize(14).text("Add-Ons", { underline: true });
-            booking.addOns.forEach((addon, index) => {
+            booking.approvedAddOns.forEach((addon, index) => {
                 doc.fontSize(12).text(`${index + 1}. ${addon.name} - NPR ${addon.totalPrice}`);
             });
             doc.moveDown();

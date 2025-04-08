@@ -52,11 +52,28 @@ const getAllVehicles = async (req, res) => {
         message: 'No vehicles found.',
       });
     }
+    // Sort vehicles with pending documents first
+    const sortedVehicles = vehicles.sort((a, b) => {
+      // Check if either document is pending
+      const aHasPending = 
+        a.registrationCertificate.status === 'Pending' || 
+        a.insuranceCertificate.status === 'Pending';
+      
+      const bHasPending = 
+        b.registrationCertificate.status === 'Pending' || 
+        b.insuranceCertificate.status === 'Pending';
+
+      if (aHasPending && !bHasPending) return -1; // a comes first
+      if (!aHasPending && bHasPending) return 1;  // b comes first
+
+      // If both have same pending status, sort by newest first
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
 
     // Respond with the vehicles data
     return res.status(200).json({
       success: true,
-      data: vehicles,
+      data: sortedVehicles,
     });
   } catch (error) {
     // Handle any errors
