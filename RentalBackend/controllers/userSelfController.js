@@ -4,7 +4,6 @@ const bcrypt = require('bcrypt');
 
 const getProfile = async (req, res) => {
     try {
-      // The user ID will be stored in req.user by the authenticateToken middleware
       const userId = req.user.id;
     //   console.log(userId)
   
@@ -28,13 +27,11 @@ const getProfile = async (req, res) => {
   };
 
 
-// Controller function to update name or contactNumber
 const updateUser = async (req, res) => {
     const userId = req.user.id; 
     const { name, contactNumber } = req.body;
   
     try {
-      // Check if at least one field is provided
       if (!name && !contactNumber) {
         return res.status(400).json({ message: "Please provide a name or contact number to update." });
       }
@@ -46,9 +43,9 @@ const updateUser = async (req, res) => {
   
       // Update the user's data
       const updatedUser = await User.findByIdAndUpdate(
-        userId,            // ID of the user to update
-        { $set: updateFields }, // Use $set to update only the provided fields
-        { new: true, runValidators: true } // Return the updated user and validate the input
+        userId,           
+        { $set: updateFields },
+        { new: true, runValidators: true }
       );
   
       if (!updatedUser) {
@@ -90,7 +87,6 @@ const changePassword = async (req, res) => {
       user.password = hashedPassword;
       await user.save();
   
-      // Respond with success message
       res.status(200).json({ message: "Password updated successfully!" });
     } catch (err) {
       console.error(err);

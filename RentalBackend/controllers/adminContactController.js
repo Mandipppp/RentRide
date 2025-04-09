@@ -2,9 +2,6 @@ const Contact = require("../models/contact");
 const nodemailer = require("nodemailer");
 
 
-// Configure Nodemailer Transporter
-
-
 exports.getAllContacts = async (req, res) => {
     try {
         // Extract query parameters
@@ -23,7 +20,7 @@ exports.getAllContacts = async (req, res) => {
         }
     
         // Fetch contacts from the database based on the filter
-        const contacts = await Contact.find(filter); // Exclude the password field for security
+        const contacts = await Contact.find(filter); // Exclude the password
     
         // Check if contacts exist
         if (!contacts || contacts.length === 0) {

@@ -8,7 +8,6 @@ const bcrypt = require('bcrypt');
 
 const getOwnerProfile = async (req, res) => {
   try {
-    // The Owner ID will be stored in req.user by the authenticateToken middleware
     const ownerId = req.user.id;
 
     // Fetch the Owner from the database and populate KYC details
@@ -65,7 +64,7 @@ const updateOwner = async (req, res) => {
     const updatedOwner = await Owner.findByIdAndUpdate(
       ownerId,
       { $set: ownerUpdateFields },
-      { new: true, runValidators: true } // Return updated document and validate input
+      { new: true, runValidators: true }
     );
 
     if (!updatedOwner) {
@@ -74,7 +73,7 @@ const updateOwner = async (req, res) => {
 
     // Update KYC-related fields
     const kycUpdateFields = {};
-    const updatedFields = []; // To track which fields are being updated
+    const updatedFields = [];
 
     if (req.files && req.files.profilePicture) {
       kycUpdateFields['documents.profilePicture.file'] = req.files.profilePicture[0].path;
@@ -117,8 +116,6 @@ const updateOwner = async (req, res) => {
 };
 
 
-
-// Controller function to update password
 const changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const ownerId = req.user.id; 
@@ -165,7 +162,7 @@ const changePassword = async (req, res) => {
       // Fetch total number of pending bookings
       const totalPendingBookings = await Booking.countDocuments({ ownerId, bookingStatus: 'Pending' });
   
-      // Fetch total earnings (sum of amountPaid from completed bookings)
+      // Fetch total earnings
       const totalEarningsData = await Booking.aggregate([
         { $match: { ownerId: ownerId, bookingStatus: 'Completed' } },
         { $group: { _id: null, totalEarnings: { $sum: "$amountPaid" } } }

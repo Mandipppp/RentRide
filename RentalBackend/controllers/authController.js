@@ -27,7 +27,7 @@ const generateVerificationToken = (email, type) => {
   return jwt.sign({ email, type }, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
 
-// Generalized function to send verification email
+// Function to send verification email
 const sendVerificationEmail = (email, token, type) => {
   const transporter = nodemailer.createTransport({
     service: 'Gmail',
@@ -91,7 +91,7 @@ exports.registerEmail = async (req, res) => {
       return res.status(400).json({ message: 'Please enter a valid email address' });
     }
 
-    // Check if the email already exists in the respective collection
+    // Check if the email already exists in their models
     const existingUser = await Model.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'Email already registered' });
 
@@ -430,7 +430,7 @@ exports.login = async (req, res) => {
 
 exports.getUserDetails = async (req, res) => {
   try {
-    // Step 1: Access the user data from req.user (populated by checkAuthentication)
+    // Access the user data from req.user (populated by checkAuthentication)
     const user = req.user;
     // console.log("User in console",user)
     // Check if user data exists and if the userId is available
@@ -442,7 +442,7 @@ exports.getUserDetails = async (req, res) => {
       return res.status(404).json({ message: "User not found in database." });
     }
 
-    // Step 3: Return the user details in the response
+    // Return the user details in the response
     res.status(200).json({ data: user });
 
   } catch (error) {

@@ -53,7 +53,7 @@ exports.requestPasswordReset = async (req, res) => {
 
     // Configure nodemailer
     const transporter = nodemailer.createTransport({
-      service: "Gmail", // Use your email service
+      service: "Gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -61,7 +61,7 @@ exports.requestPasswordReset = async (req, res) => {
     });
 
     // Email content
-    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`; // Frontend URL
+    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,

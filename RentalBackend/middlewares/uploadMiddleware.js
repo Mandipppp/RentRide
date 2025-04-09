@@ -4,7 +4,7 @@ const path = require('path');
 // Set storage engine
 const storageOwner = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/owners/'); // Specify upload directory
+    cb(null, 'uploads/owners/'); // upload directory
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`); // Ensure unique file names
@@ -14,7 +14,7 @@ const storageOwner = multer.diskStorage({
 // Set storage engine
 const storageVehicle = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/vehicles/'); // Specify upload directory
+    cb(null, 'uploads/vehicles/'); // upload directory
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`); // Ensure unique file names

@@ -48,7 +48,6 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// Function to get a specific owner's details by ID
 const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -79,7 +78,7 @@ const getUserById = async (req, res) => {
 const adminBlockUser = async (req, res) => {
   try {
       const { userId } = req.params;
-      const { reason } = req.body; // Admin provides a reason for blocking
+      const { reason } = req.body; // Admin's reason for blocking
 
       if (!reason) {
           return res.status(400).json({
@@ -109,7 +108,7 @@ const adminBlockUser = async (req, res) => {
 
        await user.save();
 
-       // Cancel all bookings where the blocked user is the renter and status is 'Pending', 'Accepted', or 'RevisionRequired'
+       // Cancel all bookings where the blocked user is the renter and status is pending, accepted or revision required
       const bookingsToCancel = await Booking.find({
         renterId: userId,
         bookingStatus: { $in: ['Pending', 'Accepted', 'RevisionRequired'] },

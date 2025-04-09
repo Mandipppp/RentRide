@@ -54,7 +54,7 @@ exports.createBooking = async (req, res) => {
 
     if (totalDays <= 0) return res.status(400).json({ message: 'Invalid booking duration' });
 
-     // Validate optional pickup and drop times (if provided)
+     // Validate optional pickup and drop times
      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/; // Matches HH:mm (24-hour format)
      if (pickupTime && !timeRegex.test(pickupTime)) {
        return res.status(400).json({ message: 'Invalid pickup time format. Use HH:mm (24-hour format).' });
@@ -214,7 +214,6 @@ exports.createBooking = async (req, res) => {
   }
 };
 
-// Update a pending booking
 exports.editPendingBooking = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -300,7 +299,7 @@ exports.editPendingBooking = async (req, res) => {
 
 exports.getAllBookings = async (req, res) => {
   try {
-    const renterId = req.user.id; // Extract user ID from token
+    const renterId = req.user.id;
     const bookings = await Booking.find({ renterId, bookingStatus: "Pending" }).select("vehicleId");
 
     // Extract only vehicle IDs
@@ -353,7 +352,7 @@ exports.getAllVehicleBookings = async (req, res) => {
 
 exports.getRenterBookings = async (req, res) => {
   try {
-    const renterId = req.user.id; // Extract renter ID from authenticated user
+    const renterId = req.user.id;
 
     const bookings = await Booking.find({ renterId })
       .populate('ownerId', 'name email') // Populate owner details
@@ -425,7 +424,7 @@ exports.cancelUserBooking = async (req, res) => {
 
     const ownerId = vehicle.ownerId._id;
     const owner = await Owner.findById(ownerId);
-    // Check if the user is authorized (either renter or owner)
+    // Check if the user is authorized
     if (String(booking.renterId) !== userId) {
       return res.status(403).json({ message: 'Not authorized to cancel this booking' });
     }
@@ -576,7 +575,6 @@ exports.cancelUserBooking = async (req, res) => {
 };
 
 
-// Accept a booking revision and change status to "Confirmed"
 exports.acceptRevisionBooking = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -763,8 +761,8 @@ exports.acceptRevisionBooking = async (req, res) => {
 
 exports.requestRefund = async (req, res) => {
   try {
-      const { bookingId } = req.params; // Get bookingId from request params
-      const { walletName, walletId } = req.body; // Wallet details from request body
+      const { bookingId } = req.params; 
+      const { walletName, walletId } = req.body;
       const userId = req.user.id;
 
       // Find booking by ID and ensure the user owns it
@@ -782,7 +780,7 @@ exports.requestRefund = async (req, res) => {
           return res.status(404).json({ success: false, message: "Booking not found or unauthorized" });
       }
 
-      // Check if the booking is canceled and payment was made (Partial or Full)
+      // Check if the booking is canceled and payment was made: Partial or Full
       if (booking.bookingStatus !== "Cancelled") {
           return res.status(400).json({ success: false, message: "Refund can only be requested for canceled bookings" });
       }
@@ -824,11 +822,10 @@ exports.requestRefund = async (req, res) => {
 };
 
 
-// Owner approves/rejects the booking
 exports.updateBookingStatus = async (req, res) => {
     try {
       const { bookingId } = req.params;
-      const { status } = req.body; // 'Accepted' or 'Cancelled'
+      const { status } = req.body;
   
       if (!['Accepted', 'Cancelled'].includes(status)) {
         return res.status(400).json({ message: 'Invalid status update' });

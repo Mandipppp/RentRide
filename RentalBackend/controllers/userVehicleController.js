@@ -21,37 +21,14 @@ exports.getAvailableVehicles = async (req, res) => {
       matchQuery.isVerified = true;
     }
 
-    // Filter by add-ons
-    // if (addOns) {
-    //   const addOnList = addOns.split(",").map(addOn => 
-    //     addOn.toLowerCase().replace(/[-\s]/g, "_")  // Convert to lowercase and replace spaces/hyphens with "_"
-    //   );
-    //   matchQuery["addOns.name"] = { $all: addOnList };
-    // }
-
     if (addOns) {
       const addOnList = addOns.split(",").map(addOn =>
         addOn.toLowerCase().replace(/[-\s]/g, "_") // Normalize user input
       );
-    
-      // matchQuery["addOns"] = {
-      //   $all: addOnList.map(addOn => ({
-      //     $elemMatch: {
-      //       name: { $regex: new RegExp(`^${addOn.replace(/_/g, "[-_\\s]")}$`, "i") }
-      //     }
-      //   }))
-      // };
       matchQuery["addOns.name"] = {
         $in: addOnList.map(addOn => new RegExp(`^${addOn.replace(/_/g, "[-_\\s]")}$`, "i"))
       };
     }
-
-    // // Filter by add-ons if provided
-    // if (addOns) {
-    //   const addOnList = addOns.split(",");
-    //   // console.log(addOnList);
-    //   query["addOns.name"] = { $all: addOnList };
-    // }
 
     // Filter by rental date availability
     let rentalPeriodQuery = {};
@@ -80,12 +57,11 @@ exports.getAvailableVehicles = async (req, res) => {
       matchQuery._id = { $nin: bookedVehicles };
     }
 
-    // MongoDB Aggregation Pipeline
     let vehicles = await Vehicle.aggregate([
-      // Step 1: Match Vehicles that are Available
+      // Match Vehicles that are Available
       { $match: matchQuery },
 
-      // Step 2: Join with Owner Collection
+      // Join with Owner Collection
       {
         $lookup: {
           from: "owners",
@@ -97,7 +73,7 @@ exports.getAvailableVehicles = async (req, res) => {
       { $unwind: "$owner" }, // Convert array to object
       { $match: { "owner.blockStatus": "active" } },
 
-      // Step 3: Join with KYC Collection
+      //Join with KYC Collection
       {
         $lookup: {
           from: "kycs",
@@ -108,10 +84,10 @@ exports.getAvailableVehicles = async (req, res) => {
       },
       { $unwind: "$kyc" }, // Convert array to object
 
-      // Step 4: Filter by KYC Status
+      // Filter by KYC Status
       { $match: { "kyc.overallStatus": "verified" } },
 
-      // Step 5: Apply rental period filter if needed
+      // Apply rental period filter if needed
       { $match: rentalPeriodQuery }
     ]);
 
@@ -119,7 +95,6 @@ exports.getAvailableVehicles = async (req, res) => {
     if (latitude && longitude) {
       const userLocation = { latitude: parseFloat(latitude), longitude: parseFloat(longitude) };
       
-      // Create a new array instead of modifying 'vehicles' directly
       const sortedVehicles = vehicles.map(vehicle => {
         if (vehicle.latitude && vehicle.longitude) {
           const vehicleLocation = { latitude: vehicle.latitude, longitude: vehicle.longitude };
@@ -153,7 +128,6 @@ exports.getAvailableVehicles = async (req, res) => {
   }
 };
 
-  // Get a vehicle by ID
 exports.getVehicleById = async (req, res) => {
   try {
       const { vehicleId } = req.params;

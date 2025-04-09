@@ -48,7 +48,7 @@ exports.addAdmin = async (req, res) => {
     // Save the new admin to the database
     await newAdmin.save();
 
-    // Set up the email transporter (make sure you have a working email service)
+    // Set up the email transporter
     const transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
@@ -103,7 +103,7 @@ exports.setupPassword = async (req, res) => {
         return res.status(400).json({ message: 'Invalid or expired token' });
       }
   
-      // Hash the new password using bcrypt with 10 salt rounds (consistent with previous logic)
+      // Hash the new password using bcrypt with 10 salt rounds
       const hashedPassword = await bcrypt.hash(password, 10);
   
       // Update the user's password and clear the reset token
@@ -200,12 +200,9 @@ exports.setupPassword = async (req, res) => {
         priority,
       }));
   
-      // await Notification.insertMany(notifications);
-      
-      // Save each notification individually to trigger the post hook
     for (const notification of notifications) {
       const newNotification = new Notification(notification);
-      await newNotification.save(); // Save individually
+      await newNotification.save();
     }
   
       const transporter = nodemailer.createTransport({
@@ -261,7 +258,7 @@ exports.setupPassword = async (req, res) => {
       }
   
       // Fetch users from the database based on the filter
-      const users = await User.find(filter, '-password'); // Exclude the password field for security
+      const users = await User.find(filter, '-password'); // Exclude the password
   
       // Check if users exist
       if (!users || users.length === 0) {
@@ -306,7 +303,7 @@ exports.setupPassword = async (req, res) => {
         });
       }
   
-      // Find the admin to be blocked/unblocked
+      // Find the admin to be blocked or unblocked
       const admin = await User.findById(adminId);
   
       if (!admin) {
@@ -445,7 +442,7 @@ exports.setupPassword = async (req, res) => {
               { 'insuranceCertificate.status': 'Pending' }
             ]
           },
-          { status: { $ne: 'Deleted' } }  // Exclude deleted vehicles
+          { status: { $ne: 'Deleted' } }
         ]
       });
   

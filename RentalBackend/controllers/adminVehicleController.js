@@ -1,6 +1,6 @@
 const Vehicle = require('../models/vehicle');
 const nodemailer = require('nodemailer');
-const Notification = require('../models/notification'); // Import the Owner model
+const Notification = require('../models/notification');
 
 
 
@@ -24,12 +24,12 @@ const getAllVehicles = async (req, res) => {
       filter.type = type;
     }
 
-    // Filter by category (if provided)
+    // Filter by category
     if (category) {
       filter.category = category;
     }
 
-    // Filter by status (if provided)
+    // Filter by status
     if (status) {
       filter.status = status;
     }
@@ -138,7 +138,7 @@ const verifyVehicle = async (req, res) => {
     const vehicle = await Vehicle.findById(vehicleId).populate('ownerId');
     if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
 
-    let updatedFields = {}; // Dynamically build update fields
+    let updatedFields = {};
     let updated = false;
 
     // Update registration certificate fields if provided
@@ -171,7 +171,7 @@ const verifyVehicle = async (req, res) => {
     ) {
       updatedFields.isVerified = true;
     } else {
-      updatedFields.isVerified = false; // Optionally handle unverified case if desired
+      updatedFields.isVerified = false;
     }
 
     // Only update the vehicle if any fields were modified

@@ -1,13 +1,12 @@
-const Notification = require('../models/notification'); // Notification model
-const User = require('../models/user'); // User model
-const Owner = require('../models/owner'); // Owner model
+const Notification = require('../models/notification');
+const User = require('../models/user');
+const Owner = require('../models/owner');
 
-// Controller to get notifications for the authenticated user or owner
 exports.getNotifications = async (req, res) => {
   try {
-    const recipient = req.user; // Extract user or owner info from req.user
+    const recipient = req.user; 
 
-    // Determine the model name dynamically based on the role
+    // Determine the model 
     let recipientModel;
     if (recipient.role === 'renter' || recipient.role === 'admin' || recipient.role === 'superadmin') {
       recipientModel = 'User';
@@ -20,7 +19,7 @@ exports.getNotifications = async (req, res) => {
       recipientId: recipient.id,
       recipientModel: recipientModel,
     })
-      .populate('recipient') // Populate recipient (User/Owner)
+      .populate('recipient') // Populate recipient
       .sort({ createdAt: -1 }); // Sort notifications by creation date
 
     // Return the notifications
@@ -31,7 +30,6 @@ exports.getNotifications = async (req, res) => {
   }
 };
 
-// Controller to mark a notification as read
 exports.markAsRead = async (req, res) => {
   const { notificationId } = req.params;
 

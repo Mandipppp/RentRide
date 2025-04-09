@@ -10,7 +10,6 @@ exports.getAllPages = async (req, res) => {
     const { title, slug } = req.query;
     // console.log(title);
 
-    // Construct a query object
     let query = {};
 
     if (title || slug) {
@@ -41,7 +40,6 @@ exports.getAllPages = async (req, res) => {
 };
 
 
-// Controller function to add a new page
 exports.addPage = async (req, res) => {
     try {
       const { title, slug, content } = req.body;
@@ -74,7 +72,7 @@ exports.addPage = async (req, res) => {
       // Save the new page to the database
       const savedPage = await newPage.save();
   
-      // Send the newly created page as a response
+      // return that newly created page
       res.status(201).json({
         success: true,
         data: savedPage,
@@ -88,7 +86,6 @@ exports.addPage = async (req, res) => {
     }
   };
 
-  // Controller function to edit a page
 exports.editPage = async (req, res) => {
     try {
       const { title, slug, content } = req.body;
@@ -145,7 +142,6 @@ exports.editPage = async (req, res) => {
     }
   };
   
-   // Controller function to edit a page
 exports.editAndNotify = async (req, res) => {
   try {
     const { title, slug, content } = req.body;
@@ -229,7 +225,7 @@ exports.editAndNotify = async (req, res) => {
     });
     // Construct email message
     const emailMessage = {
-      from: 'your-email@gmail.com',
+      from: process.env.EMAIL_USER,
       subject: 'Page Updated',
       text: notificationMessage,
     };
@@ -265,7 +261,6 @@ exports.editAndNotify = async (req, res) => {
   }
 };
 
-  // Controller function to delete a page
 exports.deletePage = async (req, res) => {
     try {
       const { id } = req.params;

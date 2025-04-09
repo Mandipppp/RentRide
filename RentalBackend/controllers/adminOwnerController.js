@@ -1,4 +1,4 @@
-const Owner = require('../models/owner'); // Import the Owner model
+const Owner = require('../models/owner');
 const User= require('../models/user');
 
 const KYC = require('../models/kyc');
@@ -15,7 +15,6 @@ const getAllOwners = async (req, res) => {
     // Extract query parameters
     const { name, email } = req.query;
 
-    // Build the filter object dynamically
     const filter = {};
     if (name || email) {
       filter.$or = [];
@@ -61,7 +60,7 @@ const getAllOwners = async (req, res) => {
       if (aHasPending && !bHasPending) return -1;
       if (!aHasPending && bHasPending) return 1;
 
-      // If both have same pending status, sort by creation date (newest first)
+      // If both have same pending status, sort by creation date
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
 
@@ -304,7 +303,7 @@ const adminBlockOwner = async (req, res) => {
 
        await owner.save();
 
-       /*** Cancel Bookings & Notify Renters ***/
+      //Cancel Bookings & Notify Renters
       const affectedBookings = await Booking.find({
         ownerId,
         bookingStatus: { $in: ['Pending', 'Accepted', 'RevisionRequired'] },

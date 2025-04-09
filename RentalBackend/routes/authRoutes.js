@@ -17,7 +17,6 @@ router.get('/verify-email/:token', verifyEmail);
 // Route for completing the registration after email is verified
 router.post('/registerUser', registerUser);
 
-//changed
 // router.post('/registerOwner', registerOwner);
 
 // Use upload.fields for multiple files

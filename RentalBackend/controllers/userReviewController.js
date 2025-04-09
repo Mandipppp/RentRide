@@ -1,14 +1,13 @@
 const Review = require('../models/review');
 const Vehicle = require('../models/vehicle');
-const Booking = require('../models/Booking'); // Import the Booking model
+const Booking = require('../models/Booking');
 
-// POST method to allow users to post a review
 exports.postReview = async (req, res) => {
   try {
     const { bookingId, rating, comment } = req.body;
     const userId = req.user.id;
 
-    // Step 1: Validate bookingId, check if the booking exists and is completed
+    // Validate bookingId, check if the booking exists and is completed
     const booking = await Booking.findById(bookingId).populate('vehicleId');
 
     if (!booking) {
@@ -25,7 +24,7 @@ exports.postReview = async (req, res) => {
       return res.status(400).json({ message: 'You can only review completed bookings.' });
     }
 
-    // Step 2: Check if the booking was completed within the last 24 hours
+    // Check if the booking was completed within the last 24 hours
     const currentTime = new Date();
     const bookingEndTime = new Date(booking.endDate);
 
@@ -36,7 +35,7 @@ exports.postReview = async (req, res) => {
       return res.status(400).json({ message: 'You can only post a review within 24 hours of completing the booking.' });
     }
 
-    // Step 3: Check if a review has already been posted for this booking by the user
+    // Check if a review has already been posted for this booking by the user
     const existingReview = await Review.findOne({ bookingId, userId });
 
     if (existingReview) {
@@ -69,7 +68,7 @@ exports.getReviews = async (req, res) => {
     const { vehicleId } = req.params;
     const reviews = await Review.find({ 
       vehicleId, 
-      status: 'Approved' // Filter reviews with "Approved" status
+      status: 'Approved'
     })
       .populate('userId', 'name')
       .populate('bookingId', 'startDate endDate')
@@ -97,7 +96,7 @@ exports.getOwnerReviews = async (req, res) => {
     // Fetch only approved reviews for calculating the average rating
     const approvedReviews = await Review.find({ 
       vehicleId, 
-      status: 'Approved' // Only fetch approved reviews
+      status: 'Approved'
     })
       .populate('userId', 'name') // Populate user details
       .sort({ createdAt: -1 }); // Sort by most recent

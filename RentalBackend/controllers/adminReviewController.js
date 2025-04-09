@@ -2,15 +2,12 @@ const Review = require('../models/review');
 const User = require('../models/user');
 const Vehicle = require('../models/vehicle');
 
-
-
-// Controller to get all reviews for admin
 exports.getAllReviews = async (req, res) => {
   try {
     const { status, userName, vehicleName } = req.query;
     const filter = {};
 
-    // Filter by renterName (if provided)
+    // Filter by renterName
     if (userName) {
         const renters = await User.find({ name: { $regex: userName, $options: 'i' } }).select('_id');
         if (renters.length > 0) {
@@ -24,7 +21,7 @@ exports.getAllReviews = async (req, res) => {
             filter.vehicleId = { $in: renters.map(renter => renter._id) };
         }
     }
-    // Filter by booking status (if provided)
+    // Filter by booking status
     if (status) {
     filter.status = status;
     }
@@ -53,7 +50,6 @@ exports.getAllReviews = async (req, res) => {
   }
 };
 
-// Controller for admin to accept or reject a review
 exports.updateReviewStatus = async (req, res) => {
     try {
       const { reviewId } = req.params;

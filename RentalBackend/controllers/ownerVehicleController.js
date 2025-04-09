@@ -38,7 +38,7 @@ const getOwnerVehicles = async (req, res) => {
 
           // Fetch owner and KYC details separately
         const owner = await Owner.findById(ownerId)
-        .select('name email contactNumber kycId blockStatus blockReason') // Include necessary owner details
+        .select('name email contactNumber kycId blockStatus blockReason')
         .populate({
           path: 'kycId', // Populate KYC details
           select: 'overallStatus', // Select only the overallStatus from KYC
@@ -52,26 +52,12 @@ const getOwnerVehicles = async (req, res) => {
       }
   
       // Fetch vehicles associated with the ownerId
-      const vehicles = await Vehicle.find({ ownerId, status: { $ne: 'Deleted' } // Exclude vehicles with status 'Deleted'
+      const vehicles = await Vehicle.find({ ownerId, status: { $ne: 'Deleted' }
         })
         .populate({
           path: 'registrationCertificate.verifiedBy insuranceCertificate.verifiedBy',
-          select: 'name email', // Include admin details
+          select: 'name email',
         });
-  
-      // Check if any vehicles were found
-      // if (vehicles.length === 0) {
-      //   return res.status(404).json({
-      //     success: false,
-      //     owner: {
-      //       name: owner.name,
-      //       email: owner.email,
-      //       contactNumber: owner.contactNumber,
-      //       kyc: owner.kycId,
-      //     },
-      //     message: 'No vehicles found for the given owner.',
-      //   });
-      // }
   
       // Respond with the list of vehicles
       return res.status(200).json({
@@ -246,21 +232,6 @@ const getOwnerVehicles = async (req, res) => {
       const registrationCert = req.files.registrationCert[0].path;
       const insuranceCert = req.files.insuranceCert[0].path;
       const imageUrls = req.files.pictures.map(picture => picture.path);
-  
-      // Parse addOns and features
-      // const parsedAddOns = addOns ? JSON.parse(addOns) : [];
-      // Parse and normalize add-ons
-      // let parsedAddOns = [];
-      // try {
-      //     if (addOns) {
-      //         parsedAddOns = JSON.parse(addOns)
-      //             .map(addOn => addOn.toLowerCase().replace(/[-\s]/g, "_")) // Normalize format
-      //             .filter((value, index, self) => self.indexOf(value) === index); // Remove duplicates
-      //     }
-      // } catch (error) {
-      //     return res.status(400).json({ message: 'Invalid add-ons format.' });
-      // }
-      // const parsedFeatures = features ? JSON.parse(features) : [];
   
       // Create the vehicle
       const newVehicle = new Vehicle({
@@ -630,7 +601,7 @@ const getOwnerVehicles = async (req, res) => {
 
   
   const updateVehicle = async (req, res) => {
-    const ownerId = req.user.id; // The owner ID from the authenticated user
+    const ownerId = req.user.id;
     const { vehicleId } = req.params; 
     const {
       name,
@@ -688,20 +659,20 @@ const getOwnerVehicles = async (req, res) => {
       if (latitude) vehicleUpdateFields.latitude = latitude;
       if (longitude) vehicleUpdateFields.longitude = longitude;
        // Parse and update addOns if provided
-    if (addOns) {
-      try {
-        vehicleUpdateFields.addOns = JSON.parse(addOns);
-      } catch (err) {
-        return res.status(400).json({ message: "Invalid format for addOns field." });
+      if (addOns) {
+        try {
+          vehicleUpdateFields.addOns = JSON.parse(addOns);
+        } catch (err) {
+          return res.status(400).json({ message: "Invalid format for addOns field." });
+        }
       }
-    }
-    if (features) {
-      try {
-        vehicleUpdateFields.features = JSON.parse(features);
-      } catch (err) {
-        return res.status(400).json({ message: "Invalid format for features field." });
+      if (features) {
+        try {
+          vehicleUpdateFields.features = JSON.parse(features);
+        } catch (err) {
+          return res.status(400).json({ message: "Invalid format for features field." });
+        }
       }
-    }
   
       // Handle file uploads for registration and insurance certificates
       const documentUpdateFields = {};
@@ -794,25 +765,25 @@ const getOwnerVehicles = async (req, res) => {
         );
 
         // Create notification message including removed add-ons info
-  let notificationMessage = `The price for your pending booking has been updated. Your new total cost is Rs. ${updatedAmountDue}.`;
-  if (removedAddOns.length > 0) {
-    notificationMessage += ` The following add-ons are no longer available: ${removedAddOns.join(', ')}.`;
-  }
+        let notificationMessage = `The price for your pending booking has been updated. Your new total cost is Rs. ${updatedAmountDue}.`;
+        if (removedAddOns.length > 0) {
+          notificationMessage += ` The following add-ons are no longer available: ${removedAddOns.join(', ')}.`;
+        }
 
         // Create a notification for the user
-      await Notification.create({
-        recipientId: booking.renterId,
-        recipientModel: "User",
-        message: notificationMessage,
-        type: "booking",
-        status: "unread",
-        priority: "high",
-      });
+        await Notification.create({
+          recipientId: booking.renterId,
+          recipientModel: "User",
+          message: notificationMessage,
+          type: "booking",
+          status: "unread",
+          priority: "high",
+        });
 
-      const user = await User.findById(booking.renterId);
+        const user = await User.findById(booking.renterId);
 
-       // Send email to the user
-       const mailOptions = {
+        // Send email to the user
+        const mailOptions = {
         from: process.env.EMAIL_USER,
         to: user.email,
         subject: `Booking Update For: ${vehicle.name}`,

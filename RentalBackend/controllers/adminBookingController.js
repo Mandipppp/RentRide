@@ -10,7 +10,7 @@ exports.getAllBookings = async (req, res) => {
   
       const filter = {};
   
-     // Filter by renterName (if provided)
+     // Filter by renterName if provided
      if (renterName) {
         const renters = await User.find({ name: { $regex: renterName, $options: 'i' } }).select('_id');
         if (renters.length > 0) {
@@ -18,7 +18,7 @@ exports.getAllBookings = async (req, res) => {
         }
     }
 
-    // Filter by ownerName (if provided)
+    // Filter by ownerName if provided
     if (ownerName) {
         const owners = await Owner.find({ name: { $regex: ownerName, $options: 'i' } }).select('_id');
         if (owners.length > 0) {
@@ -26,7 +26,7 @@ exports.getAllBookings = async (req, res) => {
         }
     }
 
-    // Filter by vehicleName (if provided)
+    // Filter by vehicleName if provided
     if (vehicleName) {
         const vehicles = await Vehicle.find({ name: { $regex: vehicleName, $options: 'i' } }).select('_id');
         if (vehicles.length > 0) {
@@ -34,17 +34,17 @@ exports.getAllBookings = async (req, res) => {
         }
     }
   
-      // Filter by booking status (if provided)
+      // Filter by booking status if provided
       if (bookingStatus) {
         filter.bookingStatus = bookingStatus;
       }
   
-      // Filter by payment status (if provided)
+      // Filter by payment status if provided
       if (paymentStatus) {
         filter.paymentStatus = paymentStatus;
       }
   
-      // Filter by date range (startDate and endDate)
+      // Filter by date range if provided
       if (startDate && endDate) {
         filter.startDate = { $gte: new Date(startDate) };
         filter.endDate = { $lte: new Date(endDate) };
@@ -58,15 +58,15 @@ exports.getAllBookings = async (req, res) => {
       const bookings = await Booking.find(filter)
         .populate({
           path: 'renterId',
-          select: 'name email contactNumber', // Include only specific fields from the renter
+          select: 'name email contactNumber', // Include these fields
         })
         .populate({
           path: 'ownerId',
-          select: 'name email contactNumber', // Include only specific fields from the owner
+          select: 'name email contactNumber', // Include these fields
         })
         .populate({
           path: 'vehicleId',
-          select: 'name registrationNumber type category', // Include specific vehicle details
+          select: 'name registrationNumber type category', // Include these
         });
   
       // Check if bookings exist
@@ -99,7 +99,7 @@ exports.getBooking = async (req, res) => {
   try {
       const { bookingId } = req.params;
 
-      // Check if bookingId is valid
+      // Check if bookingId is there
       if (!bookingId) {
           return res.status(400).json({
               success: false,
