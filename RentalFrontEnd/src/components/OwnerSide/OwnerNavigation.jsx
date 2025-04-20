@@ -12,6 +12,7 @@ function OwnerNavigation() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState('all'); // 'all' or 'unread'
+  const [hasRejectedDocuments, setHasRejectedDocuments] = useState(false);
 
   const token = localStorage.getItem('access_token');
 
@@ -39,6 +40,25 @@ function OwnerNavigation() {
     };
 
     fetchNotifications();
+  }, [token]);
+
+  useEffect(() => {
+    const checkKycRejection = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/api/owner/getkycinfo', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setHasRejectedDocuments(response.data.hasRejectedDocuments);
+      } catch (error) {
+        console.error('Error checking KYC rejection status:', error);
+      }
+    };
+
+    if (token) {
+      checkKycRejection();
+    }
   }, [token]);
 
   useEffect(() => {
@@ -210,8 +230,11 @@ function OwnerNavigation() {
           </div>
 
           {/* Owner Profile Icon */}
-          <Link to="/ownerprofile">
+          <Link to="/ownerprofile" className="relative">
             <i className="fas fa-user text-gray-600 hover:text-black"></i>
+            {hasRejectedDocuments && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+            )}
           </Link>
         </div>
       </nav>

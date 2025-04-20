@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import OwnerNavigation from './OwnerNavigation'
 import OwnerProfileDetails from './OwnerProfileDetails'
 import OwnerPasswordDetails from './OwnerPasswordDetails'
@@ -6,11 +6,33 @@ import { reactLocalStorage } from 'reactjs-localstorage';
 import { useNavigate } from 'react-router-dom';
 import OwnerWalletDetails from './OwnerWalletDetails';
 import OwnerKYCDetails from './OwnerKYCDetails';
+import axios from 'axios';
 
 function OwnerProfilePage() {
   const [activeView, setActiveView] = useState("ownerprofile");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const token = localStorage.getItem('access_token');
+  const [hasRejectedDocuments, setHasRejectedDocuments] = useState(false);
+  
+  useEffect(() => {
+      const checkKycRejection = async () => {
+        try {
+          const response = await axios.get('http://localhost:3000/api/owner/getkycinfo', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          setHasRejectedDocuments(response.data.hasRejectedDocuments);
+        } catch (error) {
+          console.error('Error checking KYC rejection status:', error);
+        }
+      };
+  
+      if (token) {
+        checkKycRejection();
+      }
+    }, [token]);
 
   const handleSignOut = () => {
     // Open the confirmation dialog when the sign-out is clicked
@@ -51,7 +73,12 @@ function OwnerProfilePage() {
                 activeView === "kyc" ? "font-bold text-gray-800" : ""}`}
                 onClick={() => setActiveView("kyc")}
             >
-              KYC
+              <div className="flex items-center gap-2">
+                KYC
+                {hasRejectedDocuments && (
+                  <span className="inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
+              </div>
             </li>
             <li className={`text-gray-600 hover:text-gray-800 cursor-pointer ${
               activeView === "ownerwallet" ? "font-bold text-gray-800" : ""}`}

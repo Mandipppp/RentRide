@@ -180,5 +180,59 @@ const changePassword = async (req, res) => {
       res.status(500).json({ message: "Internal server error." });
     }
   };
+
+  const checkKycRejection = async (req, res) => {
+    try {
+      const ownerId = req.user.id;
   
-module.exports = { getOwnerProfile, updateOwner, changePassword, getOwnerStats };
+      // Find the owner's KYC document
+      const kycDoc = await KYC.findOne({ ownerId });
+  
+      if (!kycDoc) {
+        return res.status(200).json({ 
+          hasRejectedDocuments: false,
+          message: "No KYC documents found" 
+        });
+      }
+  
+      // Check if any document has a rejected status
+      const hasRejectedDocuments = 
+        kycDoc.documents.citizenshipFront.status === 'rejected' ||
+        kycDoc.documents.citizenshipBack.status === 'rejected' ||
+        kycDoc.documents.profilePicture.status === 'rejected';
+  
+      // If any document is rejected, get the rejection comments
+      let rejectedDocuments = [];
+      if (hasRejectedDocuments) {
+        if (kycDoc.documents.citizenshipFront.status === 'rejected') {
+          rejectedDocuments.push({
+            document: 'Citizenship Front',
+            comment: kycDoc.documents.citizenshipFront.comments
+          });
+        }
+        if (kycDoc.documents.citizenshipBack.status === 'rejected') {
+          rejectedDocuments.push({
+            document: 'Citizenship Back',
+            comment: kycDoc.documents.citizenshipBack.comments
+          });
+        }
+        if (kycDoc.documents.profilePicture.status === 'rejected') {
+          rejectedDocuments.push({
+            document: 'Profile Picture',
+            comment: kycDoc.documents.profilePicture.comments
+          });
+        }
+      }
+  
+      return res.status(200).json({
+        hasRejectedDocuments,
+        rejectedDocuments: hasRejectedDocuments ? rejectedDocuments : []
+      });
+  
+    } catch (error) {
+      console.error("Error checking KYC rejection status:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  };
+  
+module.exports = { getOwnerProfile, updateOwner, changePassword, getOwnerStats, checkKycRejection };
