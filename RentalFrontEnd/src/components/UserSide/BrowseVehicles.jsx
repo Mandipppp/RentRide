@@ -366,7 +366,10 @@ export default function BrowseVehicles() {
               onChange={handleInputChange}
             /> */}
 
-<div className="w-full relative">
+          <div className="w-full relative">
+          <label className="block text-sm font-semibold mb-1 ml-3">
+              Location <span className="text-red-500">*</span>
+            </label>
           {selectedLocation ? (
                 <div className="flex items-center text-sm font-bold bg-blue-100 text-blue-800 px-6 py-4 rounded-full mb-2">
                     <span>{selectedLocation.display_name}</span>
@@ -418,7 +421,9 @@ export default function BrowseVehicles() {
 
           <div className="grid grid-cols-1 gap-4 mb-6">
             <div className="border p-3 rounded">
-              <label className="block text-sm font-semibold">Pick-up Date</label>
+              <label className="block text-sm font-semibold">
+                Pick-up Date <span className="text-red-500">*</span>
+              </label>
               <input className="w-full" name="pickupDate" type="date" min={today} value={filters.pickupDate} onChange={handleInputChange} />
             </div>
             <div className="border p-3 rounded">
@@ -426,7 +431,9 @@ export default function BrowseVehicles() {
               <input className="w-full" name="pickupTime" type="time" value={filters.pickupTime} onChange={handleInputChange} />
             </div>
             <div className="border p-3 rounded">
-              <label className="block text-sm font-semibold">Return Date</label>
+              <label className="block text-sm font-semibold">
+                Return Date <span className="text-red-500">*</span>
+              </label>
               <input className="w-full" name="dropDate" type="date" min={filters.pickupDate} value={filters.dropDate} onChange={handleInputChange} />
             </div>
             <div className="border p-3 rounded">

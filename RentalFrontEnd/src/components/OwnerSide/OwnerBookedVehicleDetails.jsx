@@ -5,6 +5,9 @@ import { reactLocalStorage } from 'reactjs-localstorage';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import io from "socket.io-client";
+import CryptoJS from "crypto-js";
+
+const SECRET_KEY = "rentride"; 
 
 const socket = io("http://localhost:3000");
 
@@ -161,7 +164,7 @@ export default function OwnerBookedVehicleDetails() {
           // Calculate base vehicle cost
           // const onlyVehicleCost = booking.vehicleId.dailyPrice * numDays;
           let onlyVehicleCost = 0;
-          if(booking.status=="Pending"){
+          if(booking.bookingStatus=="Pending"){
           // Calculate base vehicle cost
             onlyVehicleCost = booking.vehicleId.dailyPrice * numDays;
           }else{
@@ -191,8 +194,19 @@ export default function OwnerBookedVehicleDetails() {
                   headers: { Authorization: `Bearer ${token}` },
               }
               );
+              // Decrypt each message
+              const decryptedMessages = (response.data.messages || []).map((msg) => {
+                try {
+                  const bytes = CryptoJS.AES.decrypt(msg.message, SECRET_KEY);
+                  const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+                  return { ...msg, message: decryptedText };
+                } catch (error) {
+                  console.error("Decryption failed for message:", msg._id);
+                  return msg; // fallback: keep encrypted
+                }
+              });
               // console.log("messages: ", response.data);
-              setMessages(response.data.messages || []);
+              setMessages(decryptedMessages);
               
               setChatId(response.data.chatId);
               setUserId(booking.ownerId._id);
@@ -220,7 +234,15 @@ export default function OwnerBookedVehicleDetails() {
             useEffect(() => {
                 // Listen for incoming messages from the server
                 socket.on("receiveMessage", (newMessage) => {
-                  setMessages((prevMessages) => [...prevMessages, newMessage]);
+                  // Decrypt the message content
+                  const bytes = CryptoJS.AES.decrypt(newMessage.message, SECRET_KEY);
+                  const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+
+                  const decryptedMessage = {
+                    ...newMessage,
+                    message: decryptedText,
+                  };
+                  setMessages((prevMessages) => [...prevMessages, decryptedMessage]);
                   scrollToBottom();
                   const timeoutId = setTimeout(() => scrollToBottom(), 100);
                   return () => clearTimeout(timeoutId);
@@ -383,6 +405,9 @@ export default function OwnerBookedVehicleDetails() {
       toast.success("Rental has started.");
       // console.log('Starting rental:', response.data);
       setBooking(response.data.booking);
+      if(response.data.booking.bookingStatus === "Active" || response.data.booking.bookingStatus === "Confirmed"){
+        setContractUrl(`http://localhost:3000/api/owner/booking/contract/${bookingId}`);
+      }
       setShowStartRentalDialog(false);
 
     } catch (error) {

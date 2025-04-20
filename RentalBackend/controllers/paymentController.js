@@ -33,6 +33,10 @@ const initiatePayment = async (req, res) => {
       return res.status(404).json({ success: false, message: "Booking not found." });
     }
 
+    if(booking.paymentMethod == "Cash"){
+      return res.status(404).json({ success: false, message: "Booking set to cash by onwer." });
+    }
+
     // Check for overlapping confirmed bookings for the same vehicle
     const overlappingBookings = await Booking.find({
       vehicleId: booking.vehicleId,
@@ -86,7 +90,19 @@ const initiatePayment = async (req, res) => {
     console.error("Khalti Payment Error:", error);
 
     if (error.response) {
-      res.status(error.response.status || 400).json(error.response.data);
+      // res.status(error.response.status || 400).json(error.response.data);
+      if (error.response.status === 503) {
+        return res.status(503).json({
+          success: false,
+          message: "Khalti payment service is temporarily unavailable. Please try again in a few minutes.",
+          error: "SERVICE_UNAVAILABLE"
+        });
+      }
+      return res.status(error.response.status).json({
+        success: false,
+        message: error.response.data?.message || "Payment initiation failed",
+        error: error.response.data
+      });
     } else if (error.request) {
       res.status(500).json({ message: "No response from Khalti. Check your internet or API URL." });
     } else {

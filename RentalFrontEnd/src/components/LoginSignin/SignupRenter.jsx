@@ -15,6 +15,10 @@ const SignupRenter = () => {
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
+    if (countdown > 0) {
+      toast.warning(`Please wait ${countdown} seconds before resending.`);
+      return;
+    }
     setLoading(true);
     axios
       .post("http://localhost:3000/api/auth/registerEmail", { email, type: 'user'})

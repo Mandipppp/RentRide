@@ -86,13 +86,13 @@ function OwnerBookings() {
                 } else if (updatedBooking.bookingStatus === "Completed") {
                     newCategory = "completed";
                 } else if (
-                    updatedBooking.bookingStatus === "Cancelled" &&
-                    ["Pending", "Refunded"].includes(updatedBooking.paymentStatus)
+                    updatedBooking.bookingStatus === "Cancelled" && (
+                    ["Pending", "Refunded"].includes(updatedBooking.paymentStatus) || updatedBooking.paymentMethod === "Cash")
                 ) {
                     newCategory = "cancelled";
                 } else if (
-                    updatedBooking.bookingStatus === "Cancelled" &&
-                    ["Partial", "Full"].includes(updatedBooking.paymentStatus)
+                    updatedBooking.bookingStatus === "Cancelled" && (
+                    ["Partial", "Full"].includes(updatedBooking.paymentStatus) || updatedBooking.paymentMethod !== "Cash")
                 ) {
                     newCategory = "refunds";
                 }

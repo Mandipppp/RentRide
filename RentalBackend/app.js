@@ -16,6 +16,8 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const reviewRoutes = require("./routes/userReviewRoutes");
 const adminPageRoutes = require("./routes/adminPageRoutes");
+const CryptoJS = require("crypto-js");
+const secretKey = process.env.CHAT_SECRET;
 
 
 const Chat = require('./models/Chat');
@@ -111,7 +113,9 @@ io.on('connection', (socket) => {
   // Handle sending a message
   socket.on('sendMessage', async ({ chatId, senderId, message }) => {
     try {
-      const newMessage = new Message({ chatId, senderId, message });
+      const encryptedMessage = CryptoJS.AES.encrypt(message, secretKey).toString();
+      // console.log("Encrypted message:", encryptedMessage);
+      const newMessage = new Message({ chatId, senderId, message: encryptedMessage });
       await newMessage.save();
 
       // Update chat with new message

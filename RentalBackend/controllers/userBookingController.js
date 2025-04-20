@@ -809,6 +809,108 @@ exports.requestRefund = async (req, res) => {
       booking.updatedAt = new Date();
       await booking.save(); // Save the updated booking
 
+      // Create notification for owner
+      const notification = new Notification({
+        recipientId: booking.ownerId._id,
+        recipientModel: 'Owner',
+        message: `Refund requested for booking of ${booking.vehicleId.name}. Wallet: ${walletName}`,
+        type: 'payment',
+        priority: 'high'
+      });
+      await notification.save();
+
+
+    // Send email to owner
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: booking.ownerId.email,
+      subject: `Refund Request for Booking: ${booking.vehicleId.name}`,
+      html: `
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                color: #333;
+                background-color: #f4f4f4;
+                padding: 20px;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 20px;
+              }
+              .header h1 {
+                color: #e44d26;
+              }
+              .content {
+                font-size: 16px;
+              }
+              .details {
+                background-color: #f8f9fa;
+                padding: 15px;
+                border-radius: 5px;
+                margin: 15px 0;
+              }
+              .footer {
+                margin-top: 30px;
+                text-align: center;
+                color: #777;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Refund Request Received</h1>
+              </div>
+              <div class="content">
+                <p>Dear ${booking.ownerId.name},</p>
+                
+                <p>A refund has been requested for the following booking:</p>
+                
+                <div class="details">
+                  <p><strong>Vehicle:</strong> ${booking.vehicleId.name}</p>
+                  <p><strong>Booking ID:</strong> ${booking._id}</p>
+                  <p><strong>Amount Paid:</strong> Rs. ${booking.amountPaid}</p>
+                  <p><strong>Refund Wallet:</strong> ${walletName}</p>
+                  <p><strong>Wallet ID:</strong> ${walletId}</p>
+                </div>
+
+                <p>Please review this request at your earliest convenience.</p>
+                
+                <p>You can process this refund request through your owner dashboard.</p>
+                
+                <p><a href="${process.env.BASE_URL}/ownerbookings" style="background-color: #e44d26; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Request</a></p>
+
+                <p>Best regards,<br/>The RentRide Team</p>
+              </div>
+              <div class="footer">
+                <p>&copy; 2025 RentRide. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `
+    };
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      }
+    });
+
+    await transporter.sendMail(mailOptions);
+
       return res.status(200).json({
           success: true,
           message: "Refund request submitted successfully",

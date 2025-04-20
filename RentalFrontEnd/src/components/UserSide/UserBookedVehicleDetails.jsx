@@ -7,6 +7,10 @@ import { toast, ToastContainer } from 'react-toastify';
 import io from "socket.io-client";
 import { Card } from '../Ui/Card';
 import car from '../Images/HomeCar.png';
+import CryptoJS from "crypto-js";
+
+const SECRET_KEY = "rentride"; 
+
 
 
 const socket = io("http://localhost:3000");
@@ -238,7 +242,7 @@ const handleSubmitReview = async () => {
           const numDays = calculateDaysDifference(booking.startDate, booking.endDate);
   
           let onlyVehicleCost = 0;
-          if(booking.status=="Pending"){
+          if(booking.bookingStatus=="Pending"){
           // Calculate base vehicle cost
             onlyVehicleCost = booking.vehicleId.dailyPrice * numDays;
           }else{
@@ -291,8 +295,19 @@ const handleSubmitReview = async () => {
                   headers: { Authorization: `Bearer ${token}` },
               }
               );
+              // Decrypt each message
+              const decryptedMessages = (response.data.messages || []).map((msg) => {
+                try {
+                  const bytes = CryptoJS.AES.decrypt(msg.message, SECRET_KEY);
+                  const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+                  return { ...msg, message: decryptedText };
+                } catch (error) {
+                  console.error("Decryption failed for message:", msg._id);
+                  return msg; // fallback: keep encrypted
+                }
+              });
               // console.log("messages: ", response.data);
-              setMessages(response.data.messages || []);
+              setMessages(decryptedMessages);
               
               setChatId(response.data.chatId);
               setUserId(booking.renterId);
@@ -320,7 +335,15 @@ const handleSubmitReview = async () => {
       useEffect(() => {
           // Listen for incoming messages from the server
           socket.on("receiveMessage", (newMessage) => {
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
+            // Decrypt the message content
+            const bytes = CryptoJS.AES.decrypt(newMessage.message, SECRET_KEY);
+            const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+
+            const decryptedMessage = {
+              ...newMessage,
+              message: decryptedText,
+            };
+            setMessages((prevMessages) => [...prevMessages, decryptedMessage]);
             scrollToBottom();
             const timeoutId = setTimeout(() => scrollToBottom(), 100);
             return () => clearTimeout(timeoutId);
@@ -555,6 +578,7 @@ const handleSubmitReview = async () => {
       window.location.href = response.data.payment_url; // Redirect to Khalti
     } catch (error) {
       console.error("Payment initiation failed:", error.response?.data);
+      toast.error(error.response.data.message || "Payment initiation failed. Please try again.");
       setStatus("failed");
     }
   }
@@ -582,6 +606,7 @@ const handleSubmitReview = async () => {
       window.location.href = response.data.payment_url; // Redirect to Khalti
     } catch (error) {
       console.error("Payment initiation failed:", error.response?.data);
+      toast.error(error.response.data.message || "Payment initiation failed. Please try again.");
       setStatus("failed");
     }
   }
