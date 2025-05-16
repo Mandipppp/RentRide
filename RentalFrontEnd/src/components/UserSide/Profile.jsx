@@ -1,21 +1,27 @@
 // Profile.jsx
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Navigation from "./Navigation";
 import Footer from "./Footer";
 import ProfileSidebar from "./ProfileSidebar";
 import ProfileDetails from "./ProfileDetails";
 import PasswordDetails from "./PasswordDetails";
 // import { UserContext } from "../../App";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { reactLocalStorage } from "reactjs-localstorage";
 import { UserContext } from "../UserContext/UserContext";
 
 const Profile = () => {
-  const [activeView, setActiveView] = useState("profile");
+  // const [activeView, setActiveView] = useState("profile");
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const [activeView, setActiveView] = useState(searchParams.get("section") || "profile");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const { isAuthenticated, setIsAuthenticated } = useContext(UserContext);
   const navigate = useNavigate();
+  useEffect(() => {
+        setActiveView(searchParams.get("section") || "profile");
+      }, [location.search]);
 
   const handleSignOut = () => {
        // Open the confirmation dialog when the sign-out is clicked

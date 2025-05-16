@@ -2,6 +2,7 @@ const Owner = require('../models/owner');
 const KYC = require('../models/kyc');
 const Vehicle = require('../models/vehicle');
 const Booking = require('../models/Booking');
+const mongoose = require('mongoose');
 
 const bcrypt = require('bcrypt');
 
@@ -153,6 +154,7 @@ const changePassword = async (req, res) => {
     try {
       const ownerId = req.user.id;
   
+      const ownerObjectId = new mongoose.Types.ObjectId(ownerId);
       // Fetch total number of vehicles owned
       const totalVehicles = await Vehicle.countDocuments({ 
         ownerId,
@@ -164,7 +166,7 @@ const changePassword = async (req, res) => {
   
       // Fetch total earnings
       const totalEarningsData = await Booking.aggregate([
-        { $match: { ownerId: ownerId, bookingStatus: 'Completed' } },
+        { $match: { ownerId: ownerObjectId, bookingStatus: 'Completed' } },
         { $group: { _id: null, totalEarnings: { $sum: "$amountPaid" } } }
       ]);
       

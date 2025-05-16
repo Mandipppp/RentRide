@@ -509,6 +509,7 @@ export default function VehicleDetails() {
 
             {/* Book Now Button */}
             {isBooked ? (
+              <div className='flex space-x-2'>
               <Button 
               className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" 
               onClick={handleCancelBooking}
@@ -526,6 +527,13 @@ export default function VehicleDetails() {
                   "Cancel Booking"
                 )}
               </Button>
+              <Button 
+              className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" 
+              onClick={() => navigate("/mybookings")}
+              >
+                View In Bookings
+              </Button>
+              </div>
             ):(
             <Button 
             className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg" 

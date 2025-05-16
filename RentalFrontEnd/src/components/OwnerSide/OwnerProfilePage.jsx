@@ -3,17 +3,24 @@ import OwnerNavigation from './OwnerNavigation'
 import OwnerProfileDetails from './OwnerProfileDetails'
 import OwnerPasswordDetails from './OwnerPasswordDetails'
 import { reactLocalStorage } from 'reactjs-localstorage';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import OwnerWalletDetails from './OwnerWalletDetails';
 import OwnerKYCDetails from './OwnerKYCDetails';
 import axios from 'axios';
 
 function OwnerProfilePage() {
-  const [activeView, setActiveView] = useState("ownerprofile");
+  // const [activeView, setActiveView] = useState("ownerprofile");
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const [activeView, setActiveView] = useState(searchParams.get("section") || "ownerprofile");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
   const token = localStorage.getItem('access_token');
   const [hasRejectedDocuments, setHasRejectedDocuments] = useState(false);
+  
+  useEffect(() => {
+      setActiveView(searchParams.get("section") || "ownerprofile");
+    }, [location.search]);
   
   useEffect(() => {
       const checkKycRejection = async () => {

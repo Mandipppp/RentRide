@@ -27,6 +27,22 @@ export default function BrowseVehicles() {
   // const [selectedLocation, setSelectedLocation] = useState(null); // Track the selected location
   const cache = new Map(); // Caching previous searches
   
+  const getCurrentTimePlus4Hours = () => {
+    const now = new Date();
+    now.setHours(now.getHours() + 4); // Add 4 hours
+    return now.toTimeString().slice(0,5); // Returns time in HH:mm format
+  };
+  
+  const isToday = (date) => {
+    const today = new Date();
+    const compareDate = new Date(date);
+    return (
+      compareDate.getDate() === today.getDate() &&
+      compareDate.getMonth() === today.getMonth() &&
+      compareDate.getFullYear() === today.getFullYear()
+    );
+  };
+
   const fetchLocations = useCallback(async (input) => {
           if (input.length < 3) return;
   
@@ -260,10 +276,27 @@ export default function BrowseVehicles() {
     setFilters((prevFilters) => {
       let updatedFilters = { ...prevFilters, [name]: value };
       
-      if (name === "pickupDate" && updatedFilters.dropDate && value >= updatedFilters.dropDate) {
-        let nextDay = new Date(value);
-        nextDay.setDate(nextDay.getDate() + 1);
-        updatedFilters.dropDate = nextDay.toISOString().split("T")[0];
+      // if (name === "pickupDate" && updatedFilters.dropDate && value >= updatedFilters.dropDate) {
+      //   let nextDay = new Date(value);
+      //   nextDay.setDate(nextDay.getDate() + 1);
+      //   updatedFilters.dropDate = nextDay.toISOString().split("T")[0];
+      // }
+      // Handle pickup date changes
+      if (name === "pickupDate") {
+        // Reset pickup time if date changes to today
+        if (isToday(value)) {
+          const minTime = getCurrentTimePlus4Hours();
+          if (updatedFilters.pickupTime && updatedFilters.pickupTime < minTime) {
+            updatedFilters.pickupTime = minTime;
+          }
+        }
+        
+        // Update drop date if pickup date is after or equal to it
+        if (updatedFilters.dropDate && value >= updatedFilters.dropDate) {
+          let nextDay = new Date(value);
+          nextDay.setDate(nextDay.getDate() + 1);
+          updatedFilters.dropDate = nextDay.toISOString().split("T")[0];
+        }
       }
       
       return updatedFilters;
@@ -356,7 +389,9 @@ export default function BrowseVehicles() {
         {/* Search Panel */}
         <div className="w-1/3 border p-6 rounded-lg shadow-lg bg-white">
           {/* <input className="border p-3 rounded w-full mb-4" name="pickAndDropLocation" placeholder="Pick-up and return location" value={filters.pickAndDropLocation} onChange={handleInputChange} /> */}
-          
+            <label className="block text-sm font-semibold mb-1 ml-3">
+              Location <span className="text-red-500">*</span>
+            </label>
           <div className="flex items-center">
             {/* <input
               className="border p-3 rounded w-full mb-4"
@@ -367,9 +402,7 @@ export default function BrowseVehicles() {
             /> */}
 
           <div className="w-full relative">
-          <label className="block text-sm font-semibold mb-1 ml-3">
-              Location <span className="text-red-500">*</span>
-            </label>
+          
           {selectedLocation ? (
                 <div className="flex items-center text-sm font-bold bg-blue-100 text-blue-800 px-6 py-4 rounded-full mb-2">
                     <span>{selectedLocation.display_name}</span>
@@ -390,7 +423,7 @@ export default function BrowseVehicles() {
                       handleInputChange(e);
                     }}
                     placeholder="Enter location"
-                    className="border p-3 rounded w-full mb-4"
+                    className="border border-red-700 p-3 rounded w-full mb-4"
                 />
               )}
             
@@ -420,7 +453,7 @@ export default function BrowseVehicles() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 mb-6">
-            <div className="border p-3 rounded">
+            <div className="border border-red-700 p-3 rounded">
               <label className="block text-sm font-semibold">
                 Pick-up Date <span className="text-red-500">*</span>
               </label>
@@ -428,9 +461,27 @@ export default function BrowseVehicles() {
             </div>
             <div className="border p-3 rounded">
               <label className="block text-sm font-semibold">Pick-up Time</label>
-              <input className="w-full" name="pickupTime" type="time" value={filters.pickupTime} onChange={handleInputChange} />
+              <input 
+                className="w-full" 
+                name="pickupTime" 
+                type="time" 
+                min={isToday(filters.pickupDate) ? getCurrentTimePlus4Hours() : "00:00"}
+                value={filters.pickupTime} 
+                onChange={(e) => {
+                  if (isToday(filters.pickupDate) && e.target.value < getCurrentTimePlus4Hours()) {
+                    toast.error("Please select a time at least 4 hours from now for same-day bookings");
+                    return;
+                  }
+                  handleInputChange(e);
+                }}
+              />
+              {isToday(filters.pickupDate) && (
+                <p className="text-xs text-gray-500 mt-1">
+                  For same-day bookings, pickup time must be at least 4 hours from now
+                </p>
+              )}
             </div>
-            <div className="border p-3 rounded">
+            <div className="border border-red-700 p-3 rounded">
               <label className="block text-sm font-semibold">
                 Return Date <span className="text-red-500">*</span>
               </label>

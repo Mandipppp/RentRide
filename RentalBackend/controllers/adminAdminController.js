@@ -212,11 +212,53 @@ exports.setupPassword = async (req, res) => {
           pass: process.env.EMAIL_PASS,
         },
       });
+
+      const getEmailTemplate = (message, type, priority) => `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: #2c3e50; margin: 0;">RentRide Notification</h1>
+          <p style="color: #7f8c8d; font-size: 14px;">Important Update from Admin</p>
+        </div>
+        
+        <div style="background-color: ${
+          priority === 'high' ? '#fee2e2' : 
+          priority === 'medium' ? '#fef3c7' : 
+          '#f3f4f6'
+        }; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+          <p style="margin: 0; color: #4a5568;">
+            <strong style="color: ${
+              priority === 'high' ? '#dc2626' : 
+              priority === 'medium' ? '#d97706' : 
+              '#1f2937'
+            };">Priority Level:</strong> ${priority.toUpperCase()}
+          </p>
+        </div>
+
+        <div style="background-color: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h2 style="color: #2c3e50; margin-top: 0; font-size: 18px;">
+            ${type.charAt(0).toUpperCase() + type.slice(1)} Notice
+          </h2>
+          <p style="color: #4a5568; line-height: 1.6;">
+            ${message}
+          </p>
+        </div>
+
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+          <p style="color: #7f8c8d; font-size: 12px;">
+            This is an automated message from RentRide. Please do not reply to this email.
+          </p>
+        </div>
+      </div>
+    `;
+
   
       const emailMessage = {
-        from: process.env.EMAIL_USER,
-        subject: 'Admin Notification',
-        text: message,
+      from: {
+        name: 'RentRide Admin',
+        address: process.env.EMAIL_USER
+      },
+      subject: `RentRide ${type.charAt(0).toUpperCase() + type.slice(1)} Notification`,
+      html: getEmailTemplate(message, type, priority)
       };
   
       for (const recipient of recipients) {
