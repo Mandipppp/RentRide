@@ -34,7 +34,7 @@ const initiatePayment = async (req, res) => {
     }
 
     if(booking.paymentMethod == "Cash"){
-      return res.status(404).json({ success: false, message: "Booking set to cash by onwer." });
+      return res.status(404).json({ success: false, message: "Booking set to cash by owner." });
     }
 
     // Check for overlapping confirmed bookings for the same vehicle
@@ -251,7 +251,9 @@ const verifyPayment = async (req, res) => {
     booking.amountDue -= payment.amountPaid;
 
     // Change the bookingStatus to "Confirmed" if payment is successful
-    booking.bookingStatus = "Confirmed";
+    if(booking.bookingStatus === "Pending"){
+      booking.bookingStatus = "Confirmed";
+    }
     await booking.save();
 
     // Generate Receipt PDF
