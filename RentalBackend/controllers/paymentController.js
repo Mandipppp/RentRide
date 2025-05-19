@@ -251,7 +251,7 @@ const verifyPayment = async (req, res) => {
     booking.amountDue -= payment.amountPaid;
 
     // Change the bookingStatus to "Confirmed" if payment is successful
-    if(booking.bookingStatus === "Pending"){
+    if(booking.bookingStatus === "Pending" || booking.bookingStatus === "Accepted"){
       booking.bookingStatus = "Confirmed";
     }
     await booking.save();
