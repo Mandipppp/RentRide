@@ -113,6 +113,14 @@ const adminBlockUser = async (req, res) => {
         renterId: userId,
         bookingStatus: { $in: ['Pending', 'Accepted', 'RevisionRequired'] },
       });
+      
+      const transporter = nodemailer.createTransport({
+        service: 'Gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
 
       for (const booking of bookingsToCancel) {
         booking.bookingStatus = 'Cancelled';
@@ -243,14 +251,6 @@ const adminBlockUser = async (req, res) => {
           </body>
         </html>
       `;
-
-      const transporter = nodemailer.createTransport({
-        service: 'Gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
 
       await transporter.sendMail({
         from: '"Account Support" <no-reply@example.com>',
