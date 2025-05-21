@@ -195,7 +195,7 @@ const getOwnerVehicles = async (req, res) => {
       if (parsedBuiltYear < 1886 || parsedBuiltYear > currentYear) {
         return res.status(400).json({ message: `Built year must be between 1886 and ${currentYear}.` });
       }
-      const existingVehicle = await Vehicle.findOne({ registrationNumber });
+      const existingVehicle = await Vehicle.findOne({ registrationNumber, status: { $ne: 'Deleted' } });
       if (existingVehicle) {
         return res.status(400).json({ message: 'A vehicle with this registration number is already registered.' });
       }
