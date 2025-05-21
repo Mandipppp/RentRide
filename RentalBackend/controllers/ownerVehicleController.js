@@ -649,7 +649,16 @@ const getOwnerVehicles = async (req, res) => {
       if (mileage) vehicleUpdateFields.mileage = mileage;
       if (registrationNumber) vehicleUpdateFields.registrationNumber = registrationNumber;
       if (description) vehicleUpdateFields.description = description;
-      if (dailyPrice) vehicleUpdateFields.dailyPrice = dailyPrice;
+      // if (dailyPrice) vehicleUpdateFields.dailyPrice = dailyPrice;
+      if (dailyPrice) {
+        const price = parseFloat(dailyPrice);
+        if (isNaN(price) || price <= 0) {
+          return res.status(400).json({ 
+            message: "Daily price must be a positive number" 
+          });
+        }
+        vehicleUpdateFields.dailyPrice = price;
+      }
       if (minRentalPeriod) vehicleUpdateFields.minRentalPeriod = minRentalPeriod;
       if (maxRentalPeriod) vehicleUpdateFields.maxRentalPeriod = maxRentalPeriod;
       // if (features) vehicleUpdateFields.features = features;
@@ -659,11 +668,33 @@ const getOwnerVehicles = async (req, res) => {
       if (latitude) vehicleUpdateFields.latitude = latitude;
       if (longitude) vehicleUpdateFields.longitude = longitude;
        // Parse and update addOns if provided
+      // if (addOns) {
+      //   try {
+      //     vehicleUpdateFields.addOns = JSON.parse(addOns);
+      //   } catch (err) {
+      //     return res.status(400).json({ message: "Invalid format for addOns field." });
+      //   }
+      // }
       if (addOns) {
         try {
-          vehicleUpdateFields.addOns = JSON.parse(addOns);
+          const parsedAddOns = JSON.parse(addOns);
+          
+          // Validate each add-on's price
+          for (const addon of parsedAddOns) {
+            const price = parseFloat(addon.pricePerDay);
+            if (isNaN(price) || price <= 0) {
+              return res.status(400).json({ 
+                message: `Price for add-on "${addon.name}" must be a positive number` 
+              });
+            }
+            addon.pricePerDay = price; // Ensure price is stored as a number
+          }
+          
+          vehicleUpdateFields.addOns = parsedAddOns;
         } catch (err) {
-          return res.status(400).json({ message: "Invalid format for addOns field." });
+          return res.status(400).json({ 
+            message: "Invalid format for addOns field." 
+          });
         }
       }
       if (features) {
